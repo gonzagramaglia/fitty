@@ -1,3 +1,20 @@
-# Expo HAS CHANGED
+## Read Before Anything Else
 
-Read the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing any code.
+Read in this exact order before any implementation:
+
+1. context/project-overview.md
+
+
+## Rules That Never Change
+
+- If the same problem persists after one corrective prompt stop immediately and run /recover
+
+
+## Available Skills
+
+- `/architect` — before any complex feature. Think before building.
+- `/imprint` — after any new UI component. Capture patterns.
+- `/review` — before demo or when something feels off.
+- `/recover` — when something breaks after one failed correction.
+- `/remember save` — when a feature spans multiple sessions.
+- `/remember restore` — when returning after a multi-session feature.

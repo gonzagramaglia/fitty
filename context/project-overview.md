@@ -68,13 +68,35 @@ This directly ties into the **World Cat Domination Day** theme by driving positi
 
 ---
 
-## Hackathon Tech Stack & Strategy
+## Hackathon Strategy
 
-To maximize the judging criteria (Technical Execution, Innovation, Theme Relevance, Security, UX/UI, Documentation), Fitty utilizes the following stack:
+To maximize the judging criteria (Technical Execution, Innovation, Theme Relevance, Security, UX/UI, Documentation), Fitty's technical architecture is explicitly designed around the sponsors' technologies. 
 
-- **Frontend / Mobile**: `React Native (Expo)` - For a polished, smooth, and universal user experience across iOS, Android, and Web.
-- **Backend & Database**: `Supabase` - Provides instant PostgreSQL database, secure Storage for cat photos, and out-of-the-box Authentication.
-- **Durable Execution (Technical Execution)**: `Temporal.io` - Used to orchestrate the AI analysis workflows reliably. It handles image uploading, AI API calls, and retries seamlessly behind the scenes.
-- **AI / Machine Learning**: `OpenAI API (GPT-4o Vision & Whisper)` - Provides a unified, state-of-the-art ecosystem for both complex visual reasoning (BCS evaluation) and fast voice transcription under a single API and billing account.
-- **Security & CI/CD (Bonus Points)**: `Aikido Security` - Integrated into GitHub Actions to scan dependencies and vulnerabilities, ensuring the code is secure from day one. (A report will be included in the final submission).
-- **Spec-Driven Development (Kiro Track)**: `Kiro` - Built using agentic AI and a persistent `.kiro` / `.agents` configuration to accelerate development from weeks to days.
+We utilize **Temporal.io** to guarantee durable execution for our AI workflows, **AWS Bedrock and Transcribe** for scalable cloud AI services, **Aikido** for robust security scanning, and **Kiro** to accelerate our build process through spec-driven development.
+
+For the full technical breakdown, stack details, and data flows, see [`architecture.md`](./architecture.md).
+
+---
+
+## Target User
+
+A cat owner who:
+- Wants to ensure their cat is maintaining a healthy weight and preventing pet obesity.
+- Finds it difficult to objectively assess their cat's body condition or weigh them on a traditional scale.
+- Is looking for a quick, stress-free way to monitor their pet's health at home without frequent vet visits.
+- Is comfortable taking photos with a smartphone and using a modern mobile/web application.
+
+---
+
+## Success Criteria
+
+- User can sign up, create a cat profile, and complete their first health check in under 3 minutes.
+- The camera interface correctly guides the user to take top-down and side-profile photos using intuitive silhouette overlays.
+- AWS Bedrock (Claude 4.3 Sonnet) accurately calculates a Body Condition Score (BCS) that aligns with standard veterinary guidelines.
+- AI reasoning is empathetic, clear, and makes logical sense based on the visual evidence in the photos.
+- Voice notes are accurately transcribed by Amazon Transcribe and meaningfully incorporated into the AI's final recommendations.
+- Temporal.io successfully orchestrates the backend workflow, ensuring no failed AI API calls disrupt the user experience.
+- The History dashboard correctly displays interactive timeline charts for weight and BCS trends.
+- All cat profiles, health check logs, and photos are securely stored in Supabase.
+- UI is visually premium, fluid, and fully in English (as required by the hackathon rules).
+- Aikido Security scans pass cleanly, and the report is included in the final submission.

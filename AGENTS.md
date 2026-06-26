@@ -3,6 +3,8 @@
 Read in this exact order before any implementation:
 
 1. context/project-overview.md
+2. context/architecture.md
+3. context/build-plan.md
 
 
 ## Rules That Never Change

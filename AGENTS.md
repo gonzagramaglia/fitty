@@ -4,7 +4,9 @@ Read in this exact order before any implementation:
 
 1. context/project-overview.md
 2. context/architecture.md
-3. context/build-plan.md
+3. context/code-standards.md
+4. context/library-docs.md
+5. context/build-plan.md
 
 
 ## Rules That Never Change

@@ -3,13 +3,14 @@
 Living document to track the completion of Fitty's phases as defined in `build-plan.md`.
 
 ## Phase 1 — Foundation
-- [ ] **01 Project Setup & Navigation**
-  - [ ] Initialize Expo app (`create-expo-app`)
-  - [ ] Setup TailwindCSS (NativeWind v4) and custom `ui-tokens`
-  - [ ] Configure Expo Router (`app/(tabs)`, `app/(auth)`)
-  - [ ] Implement Bottom Tabs Navigation (Dashboard, Camera, History, Profile)
-  - [ ] Implement Protected Routes logic (`_layout.tsx`)
-  - [ ] Initialize Supabase Client & Environment Variables (`lib/supabase.ts`)
+- [x] **01 Project Setup & Navigation**
+  - [x] Initialize Expo app (`create-expo-app`)
+  - [x] Setup TailwindCSS (NativeWind v4) and custom `ui-tokens`
+  - [x] Configure Expo Router (`app/(tabs)`, `app/(auth)`)
+  - [x] Implement Bottom Tabs Navigation (Dashboard, Camera, History, Profile)
+  - [x] Implement Protected Routes logic (`_layout.tsx`)
+  - [x] Initialize Supabase Client & Environment Variables (`lib/supabase.ts`)
+  - [x] Build Web Presentation Wrapper (Hackathon Demo UI)
 - [ ] **02 Auth UI & Logic**
   - [ ] Build Onboarding Carousel UI
   - [ ] Build Login Screen UI (Google + Guest buttons)

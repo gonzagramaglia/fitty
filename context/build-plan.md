@@ -11,7 +11,8 @@ Initialize the Expo project with Expo Router and configure styling. Ensure the p
 
 **Logic:**
 - Setup Expo Router folder structure (`app/(tabs)`, `app/(auth)`)
-- Implement responsive navigation (Dashboard, Camera, History, Profile) using Bottom Tabs for mobile and a Sidebar/Top Navbar for Web
+- Implement navigation (Dashboard, Camera, History, Profile) using Bottom Tabs
+- Implement Web Presentation Wrapper (`WebFrame`) to simulate mobile layout on desktop browsers for hackathon demo
 - Enforce protected routes (redirect to `/login` if no active session via Expo Router `_layout.tsx`)
 
 ### 02 Auth UI & Logic

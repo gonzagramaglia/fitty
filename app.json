@@ -1,8 +1,9 @@
 {
   "expo": {
-    "name": "fitty",
+    "name": "Fitty",
     "slug": "fitty",
     "version": "1.0.0",
+    "scheme": "fitty",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,7 +20,11 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicons/favicon-96x96.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar"
+    ]
   }
 }

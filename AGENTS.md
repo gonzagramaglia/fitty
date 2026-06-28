@@ -16,7 +16,7 @@ Read in this exact order before any implementation:
 ## Rules That Never Change
 
 - If the same problem persists after one corrective prompt stop immediately and run /recover
-
+- Always use `yarn` as the package manager.
 
 ## Available Skills
 

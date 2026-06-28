@@ -14,6 +14,18 @@ The AI agent on this project operates as a senior engineer. This means:
 - **One thing at a time** — complete one feature fully before touching the next
 - **Failures are expected** — wrap agent operations in try/catch, log failures, never let one failure crash everything
 
+## Git & CodeRabbit Workflow
+
+To fully leverage **CodeRabbit**, we must stop pushing directly to `main`. The agent and the user must follow this PR-driven flow:
+
+1. **Feature Branches:** Create a branch for each **main task** from `progress-tracker.md`. **Branch naming is strict:** It must use the prefix `feat/` or `fix/`, followed by the exact two-digit task number, and a short kebab-case description.
+   - *Example:* `git checkout -b feat/01-project-setup`
+   - *Subtasks Strategy:* Do **not** create a new branch for every mini subtask (that would create too many PRs). Instead, work on the main branch (e.g., `feat/01`) and make an individual **Commit** as you complete each subtask (e.g., `git commit -m "feat(setup): initialize expo app"`).
+2. **Commit & Push:** Once the feature is complete and verified locally, commit and push the branch to GitHub.
+3. **Pull Request:** Open a PR against `main`. This automatically triggers CodeRabbit.
+4. **Review & Fix:** Wait for CodeRabbit's AI review. If it requests changes, use the agent to address the feedback, apply fixes, and push the updates.
+5. **Merge:** Only merge to `main` when CodeRabbit gives the green light.
+
 ## TypeScript
 
 - Strict mode enabled in `tsconfig.json` — no exceptions

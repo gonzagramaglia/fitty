@@ -74,6 +74,8 @@ To maximize the judging criteria (Technical Execution, Innovation, Theme Relevan
 
 We utilize **Temporal.io** to guarantee durable execution for our AI workflows, **AWS Bedrock and Transcribe** for scalable cloud AI services, **Aikido** for robust security scanning, and **Kiro** to accelerate our build process through spec-driven development.
 
+Additionally, to ensure high code quality and maintain standards during the fast-paced development cycle, we have integrated **CodeRabbit** for automated AI code reviews on every Pull Request.
+
 For the full technical breakdown, stack details, and data flows, see [`architecture.md`](./architecture.md).
 
 ---

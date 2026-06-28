@@ -98,6 +98,7 @@ const url = data.publicUrl;
 ```
 
 **Storage paths for Fitty:**
+- Cat avatar: `cat_avatars/{user_id}/{cat_id}/avatar-{timestamp}.jpg`
 - Top photo: `cat_photos/{user_id}/{cat_id}/top-{timestamp}.jpg`
 - Side photo: `cat_photos/{user_id}/{cat_id}/side-{timestamp}.jpg`
 - Voice note: `voice_notes/{user_id}/{cat_id}/note-{timestamp}.m4a`

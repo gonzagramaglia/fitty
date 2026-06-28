@@ -107,6 +107,7 @@ User updates profile → App writes directly to Supabase DB (No AI/Temporal need
 | `id` | uuid | Primary key, auto-generated |
 | `user_id` | uuid | References `auth.users(id)` |
 | `name` | text | Name of the cat |
+| `avatar_url` | text | (Optional) Supabase Storage URL for the cat's avatar photo |
 | `breed` | text | e.g., "Domestic Shorthair", "Siamese" (optional) |
 | `age_years` | integer | Age of the cat |
 | `base_weight_kg` | numeric | The cat's normal or baseline weight in kg |

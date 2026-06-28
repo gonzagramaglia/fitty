@@ -15,24 +15,26 @@ Initialize the Expo project with Expo Router and configure styling. Ensure the p
 - Enforce protected routes (redirect to `/login` if no active session via Expo Router `_layout.tsx`)
 
 ### 02 Auth UI & Logic
-Supabase authentication — Email and OAuth.
+Supabase authentication — Google OAuth and Guest Mode (Anonymous) for Hackathon Judges.
 
 **UI:**
-- Login Screen — App Logo, Email input, Password input, "Sign In" button, "Sign Up" text link
-- OAuth Section — Google OAuth button, Apple OAuth button
+- Onboarding Carousel — 3 screens explaining the app value (AI analysis, 2 photos, voice note)
+- Login Screen — App Logo, prominent "Continue with Google" button, and a highly visible "Continue as Guest (Judge Mode)" button.
 
 **Logic:**
-- Email signup/login via Supabase Auth `signInWithPassword` and `signUp`
-- Google/Apple OAuth via Supabase Auth `signInWithOAuth`
+- Google OAuth via Supabase Auth `signInWithOAuth`
+- Guest Mode via Supabase Auth Anonymous sign-ins (`signInAnonymously`)
 - Session persistence via Supabase Auth state listener
-- Auto-redirect to `/` (Dashboard) on successful login
+- Auto-redirect to `/` (Dashboard) on successful login or guest entry
+- Show Onboarding only on first app launch
 
 ### 03 Database Schema
 All Supabase tables and storage buckets created before any data is written.
 
 **Logic:**
-- Create `cats` table with all columns from `architecture.md` (id, user_id, name, breed, age_years, base_weight_kg)
+- Create `cats` table with all columns from `architecture.md` (id, user_id, name, avatar_url, breed, age_years, base_weight_kg)
 - Create `health_checks` table with all columns from `architecture.md`
+- Create `cat_avatars` storage bucket with authenticated access only
 - Create `cat_photos` storage bucket with authenticated access only
 - Create `voice_notes` storage bucket with authenticated access only
 - Row Level Security (RLS) policies on all tables and buckets — always filter by `user_id`

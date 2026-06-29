@@ -27,21 +27,21 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] Create `docs/testing.md` — manual test documentation table
 
 ## Phase 3 — Auth UI & Logic
-- [ ] **03 Auth UI & Logic**
-  - [ ] Build Onboarding Carousel UI
-  - [ ] Build Login Screen UI (Google + Guest buttons)
-  - [ ] Implement Google OAuth via Supabase
-  - [ ] Implement Anonymous Guest Mode via Supabase
-  - [ ] Configure Supabase session state listener
-- [ ] **04 Database Schema (Supabase)**
+- [x] **03 Auth UI & Logic**
+  - [x] Build Onboarding Carousel UI (3 slides, in-memory state — no AsyncStorage)
+  - [x] Build Login Screen UI (Google + Guest Mode buttons)
+  - [x] Implement Anonymous Guest Mode via Supabase (`signInAnonymously`) — **priority**
+  - [x] Implement Google OAuth via Supabase (`signInWithOAuth`) — bonus, configure Redirect URL in Supabase Dashboard first
+  - [x] Configure Supabase session state listener & auto-redirect to `/` on login
+
+## Phase 4 — Database Schema & Profile
+- [ ] **04 Database Schema (Supabase)** *(done in Supabase Dashboard, not in code)*
   - [ ] Create `cats` table
   - [ ] Create `health_checks` table
   - [ ] Create `cat_avatars` storage bucket
   - [ ] Create `cat_photos` storage bucket
   - [ ] Create `voice_notes` storage bucket
   - [ ] Setup RLS (Row Level Security) policies
-
-## Phase 4 — Profile & Dashboard
 - [ ] **05 Profile Page — Full UI**
   - [ ] Build "Profile Needs Attention" Banner
   - [ ] Build Cat Form (Avatar, Name, Breed, Age, Base Weight)

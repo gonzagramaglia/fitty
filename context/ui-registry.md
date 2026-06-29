@@ -65,3 +65,19 @@ After building any component — update this file with the component name, file 
 - **Valid/Complete State:** `bg-primary-cool` with white text.
 - **Invalid/Disabled State:** `bg-surface-tertiary` with `text-slate-400`.
 - **Layout:** `flex-row items-center justify-center py-4 rounded-2xl`.
+
+### Split Screen Dark Header Layout
+**File:** `app/(tabs)/index.tsx`, `app/(tabs)/profile.tsx`
+**Description:** Screens with a dark upper header and white lower body.
+**Key Patterns:**
+- **Header Container:** `bg-[#1A2530] rounded-b-[2.5rem] px-6 pb-6 mb-6`.
+- **Top Padding:** Use dynamic insets: `style={{ paddingTop: Platform.OS === 'web' ? 72 : Math.max(insets.top + 16, 60) }}`.
+- **Text:** Section titles should be `text-white/60 text-xs font-bold uppercase tracking-widest mb-3`.
+
+### Absolute Overlay Editable Text Pattern
+**File:** `app/(tabs)/profile.tsx`
+**Description:** In-line editable text that switches from `Text` to `TextInput` without any layout shifts or sibling element jumping.
+**Key Patterns:**
+- **Visible Placeholder:** Render the static `Text` normally to drive the flex layout, and toggle `opacity-0` when editing.
+- **Input Overlay:** Render the `TextInput` with `absolute left-0 right-0 height-100%` directly over the static text when editing.
+- **Web Fallback:** Apply `style={{ outlineStyle: 'none' }}` to `TextInput` on web to prevent the default focus ring.

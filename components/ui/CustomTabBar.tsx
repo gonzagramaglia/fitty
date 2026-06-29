@@ -30,10 +30,10 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
               className="items-center flex-1"
             >
               <View className="-mt-8 items-center">
-                <View className="bg-primary-cool w-16 h-16 rounded-full items-center justify-center border-[6px] border-background">
-                  <Camera size={28} color="white" strokeWidth={2.5} />
+                <View className="bg-[#FDE047] w-16 h-16 rounded-full items-center justify-center border-[6px] border-background shadow-sm">
+                  <Camera size={28} color="#854D0E" strokeWidth={2.5} />
                 </View>
-                <Text className={`text-xs mt-1 font-bold ${isFocused ? 'text-primary-cool' : 'text-primary-cool'}`}>
+                <Text className={`text-xs mt-1 font-bold ${isFocused ? 'text-[#854D0E]' : 'text-[#854D0E]'}`}>
                   Scan
                 </Text>
               </View>
@@ -52,7 +52,7 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
         if (route.name === 'history') {
           IconComponent = Clock;
           title = 'History';
-          iconSize = 26;
+          iconSize = 24;
         }
         if (route.name === 'profile') {
           IconComponent = User;

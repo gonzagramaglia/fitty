@@ -47,19 +47,25 @@ Living document to track the completion of Fitty's phases as defined in `build-p
 - [x] **05 Profile Page — Full UI**
   - [x] Build "Profile Needs Attention" Banner
   - [x] Build Cat Form (Avatar, Name, Breed, Age, Base Weight)
+  - [x] Build Owner Profile Header (Name & Avatar Editing)
+  - [x] Implement Absolute Overlay Pattern for Seamless Edit Transitions
+  - [x] Implement Horizontal Cat Selector Pills
 - [x] **06 Profile Save Logic**
   - [x] Fetch existing profile on mount
   - [x] Save/Update `cats` table on submit
   - [x] Upload avatar photo to `cat_avatars` bucket
   - [x] Add success/error Toast notifications
-- [ ] **07 Dashboard Page — Full UI**
-  - [ ] Build Welcome Header
-  - [ ] Build conditional "Incomplete Profile" banner
-  - [ ] Build "Start New Health Check" CTA card
-  - [ ] Build "Recent Checks" summary widget
-- [ ] **08 Dashboard Logic**
-  - [ ] Fetch active cat from `cats` table
-  - [ ] Fetch latest check from `health_checks` table
+  - [x] Update local state dynamically without layout shifts
+- [x] **07 Dashboard Page — Full UI**
+  - [x] Build Welcome Header
+  - [x] Build conditional "Incomplete Profile" banner
+  - [x] Build "Start New Health Check" CTA card
+  - [x] Build "Recent Checks" summary widget
+  - [x] Synchronize header styling with Profile Page (Dark Header Layout)
+  - [x] Integrate Cat Selector Pills matching Profile UI
+- [x] **08 Dashboard Logic**
+  - [x] Fetch active cat from `cats` table
+  - [x] Fetch latest check from `health_checks` table
 
 ## Phase 5 — Camera & AI Analysis
 - [ ] **09 Camera Interface — Full UI**

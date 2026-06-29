@@ -95,7 +95,7 @@ App listens for DB changes and displays Results Page
 
 User logs in via OAuth / Email
   ↓
-Supabase Auth creates secure session
+Supabase Auth creates secure session. Owner Profile (Name, Photo URL) is stored in `auth.users` via `raw_user_meta_data`.
   ↓
 App loads ActiveCatContext (fetches last used cat from AsyncStorage, or queries first cat from DB)
   ↓

@@ -1,12 +1,13 @@
 import { Tabs } from "expo-router";
 import { Platform } from "react-native";
+import { CustomTabBar } from "../../components/ui/CustomTabBar";
 
 export default function TabsLayout() {
   return (
     <Tabs
+      tabBar={props => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarStyle: Platform.OS === 'web' ? { display: 'none' } : {},
       }}
     >
       <Tabs.Screen

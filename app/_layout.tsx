@@ -4,6 +4,7 @@ import Head from "expo-router/head";
 import { supabase } from "../lib/supabase";
 import { Session } from "@supabase/supabase-js";
 import { WebFrame } from "../components/WebFrame";
+import { ActiveCatProvider } from "../lib/ActiveCatContext";
 // @ts-ignore
 import "../global.css";
 
@@ -46,10 +47,12 @@ export default function RootLayout() {
         <title>Fitty | AI Cat Health Tracker</title>
       </Head>
       <WebFrame>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        </Stack>
+        <ActiveCatProvider>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          </Stack>
+        </ActiveCatProvider>
       </WebFrame>
     </>
   );

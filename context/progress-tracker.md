@@ -44,14 +44,14 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] Setup RLS (Row Level Security) policies
   - [x] Create `ActiveCatContext` to manage active cat ID
   - [x] Wrap `_layout.tsx` in `ActiveCatProvider`
-- [ ] **05 Profile Page — Full UI**
-  - [ ] Build "Profile Needs Attention" Banner
-  - [ ] Build Cat Form (Avatar, Name, Breed, Age, Base Weight)
-- [ ] **06 Profile Save Logic**
-  - [ ] Fetch existing profile on mount
-  - [ ] Save/Update `cats` table on submit
-  - [ ] Upload avatar photo to `cat_avatars` bucket
-  - [ ] Add success/error Toast notifications
+- [x] **05 Profile Page — Full UI**
+  - [x] Build "Profile Needs Attention" Banner
+  - [x] Build Cat Form (Avatar, Name, Breed, Age, Base Weight)
+- [x] **06 Profile Save Logic**
+  - [x] Fetch existing profile on mount
+  - [x] Save/Update `cats` table on submit
+  - [x] Upload avatar photo to `cat_avatars` bucket
+  - [x] Add success/error Toast notifications
 - [ ] **07 Dashboard Page — Full UI**
   - [ ] Build Welcome Header
   - [ ] Build conditional "Incomplete Profile" banner

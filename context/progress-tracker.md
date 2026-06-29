@@ -35,29 +35,37 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] Configure Supabase session state listener & auto-redirect to `/` on login
 
 ## Phase 4 — Database Schema & Profile
-- [ ] **04 Database Schema (Supabase)** *(done in Supabase Dashboard, not in code)*
-  - [ ] Create `cats` table
-  - [ ] Create `health_checks` table
-  - [ ] Create `cat_avatars` storage bucket
-  - [ ] Create `cat_photos` storage bucket
-  - [ ] Create `voice_notes` storage bucket
-  - [ ] Setup RLS (Row Level Security) policies
-- [ ] **05 Profile Page — Full UI**
-  - [ ] Build "Profile Needs Attention" Banner
-  - [ ] Build Cat Form (Avatar, Name, Breed, Age, Base Weight)
-- [ ] **06 Profile Save Logic**
-  - [ ] Fetch existing profile on mount
-  - [ ] Save/Update `cats` table on submit
-  - [ ] Upload avatar photo to `cat_avatars` bucket
-  - [ ] Add success/error Toast notifications
-- [ ] **07 Dashboard Page — Full UI**
-  - [ ] Build Welcome Header
-  - [ ] Build conditional "Incomplete Profile" banner
-  - [ ] Build "Start New Health Check" CTA card
-  - [ ] Build "Recent Checks" summary widget
-- [ ] **08 Dashboard Logic**
-  - [ ] Fetch active cat from `cats` table
-  - [ ] Fetch latest check from `health_checks` table
+- [x] **04 Database Schema & State** *(via `docs/supabase-schema.sql`)*
+  - [x] Create `cats` table
+  - [x] Create `health_checks` table
+  - [x] Create `cat_avatars` storage bucket
+  - [x] Create `cat_photos` storage bucket
+  - [x] Create `voice_notes` storage bucket
+  - [x] Setup RLS (Row Level Security) policies
+  - [x] Create `ActiveCatContext` to manage active cat ID
+  - [x] Wrap `_layout.tsx` in `ActiveCatProvider`
+- [x] **05 Profile Page — Full UI**
+  - [x] Build "Profile Needs Attention" Banner
+  - [x] Build Cat Form (Avatar, Name, Breed, Age, Base Weight)
+  - [x] Build Owner Profile Header (Name & Avatar Editing)
+  - [x] Implement Absolute Overlay Pattern for Seamless Edit Transitions
+  - [x] Implement Horizontal Cat Selector Pills
+- [x] **06 Profile Save Logic**
+  - [x] Fetch existing profile on mount
+  - [x] Save/Update `cats` table on submit
+  - [x] Upload avatar photo to `cat_avatars` bucket
+  - [x] Add success/error Toast notifications
+  - [x] Update local state dynamically without layout shifts
+- [x] **07 Dashboard Page — Full UI**
+  - [x] Build Welcome Header
+  - [x] Build conditional "Incomplete Profile" banner
+  - [x] Build "Start New Health Check" CTA card
+  - [x] Build "Recent Checks" summary widget
+  - [x] Synchronize header styling with Profile Page (Dark Header Layout)
+  - [x] Integrate Cat Selector Pills matching Profile UI
+- [x] **08 Dashboard Logic**
+  - [x] Fetch active cat from `cats` table
+  - [x] Fetch latest check from `health_checks` table
 
 ## Phase 5 — Camera & AI Analysis
 - [ ] **09 Camera Interface — Full UI**

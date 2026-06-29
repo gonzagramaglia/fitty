@@ -132,6 +132,23 @@ Tests the error handling wrapper used for all Supabase queries across the app.
 | Guest Mode login | Click Guest button | `signInAnonymously()` fires, redirects to `/` | ✅ |
 | Protected route — authenticated | Guest Mode active | App redirects from `/(auth)` to `/(tabs)` | ✅ |
 
+### Phase 4 — Profile & Dashboard
+
+| Feature | Condition | Expected Outcome | Result |
+|---------|-----------|-----------------|--------|
+| Profile — Incomplete Banner | `base_weight_kg` or `age_years` is null | Red warning banner "Profile needs attention" is visible | ✅ |
+| Profile — Form Validation | Save with empty Name or Weight | Highlights empty fields in red, blocks submission | ✅ |
+| Profile — Edit Owner Profile | Click pencil icon next to owner name | Switches to editable text input seamlessly (no layout shift) | ✅ |
+| Profile — Save Owner Profile | Enter name, click green check | Saves `full_name` to Supabase `auth.users`, updates UI | ✅ |
+| Profile — Image Picker (Cat) | Click cat avatar circle | Opens native image picker, sets preview | ✅ |
+| Profile — Image Picker (Owner) | Click owner avatar circle | Opens native image picker, sets preview | ✅ |
+| Profile — Save Logic | Form valid, click Save | Uploads avatar to `cat_avatars`, upserts `cats` table, shows Success Toast | ✅ |
+| Dashboard — Greeting Header | App launches with active session | Shows "Good Morning, [Name]" and owner avatar | ✅ |
+| Dashboard — Cat Selector | Multiple cats exist | Horizontal pills display cats, clicking updates ActiveCatContext | ✅ |
+| Dashboard — Incomplete Banner | Active cat missing weight | Warning banner "Finish setting up profile" is visible | ✅ |
+| Dashboard — Recent Check Widget | No previous checks | Shows "No history yet. Start a new check." | ✅ |
+| UI Consistency | Navigate between Home and Profile | Dark Header layout and Cat Selector styling match perfectly | ✅ |
+
 ---
 
-*This document is updated at the end of each phase. Last updated: Phase 3.*
+*This document is updated at the end of each phase. Last updated: Phase 4.*

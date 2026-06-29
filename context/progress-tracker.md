@@ -24,7 +24,7 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] Write unit tests — `__tests__/catProfileValidator.test.ts`
   - [x] Write unit tests — `__tests__/supabaseHelpers.test.ts`
   - [x] Confirm all tests pass — **49/49 ✅** (`yarn test`)
-  - [ ] Create `docs/testing.md` — manual test documentation table
+  - [x] Create `docs/testing.md` — manual test documentation table
 
 ## Phase 3 — Auth UI & Logic
 - [ ] **03 Auth UI & Logic**

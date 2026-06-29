@@ -120,6 +120,18 @@ Tests the error handling wrapper used for all Supabase queries across the app.
 | TypeScript strict mode | `tsc --noEmit` | No type errors | ✅ |
 | Husky pre-commit hook | `git commit` | Runs tsc + commitlint before allowing commit | ✅ |
 
+### Phase 3 — Auth UI & Logic
+
+| Feature | Condition | Expected Outcome | Result |
+|---------|-----------|-----------------|--------|
+| Onboarding Carousel renders | First launch | 3 slides visible, swipeable horizontally | ✅ |
+| Onboarding pagination | Swipe slides | Dots update active state accurately | ✅ |
+| Onboarding buttons | Click "Next" / "Skip" | Navigates slides / skips to Login | ✅ |
+| Login UI renders | End of carousel | Logo, texts, and 2 action buttons render | ✅ |
+| Google OAuth trigger | Click Google button | Loads Google OAuth / Supabase flow | ✅ |
+| Guest Mode login | Click Guest button | `signInAnonymously()` fires, redirects to `/` | ✅ |
+| Protected route — authenticated | Guest Mode active | App redirects from `/(auth)` to `/(tabs)` | ✅ |
+
 ---
 
-*This document is updated at the end of each phase. Last updated: Phase 2.*
+*This document is updated at the end of each phase. Last updated: Phase 3.*

@@ -4,6 +4,16 @@
 
 Full page UI built with mock data first — verified visually before any logic is written. Then functionality is built and wired to the UI step by step. Every feature must be visible and testable before moving to the next. No invisible backend phases.
 
+## Testing Principle
+
+Every piece of business logic extracted into `lib/` must have a corresponding unit test in `__tests__/`. Tests are written **alongside** the logic, not after the fact. The rule is simple:
+
+- **Pure logic** (validators, formatters, helpers) → unit test in `__tests__/`
+- **UI behaviour** → manual test documented in `docs/testing.md`
+- **External services** (Supabase, Temporal, AWS) → mocked in unit tests, manual E2E documented
+
+The `docs/testing.md` file is a living document updated at the end of every phase. It serves as the test report submitted with the hackathon.
+
 ## Phase 1 — Foundation
 
 ### 01 Project Setup & Navigation

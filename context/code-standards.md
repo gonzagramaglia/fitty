@@ -52,6 +52,7 @@ To fully leverage **CodeRabbit**, we must stop pushing directly to `main`. The a
 - Type files: camelCase — `types.ts`
 - API route files: `+api.ts` (Expo API routes convention)
 - Server Action / Service files: camelCase — `profileService.ts`
+- **Test files**: mirror the source path inside `__tests__/` — `__tests__/bcsValidator.test.ts` tests `lib/bcsValidator.ts`
 - One component per file — never export multiple components from one file
 - Index files only in `components/ui/` — never barrel export from other folders
 
@@ -152,3 +153,12 @@ import { supabase } from "@/lib/supabase";
 
 - Never use the client-side Supabase instance inside API routes without proper context
 - Always scope every database query to the current `user_id` — never query without a user filter (even if RLS is enabled, defense in depth)
+
+## Testing Standards
+
+- Only pure functions in `lib/` get unit tests — never test React components or Expo APIs directly
+- Every `lib/` file must have a corresponding `__tests__/*.test.ts` file
+- Use `describe` blocks to group related tests. Use `it()` with plain english descriptions: `it('returns invalid for a BCS score above 9')`
+- Mock all external dependencies (Supabase, AWS, Temporal) — never make real network calls in tests
+- Run tests with `yarn test`. All tests must pass before opening a PR
+- Update `docs/testing.md` at the end of each phase with the manual test table

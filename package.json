@@ -26,8 +26,13 @@
   "devDependencies": {
     "@commitlint/cli": "21.1.0",
     "@commitlint/config-conventional": "21.1.0",
+    "@react-native/jest-preset": "^0.86.0",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.2.2",
     "husky": "9.1.7",
+    "jest": "^30.4.2",
+    "jest-expo": "^56.0.5",
+    "ts-jest": "^29.4.11",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -35,7 +40,32 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "test": "jest --watchAll=false",
+    "test:watch": "jest --watchAll",
     "prepare": "husky"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.test.ts"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "jsx": "react",
+            "strict": false
+          }
+        }
+      ]
+    },
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx"
+    ]
   },
   "private": true
 }

@@ -5,6 +5,7 @@
 | Layer | Tool | Purpose |
 |-------|------|---------|
 | Framework | React Native (Expo) | Cross-platform mobile and web application |
+| State Management | React Context + AsyncStorage | Global state for the active cat ID (`ActiveCatContext`) |
 | Auth + DB + Storage | Supabase | Entire backend (User sessions, Postgres DB, Photo storage) |
 | Durable Execution | Temporal.io | Reliable orchestration of AI workflows, retries, and background jobs |
 | AI Model (Vision & Logic) | Amazon Bedrock (Claude 4.3 Sonnet) | Extracting visual features from photos, scoring BCS, and generating reasoning |
@@ -96,7 +97,9 @@ User logs in via OAuth / Email
   ↓
 Supabase Auth creates secure session
   ↓
-App fetches `cats` profile data from Supabase DB
+App loads ActiveCatContext (fetches last used cat from AsyncStorage, or queries first cat from DB)
+  ↓
+App fetches `cats` profile data from Supabase DB using the active cat ID
   ↓
 If profile lacks required data (e.g., base weight), UI shows "Incomplete Profile" banner
   ↓

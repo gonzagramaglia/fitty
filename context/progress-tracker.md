@@ -35,13 +35,15 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] Configure Supabase session state listener & auto-redirect to `/` on login
 
 ## Phase 4 — Database Schema & Profile
-- [ ] **04 Database Schema (Supabase)** *(done in Supabase Dashboard, not in code)*
-  - [ ] Create `cats` table
-  - [ ] Create `health_checks` table
-  - [ ] Create `cat_avatars` storage bucket
-  - [ ] Create `cat_photos` storage bucket
-  - [ ] Create `voice_notes` storage bucket
-  - [ ] Setup RLS (Row Level Security) policies
+- [x] **04 Database Schema & State** *(via `docs/supabase-schema.sql`)*
+  - [x] Create `cats` table
+  - [x] Create `health_checks` table
+  - [x] Create `cat_avatars` storage bucket
+  - [x] Create `cat_photos` storage bucket
+  - [x] Create `voice_notes` storage bucket
+  - [x] Setup RLS (Row Level Security) policies
+  - [x] Create `ActiveCatContext` to manage active cat ID
+  - [x] Wrap `_layout.tsx` in `ActiveCatProvider`
 - [ ] **05 Profile Page — Full UI**
   - [ ] Build "Profile Needs Attention" Banner
   - [ ] Build Cat Form (Avatar, Name, Breed, Age, Base Weight)

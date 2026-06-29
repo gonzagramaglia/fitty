@@ -50,6 +50,12 @@
 │   ├── temporal.ts         → Temporal client & workflow triggers
 │   └── ai.ts               → AWS Bedrock / AI utility functions
 └── assets/                 → Images, fonts, icons
+├── __tests__/              → Unit tests mirroring lib/ structure
+│   ├── bcsValidator.test.ts
+│   ├── catProfileValidator.test.ts
+│   └── supabaseHelpers.test.ts
+└── docs/
+    └── testing.md          → Manual test documentation & hackathon test report
 ```
 
 ---

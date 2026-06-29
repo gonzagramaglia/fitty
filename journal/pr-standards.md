@@ -90,6 +90,8 @@ When GitHub asks for the Extended Description during the merge, use this bullet 
 |----|--------|-------|--------|
 | #1 | `feat/00-kiro-config` | 00 Kiro Config | ✅ Merged |
 | #2 | `feat/01-project-setup` | 01 Foundation | ✅ Merged |
-| #3 | `feat/02-testing-infrastructure` | 02 Testing | 🔄 Open |
+| #3 | `feat/02-testing-infrastructure` | 02 Testing | ✅ Merged |
+| #4 | `feat/03-auth-logic` | 03 Auth | ✅ Merged |
+| #5 | `feat/04-profile-dashboard` | 04 Profile & Dashboard | 🔄 Open |
 
 *(Update this table every time a PR is opened or merged.)*

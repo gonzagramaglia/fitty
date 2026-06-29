@@ -7,6 +7,13 @@ import { useActiveCat } from '../../lib/ActiveCatContext';
 import { AlertCircle, ChevronRight, Activity, Plus, Camera } from 'lucide-react-native';
 import { useCallback } from 'react';
 
+/**
+ * DashboardScreen represents the main landing page of the application.
+ * It displays the user's active cats, incomplete profile warnings,
+ * the recent health checks, and acts as the entry point for starting new health checks.
+ *
+ * @returns The rendered React element for the Dashboard screen.
+ */
 export default function DashboardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();

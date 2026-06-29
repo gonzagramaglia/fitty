@@ -9,6 +9,13 @@ import { useActiveCat } from '../../lib/ActiveCatContext';
 import { supabase } from '../../lib/supabase';
 import { validateCatProfile, FieldError } from '../../lib/catProfileValidator';
 
+/**
+ * ProfileScreen provides the interface for managing owner and cat profiles.
+ * It allows editing the owner's name and avatar, creating new cat profiles,
+ * updating existing cat profiles, and switching between active cats.
+ *
+ * @returns The rendered React element for the Profile screen.
+ */
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -59,6 +66,10 @@ export default function ProfileScreen() {
 
   const canSave = isComplete && hasChanges && !isSaving;
 
+  /**
+   * Fetches the authenticated user's profile and their associated cats
+   * from Supabase to populate the form state on mount.
+   */
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -125,6 +136,15 @@ export default function ProfileScreen() {
     }
   }, [activeCatId, cats, isCreatingNew]);
 
+  /**
+   * Uploads an avatar image to a specified Supabase storage bucket.
+   *
+   * @param uri - The local file URI of the image to upload.
+   * @param bucket - The Supabase storage bucket name.
+   * @param prefix - A prefix used for constructing the file name.
+   * @returns The public URL of the uploaded image.
+   * @throws Will throw an error if the upload fails or user is not authenticated.
+   */
   const uploadAvatar = async (uri: string, bucket: string, prefix: string): Promise<string> => {
     if (uri.startsWith('http')) return uri;
 
@@ -150,6 +170,10 @@ export default function ProfileScreen() {
     return publicUrl;
   };
 
+  /**
+   * Opens the device's native image library to allow the user to select
+   * an avatar image for the owner. It automatically saves the selection.
+   */
   const pickOwnerImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -165,6 +189,12 @@ export default function ProfileScreen() {
     }
   };
 
+  /**
+   * Saves the owner's updated name and avatar to Supabase auth.users.
+   *
+   * @param nameToSave - The new full name of the owner.
+   * @param uriToSave - The local URI of the new avatar (if any).
+   */
   const saveOwner = async (nameToSave: string, uriToSave: string | null) => {
     setIsSavingOwner(true);
     try {
@@ -184,6 +214,10 @@ export default function ProfileScreen() {
     }
   };
 
+  /**
+   * Opens the device's native image library to allow the user to select
+   * an avatar image for the currently active cat.
+   */
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -197,6 +231,10 @@ export default function ProfileScreen() {
     }
   };
 
+  /**
+   * Validates the cat profile form and saves or updates the cat record
+   * in the Supabase database. Handles avatar uploading if a new local URI is selected.
+   */
   const handleSave = async () => {
     setErrors([]);
     const input = {
@@ -249,6 +287,10 @@ export default function ProfileScreen() {
     }
   };
 
+  /**
+   * Logs the current user out of Supabase and clears the active session.
+   * Navigation to the login screen is handled automatically by the auth listener.
+   */
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.replace('/(auth)/login');

@@ -2,18 +2,33 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 
+/**
+ * Represents the shape of the ActiveCatContext.
+ * Provides the ID of the currently selected cat, a function to change it, 
+ * and a loading state indicating if the initial fetch is complete.
+ */
 type ActiveCatContextType = {
   activeCatId: string | null;
   setActiveCatId: (id: string | null) => Promise<void>;
   isLoading: boolean;
 };
 
+/**
+ * React Context for managing the globally active cat across the application.
+ */
 const ActiveCatContext = createContext<ActiveCatContextType>({
   activeCatId: null,
   setActiveCatId: async () => {},
   isLoading: true,
 });
 
+/**
+ * Provider component that wraps the application to supply the ActiveCatContext.
+ * It automatically fetches the most recently created cat for the authenticated user
+ * on mount and sets it as the active cat by default.
+ *
+ * @param children - The React nodes to be rendered within the provider.
+ */
 export const ActiveCatProvider = ({ children }: { children: React.ReactNode }) => {
   const [activeCatId, setActiveCatIdState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,4 +82,9 @@ export const ActiveCatProvider = ({ children }: { children: React.ReactNode }) =
   );
 };
 
+/**
+ * Custom hook to consume the ActiveCatContext.
+ * 
+ * @returns The ActiveCatContextType containing activeCatId, setActiveCatId, and isLoading.
+ */
 export const useActiveCat = () => useContext(ActiveCatContext);

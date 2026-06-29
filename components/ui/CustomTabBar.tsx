@@ -2,6 +2,14 @@ import React from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
 import { House, Clock, User, Camera } from 'lucide-react-native';
 
+/**
+ * CustomTabBar is a custom bottom navigation bar for the application.
+ * It provides custom styling, interactive icons, and a prominent floating action button
+ * for triggering the camera flow.
+ *
+ * @param props - The props provided by React Navigation.
+ * @returns The rendered React element for the custom tab bar.
+ */
 export function CustomTabBar({ state, descriptors, navigation }: any) {
   return (
     <View className="flex-row bg-background border-t border-border pb-6 pt-3 px-4 items-center justify-between">

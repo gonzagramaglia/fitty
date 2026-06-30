@@ -11,6 +11,9 @@ import { House, Clock, User, Camera } from 'lucide-react-native';
  * @returns The rendered React element for the custom tab bar.
  */
 export function CustomTabBar({ state, descriptors, navigation }: any) {
+  const { useRouter } = require('expo-router');
+  const router = useRouter();
+
   return (
     <View className="flex-row bg-background border-t border-border pb-6 pt-3 px-4 items-center justify-between">
       {state.routes.map((route: any, index: number) => {
@@ -28,26 +31,6 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
             navigation.navigate(route.name);
           }
         };
-
-        // Scan button is special
-        if (route.name === 'camera') {
-          return (
-            <TouchableOpacity
-              key={route.key}
-              onPress={onPress}
-              className="items-center flex-1"
-            >
-              <View className="-mt-8 items-center">
-                <View className="bg-[#FDE047] w-16 h-16 rounded-full items-center justify-center border-[6px] border-background shadow-sm">
-                  <Camera size={28} color="#854D0E" strokeWidth={2.5} />
-                </View>
-                <Text className={`text-xs mt-1 font-bold ${isFocused ? 'text-[#854D0E]' : 'text-[#854D0E]'}`}>
-                  Scan
-                </Text>
-              </View>
-            </TouchableOpacity>
-          );
-        }
 
         let IconComponent: any = House;
         let title = options.title;
@@ -67,7 +50,7 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
           title = 'Profile';
         }
 
-        return (
+        const tabButton = (
           <TouchableOpacity
             key={route.key}
             onPress={onPress}
@@ -83,6 +66,31 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
             </Text>
           </TouchableOpacity>
         );
+
+        if (index === 0) {
+          // Render the Home tab, then the custom Scan button
+          return (
+            <React.Fragment key={route.key + '-wrapper'}>
+              {tabButton}
+              <TouchableOpacity
+                key="scan-button"
+                onPress={() => router.push('/camera')}
+                className="items-center flex-1"
+              >
+                <View className="-mt-8 items-center">
+                  <View className="bg-[#FDE047] w-16 h-16 rounded-full items-center justify-center border-[6px] border-background shadow-sm">
+                    <Camera size={28} color="#854D0E" strokeWidth={2.5} />
+                  </View>
+                  <Text className={`text-xs mt-1 font-bold text-[#854D0E]`}>
+                    Scan
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </React.Fragment>
+          );
+        }
+
+        return tabButton;
       })}
     </View>
   );

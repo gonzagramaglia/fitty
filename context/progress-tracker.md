@@ -68,17 +68,18 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] Fetch latest check from `health_checks` table
 
 ## Phase 5 — Camera & AI Analysis
-- [ ] **09 Camera Interface — Full UI**
-  - [ ] Build Camera Viewfinder component
-  - [ ] Build Top-down silhouette overlay
-  - [ ] Build Side-profile silhouette overlay
-  - [ ] Build Voice Note recording button
-  - [ ] Build Processing/Loading screen
-- [ ] **10 Camera Capture & Upload Logic**
-  - [ ] Request Camera & Microphone permissions
-  - [ ] Capture & compress top and side photos
-  - [ ] Record & save audio note
-  - [ ] Upload all media to Supabase Storage
+- [x] **09 Camera Interface — Full UI**
+  - [x] Build Camera Viewfinder component
+  - [x] Build Top-down silhouette overlay
+  - [x] Build Side-profile silhouette overlay
+  - [x] Build Voice Note recording button
+  - [x] Build Processing/Loading screen
+  - [x] Implement Implicit State Routing (hiding URL query params from user)
+- [x] **10 Camera Capture & Upload Logic**
+  - [x] Request Camera & Microphone permissions
+  - [x] Capture & compress top and side photos
+  - [x] Record & save audio note
+  - [x] Upload all media to Supabase Storage
 - [ ] **11 AI Workflow & Extraction Logic (Temporal + AWS)**
   - [ ] Scaffold Expo API route for webhook/trigger (`app/api/temporal+api.ts`)
   - [ ] Create Temporal workflow file

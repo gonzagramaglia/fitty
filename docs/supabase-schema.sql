@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS health_checks (
     top_photo_url TEXT,
     side_photo_url TEXT,
     voice_note_url TEXT,
+    text_note TEXT,
     bcs_score NUMERIC,
     classification TEXT,
     ai_reasoning TEXT,

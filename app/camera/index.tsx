@@ -5,6 +5,7 @@ import { Audio } from 'expo-av';
 import { useRouter } from 'expo-router';
 import { X, Camera as CameraIcon, Upload, Mic, Square, Check, ArrowLeft, Play, Pause, Trash2, Sparkles } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { SilhouetteOverlay } from '../../components/camera/SilhouetteOverlay';
 import { useCameraCapture } from '../../hooks/useCameraCapture';
 import { useAudioRecorder } from '../../hooks/useAudioRecorder';
@@ -205,11 +206,13 @@ export default function CameraScreen() {
       if (topPhoto) {
         const { publicUrl } = await uploadMedia(topPhoto, 'cat_photos', `${userId}/${activeCatId}/${timestamp}_top.jpg`, 'image/jpeg');
         if (publicUrl) topUrl = publicUrl;
+        FileSystem.deleteAsync(topPhoto, { idempotent: true }).catch(console.warn);
       }
       
       if (sidePhoto) {
         const { publicUrl } = await uploadMedia(sidePhoto, 'cat_photos', `${userId}/${activeCatId}/${timestamp}_side.jpg`, 'image/jpeg');
         if (publicUrl) sideUrl = publicUrl;
+        FileSystem.deleteAsync(sidePhoto, { idempotent: true }).catch(console.warn);
       }
 
       if (audioUri) {
@@ -217,6 +220,7 @@ export default function CameraScreen() {
         const ext = Platform.OS === 'ios' ? 'caf' : 'm4a';
         const { publicUrl } = await uploadMedia(audioUri, 'voice_notes', `${userId}/${activeCatId}/${timestamp}_voice.${ext}`, `audio/${ext}`);
         if (publicUrl) voiceUrl = publicUrl;
+        FileSystem.deleteAsync(audioUri, { idempotent: true }).catch(console.warn);
       }
 
       // Trigger Temporal Workflow via API route

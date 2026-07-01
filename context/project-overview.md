@@ -23,7 +23,7 @@ This directly ties into the **World Cat Domination Day** theme by driving positi
 - App provides guided silhouette overlays to capture a top-down and side-profile photo.
 - User can optionally add observations via **Voice Note** (auto-transcribed via Whisper) or Text (e.g., "eating less lately").
 - **Durable AI Execution**: Photos, observations, and historical data are sent to a robust backend workflow (orchestrated by **Temporal.io**) to ensure the AI request doesn't fail silently.
-- **GPT-4o Vision** extracts key visual features (rib visibility, waistline, abdominal tuck) and calculates the BCS (1-9).
+- **Anthropic Claude 5 Sonnet** extracts key visual features (rib visibility, waistline, abdominal tuck) and calculates the BCS (1-9).
 - User receives the results: Classification, visual reasoning, and personalized recommendations based on the AI's analysis of the photos and the user's voice note.
 
 ### 3. History & Tracking
@@ -51,8 +51,8 @@ This directly ties into the **World Cat Domination Day** theme by driving positi
 - Authentication (Email + OAuth).
 - Multi-cat profile management.
 - Guided camera interface with overlay silhouettes.
-- Voice note recording with auto-transcription.
-- GPT-4o Vision integration for BCS scoring and reasoning.
+- Voice note recording with auto-transcription via OpenAI Whisper.
+- Anthropic Claude 5 Sonnet integration for BCS scoring and reasoning.
 - Reliable backend AI processing queue.
 - History page with interactive trend charts.
 - **English UI** (mandatory for the hackathon).
@@ -72,7 +72,7 @@ This directly ties into the **World Cat Domination Day** theme by driving positi
 
 To maximize the judging criteria (Technical Execution, Innovation, Theme Relevance, Security, UX/UI, Documentation), Fitty's technical architecture is explicitly designed around the sponsors' technologies. 
 
-We utilize **Temporal.io** to guarantee durable execution for our AI workflows, **AWS Bedrock and Transcribe** for scalable cloud AI services, **Aikido** for robust security scanning, and **Kiro** to accelerate our build process through spec-driven development.
+We utilize **Temporal.io** to guarantee durable execution for our AI workflows, **Anthropic and OpenAI APIs** for scalable cloud AI services, **Aikido** for robust security scanning, and **Kiro** to accelerate our build process through spec-driven development.
 
 Additionally, to ensure high code quality and maintain standards during the fast-paced development cycle, we have integrated **CodeRabbit** for automated AI code reviews on every Pull Request.
 
@@ -94,9 +94,9 @@ A cat owner who:
 
 - User can sign up, create a cat profile, and complete their first health check in under 3 minutes.
 - The camera interface correctly guides the user to take top-down and side-profile photos using intuitive silhouette overlays.
-- AWS Bedrock (Claude 4.3 Sonnet) accurately calculates a Body Condition Score (BCS) that aligns with standard veterinary guidelines.
+- Anthropic Claude 5 Sonnet accurately calculates a Body Condition Score (BCS) that aligns with standard veterinary guidelines.
 - AI reasoning is empathetic, clear, and makes logical sense based on the visual evidence in the photos.
-- Voice notes are accurately transcribed by Amazon Transcribe and meaningfully incorporated into the AI's final recommendations.
+- Voice notes are accurately transcribed by OpenAI Whisper and meaningfully incorporated into the AI's final recommendations.
 - Temporal.io successfully orchestrates the backend workflow, ensuring no failed AI API calls disrupt the user experience.
 - The History dashboard correctly displays interactive timeline charts for weight and BCS trends.
 - All cat profiles, health check logs, and photos are securely stored in Supabase.

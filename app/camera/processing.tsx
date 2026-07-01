@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, ActivityIndicator, Animated } from 'react-native';
-import { Sparkles } from 'lucide-react-native';
+import { View, Text, ActivityIndicator, Animated, TouchableOpacity } from 'react-native';
+import { Sparkles, AlertCircle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useCameraContext } from './_layout';
 import { supabase } from '../../lib/supabase';
@@ -16,12 +16,13 @@ import { useActiveCat } from '../../lib/ActiveCatContext';
  */
 export default function ProcessingScreen() {
   const router = useRouter();
-  const { processingState } = useCameraContext();
+  const { processingState, setProcessingState } = useCameraContext();
   const { activeCatId } = useActiveCat();
   const { hasVoiceNote, hasTextNote } = processingState;
   
   const [dots, setDots] = useState('');
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
+  const [hasError, setHasError] = useState(false);
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   const hasContext = hasVoiceNote || hasTextNote;
@@ -42,7 +43,7 @@ export default function ProcessingScreen() {
 
   // Subscribe to Supabase Realtime for the new health_checks row
   useEffect(() => {
-    if (!activeCatId) return;
+    if (!activeCatId || hasError) return;
 
     const channel = supabase
       .channel('health-check-result')
@@ -58,47 +59,88 @@ export default function ProcessingScreen() {
           const newRecord = payload.new as { id: string };
           if (newRecord?.id) {
             console.log('[processing] Health check result received:', newRecord.id);
+            // Clear transient state before leaving
+            setProcessingState({ hasVoiceNote: false, hasTextNote: false });
             router.replace(`/history/${newRecord.id}`);
           }
         }
       )
       .subscribe();
 
+    // Timeout mechanism: fail gracefully after 45 seconds if no result
+    const timeoutId = setTimeout(() => {
+      console.warn('[processing] Timeout reached while waiting for Temporal workflow.');
+      setHasError(true);
+      supabase.removeChannel(channel);
+    }, 45000);
+
     return () => {
+      clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
-  }, [activeCatId, router]);
+  }, [activeCatId, router, hasError, setProcessingState]);
 
   // Animated dots
   useEffect(() => {
+    if (hasError) return;
     const interval = setInterval(() => {
       setDots(prev => prev.length >= 3 ? '' : prev + '.');
     }, 500);
     return () => clearInterval(interval);
-  }, []);
+  }, [hasError]);
 
   // Text rotation
   useEffect(() => {
+    if (hasError) return;
     const interval = setInterval(() => {
       setLoadingTextIndex((prev) => (prev + 1) % loadingTexts.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [hasError, loadingTexts.length]);
 
   // Progress bar animation (simulating progress over 20 seconds)
   useEffect(() => {
+    if (hasError) return;
     Animated.timing(progressAnim, {
       toValue: 90, // Only go to 90% — last 10% is instant on result arrival
       duration: 20000,
       useNativeDriver: false,
     }).start();
-  }, []);
+  }, [hasError]);
 
   const getContextText = () => {
     if (hasVoiceNote) return ' and your voice note';
     if (hasTextNote) return ' and your text note';
     return '';
   };
+
+  if (hasError) {
+    return (
+      <View className="flex-1 bg-[#F8FAFC] justify-center items-center px-8">
+        <View className="w-24 h-24 bg-red-50 rounded-3xl items-center justify-center mb-8 border border-red-100">
+          <AlertCircle color="#EF4444" size={40} />
+        </View>
+
+        <Text className="text-[#1A303F] text-3xl font-black tracking-tight text-center mb-4">
+          Analysis Timeout
+        </Text>
+        
+        <Text className="text-[#64748B] text-center text-lg leading-relaxed px-4 mb-10">
+          The AI engine is taking longer than expected. This could be due to heavy server load or an issue analyzing the photos.
+        </Text>
+
+        <TouchableOpacity 
+          className="bg-primary-cool w-full py-4 rounded-2xl flex-row justify-center shadow-sm"
+          onPress={() => {
+            setProcessingState({ hasVoiceNote: false, hasTextNote: false });
+            router.replace('/camera');
+          }}
+        >
+          <Text className="text-white font-bold text-lg">Go Back & Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-[#F8FAFC] justify-center items-center px-8">

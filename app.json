@@ -20,7 +20,8 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicons/favicon-96x96.png"
+      "favicon": "./assets/favicons/favicon-96x96.png",
+      "output": "server"
     },
     "plugins": [
       "expo-router",

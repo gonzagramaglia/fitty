@@ -4,7 +4,7 @@ inclusion: always
 
 # Fitty — Project Steering
 
-This is a React Native (Expo) + Supabase + Temporal.io + AWS Bedrock app built for the **Coding Kitty Hackathon 2026**. It is an AI-powered cat health tracker that estimates Body Condition Score (BCS) from photos.
+This is a React Native (Expo) + Supabase + Temporal.io + Anthropic/OpenAI app built for the **Coding Kitty Hackathon 2026**. It is an AI-powered cat health tracker that estimates Body Condition Score (BCS) from photos.
 
 ## Context Files — Read These Before Implementing Anything
 
@@ -27,8 +27,8 @@ Always read in this order before any implementation:
 - **Styling**: NativeWind (Tailwind CSS for React Native) — no raw hex values, no inline styles, tokens defined in `context/ui-tokens.md`, component rules in `context/ui-rules.md`, component registry in `context/ui-registry.md`
 - **Auth + DB + Storage**: Supabase
 - **Durable AI execution**: Temporal.io
-- **AI Vision**: Amazon Bedrock (Claude 4.3 Sonnet)
-- **Audio transcription**: Amazon Transcribe
+- **AI Vision**: Anthropic API (Claude 5 Sonnet)
+- **Audio transcription**: OpenAI API (Whisper)
 - **Security scanning**: Aikido Security
 
 ## Non-Negotiable Rules
@@ -38,7 +38,7 @@ Always read in this order before any implementation:
 - No default exports for components — named exports always
 - No business logic inside `app/` route files — extract to `hooks/` or `lib/`
 - No direct Supabase calls inside components — use custom hooks
-- No AWS SDK calls from the frontend — Temporal activities only
+- No direct AI API calls from the frontend — Temporal activities only
 - All Supabase queries scoped to `user_id` (defense in depth on top of RLS)
 - Every async function wrapped in try/catch
 - Strict TypeScript — no exceptions

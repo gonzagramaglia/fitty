@@ -22,11 +22,13 @@ yarn test
 
 ---
 
+### Phase 1 — Foundation
+
+*No Automated Tests*
+
+Phase 1 consists entirely of project scaffolding, Expo Router setup, and basic UI rendering (WebFrame). Since there is no complex business logic and the focus is purely on rendering and routing, this phase is exclusively verified via Manual Testing to ensure the app compiles and navigates correctly across iOS and Web.
+
 ### Phase 2 — Core Business Logic
-
-**Result: 49/49 tests passing ✅**
-
-#### `lib/bcsValidator.ts` — BCS Score Validation
 
 Tests the core AI output validation layer. Every score returned by AWS Bedrock (Claude) is validated before being written to the database.
 
@@ -96,6 +98,34 @@ Tests the error handling wrapper used for all Supabase queries across the app.
 | Unknown error | "ECONNREFUSED..." | "something went wrong" | ✅ |
 | Empty error string | `""` | "something went wrong" | ✅ |
 
+### Phase 3 — Auth UI & Logic
+
+*No Automated Tests*
+
+This phase relies heavily on Supabase Auth (a managed third-party service) and OAuth redirects. Unit testing third-party authentication flows often results in testing the mocks rather than the actual code. Therefore, Auth flows (Google OAuth, Guest Mode) are rigorously tested in the Manual Test section.
+
+### Phase 4 — Profile & Dashboard
+
+*UI Not Automated (Logic Tested in Phase 2)*
+
+While the core validation logic (`catProfileValidator`) and database error handling (`supabaseHelpers`) for profiles are fully covered by unit tests in Phase 2, the React Native UI components themselves are not automatically tested. Components in this phase interact with native device APIs (like `expo-image-picker`), which require complex mocking and are more efficiently verified via Manual UI Testing in a 7-day hackathon setting.
+
+### Phase 5 — AI & Temporal Workflows
+
+**Result: 54/54 tests passing ✅**
+
+#### `__tests__/temporal/activities.test.ts` — AI Workflow Activities
+
+Tests the backend worker logic that handles OpenAI, Anthropic, and Supabase interactions. All external services are fully mocked.
+
+| Test | Input | Expected | Result |
+|------|-------|----------|--------|
+| Transcribe audio success | Valid `audioUrl` | Calls OpenAI Whisper API, returns text | ✅ |
+| Transcribe skips gracefully | `OPENAI_API_KEY` missing | Returns empty string, avoids crashing | ✅ |
+| Analyze images success | Valid `topPhoto`, `sidePhoto` | Calls Claude 5, parses JSON result | ✅ |
+| Analyze images missing key | `ANTHROPIC_API_KEY` missing | Throws explicit Error | ✅ |
+| Save result to DB success | Valid AI JSON + Cat data | Calls Supabase `insert`, doesn't throw | ✅ |
+
 ---
 
 ## Manual Test Documentation
@@ -149,6 +179,19 @@ Tests the error handling wrapper used for all Supabase queries across the app.
 | Dashboard — Recent Check Widget | No previous checks | Shows "No history yet. Start a new check." | ✅ |
 | UI Consistency | Navigate between Home and Profile | Dark Header layout and Cat Selector styling match perfectly | ✅ |
 
+### Phase 5 — Camera & AI Analysis
+
+| Feature | Condition | Expected Outcome | Result |
+|---------|-----------|-----------------|--------|
+| Camera Permission Prompt | First launch of Camera tab | Asks for Camera + Mic permissions | ✅ |
+| Audio Recording | Press and hold record button | Counter increments, waveform animates | ✅ |
+| Image Capture (Top) | Tap capture button on top silhouette | Captures image, transitions to side | ✅ |
+| Image Capture (Side) | Tap capture button on side silhouette | Captures image, unlocks Next button | ✅ |
+| Submission Flow | Tap Analyze button | Uploads to Supabase Storage, calls API | ✅ |
+| Temporal Worker execution | API triggers Temporal | Worker receives task, calls Claude/Whisper | ✅ |
+| Realtime DB listening | App in Processing state | Subscribes to Supabase `cat_health_checks` | ✅ |
+| Error Handling | API fails / Timeout | App shows error state, allows retry | ✅ | |
+
 ---
 
-*This document is updated at the end of each phase. Last updated: Phase 4.*
+*This document is updated at the end of each phase. Last updated: Phase 5.*

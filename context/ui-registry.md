@@ -81,3 +81,25 @@ After building any component — update this file with the component name, file 
 - **Visible Placeholder:** Render the static `Text` normally to drive the flex layout, and toggle `opacity-0` when editing.
 - **Input Overlay:** Render the `TextInput` with `absolute left-0 right-0 height-100%` directly over the static text when editing.
 - **Web Fallback:** Apply `style={{ outlineStyle: 'none' }}` to `TextInput` on web to prevent the default focus ring.
+### Glassmorphism Overlays
+**File:** `app/camera/index.tsx`
+**Description:** Frosted glass text bubbles overlaying the camera feed.
+**Key Patterns:**
+- **Container:** `bg-[#1A2530]/80 rounded-3xl px-6 py-4 backdrop-blur-xl border border-white/10 shadow-lg`.
+- **Text Hierarchy:** Smaller uppercase tracking text (`text-[#74B7B5] text-xs font-bold tracking-[0.2em] uppercase mb-1`) above larger descriptive text (`text-white text-center text-base font-medium`).
+
+### Loading Progress Screens
+**File:** `app/camera/processing.tsx`, `app/camera/index.tsx` (UploadingView)
+**Description:** Full-screen loading states with simulated progress and rotating contextual text.
+**Key Patterns:**
+- **Layout:** Centered content with a light background (`bg-[#F8FAFC]`) and dark text.
+- **Progress Bar:** `Animated.View` inside an overflow-hidden container (`bg-[#E2E8F0] rounded-full`). Uses `progressAnim.interpolate` mapping `0-100` to `0%-100%` width.
+- **Rotating Status:** `setInterval` updating an index of an array of strings, displaying in a card (`bg-white border border-[#E2E8F0] px-6 py-4 rounded-2xl`).
+
+### Implicit State Routing (Expo Router)
+**File:** `app/camera/_layout.tsx`, `app/camera/index.tsx`
+**Description:** Passing transient state (like what context was added) between screens without polluting the URL with query parameters.
+**Key Patterns:**
+- **Provider:** Create a `CameraContext` in the `_layout.tsx` to hold state.
+- **Write:** Set the state immediately before calling `router.push('/target')`.
+- **Read:** Use the context hook in the destination screen to read the clean state.

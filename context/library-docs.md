@@ -110,33 +110,34 @@ const url = data.publicUrl;
 
 ---
 
-## AWS Bedrock & Transcribe
+## Anthropic & OpenAI (AI APIs)
 
-**Check first:** Check `AGENTS.md` for an installed AWS skill. If an AWS MCP server is configured — use it. The skill/MCP will have the latest AWS SDK v3 patterns.
+**Check first:** Check `AGENTS.md` for installed Anthropic or OpenAI skills.
 
 ### Usage Constraints
 
-- **Never** call AWS SDKs directly from the React Native client (Browser context).
-- All AWS interactions must happen strictly inside a Temporal Activity running on the backend.
-- Always use `@aws-sdk/client-bedrock-runtime` for Claude 4.3 and `@aws-sdk/client-transcribe` for audio.
+- **Never** call Anthropic or OpenAI SDKs directly from the React Native client (Browser context).
+- All AI API interactions must happen strictly inside a Temporal Activity running on the backend.
+- Use `@anthropic-ai/sdk` for Claude 5 Sonnet and `openai` for Whisper transcription.
 
 ### Initialisation
 
 ```typescript
-import { BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime";
+import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
-const bedrockClient = new BedrockRuntimeClient({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY!,
+});
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
 });
 ```
 
 **Rules:**
-- AWS credentials must never be hardcoded. Load them securely from the backend `.env` file.
-- Never expose AWS keys to the frontend (do not prefix with `EXPO_PUBLIC_`).
+- API keys must never be hardcoded. Load them securely from the backend `.env` file.
+- Never expose API keys to the frontend (do not prefix with `EXPO_PUBLIC_`).
 
 ---
 
@@ -147,14 +148,14 @@ const bedrockClient = new BedrockRuntimeClient({
 ### Workflows vs Activities
 
 - **Workflows** (`workflows.ts`): Must be deterministic. No API calls, no random numbers, no file system access.
-- **Activities** (`activities.ts`): All side-effects go here. Calling AWS Bedrock, calling AWS Transcribe, or writing to Supabase must be done inside an activity.
+- **Activities** (`activities.ts`): All side-effects go here. Calling Anthropic, calling OpenAI, or writing to Supabase must be done inside an activity.
 
 ```typescript
 // Example Activity Signature
 export async function processCatPhotos(catId: string, topPhotoUrl: string, sidePhotoUrl: string) {
-  // 1. Call Bedrock
+  // 1. Call Anthropic
   // 2. Return JSON
 }
 ```
 
-**Important — Temporal Workflows run independently from your Expo API routes:** Temporal Workflows run on your dedicated worker instances, not inside the Expo API route that triggers them. A 30-second AWS Bedrock AI processing job does not require increasing the Expo API route timeout. The API route merely triggers the Temporal Workflow and returns an immediate response, while the Workflow continues running independently in the background to process the media. Do not configure long timeouts on API routes to accommodate background AI processing.
+**Important — Temporal Workflows run independently from your Expo API routes:** Temporal Workflows run on your dedicated worker instances, not inside the Expo API route that triggers them. A 30-second Anthropic AI processing job does not require increasing the Expo API route timeout. The API route merely triggers the Temporal Workflow and returns an immediate response, while the Workflow continues running independently in the background to process the media. Do not configure long timeouts on API routes to accommodate background AI processing.

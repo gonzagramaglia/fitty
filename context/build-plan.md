@@ -21,132 +21,129 @@ Initialize the Expo project with Expo Router and configure styling. Ensure the p
 
 **Logic:**
 - Setup Expo Router folder structure (`app/(tabs)`, `app/(auth)`)
+- Setup TailwindCSS (NativeWind v4) and custom `ui-tokens`
 - Implement navigation (Dashboard, Camera, History, Profile) using Bottom Tabs
 - Implement Web Presentation Wrapper (`WebFrame`) to simulate mobile layout on desktop browsers for hackathon demo
 - Enforce protected routes (redirect to `/login` if no active session via Expo Router `_layout.tsx`)
 
-### 02 Auth UI & Logic
+## Phase 2 — Testing Infrastructure
+
+### 02 Testing Setup & Unit Tests
+Set up the Jest testing environment for the React Native/Expo app.
+
+**Logic:**
+- Install Jest + `ts-jest` + `@react-native/jest-preset`
+- Create `lib/bcsValidator.ts`, `lib/catProfileValidator.ts`, and `lib/supabaseHelpers.ts`
+- Write unit tests ensuring 100% pass rate for pure logic functions
+
+## Phase 3 — Auth UI & Logic
+
+### 03 Auth UI & Logic
 Supabase authentication — Google OAuth and Guest Mode (Anonymous) for Hackathon Judges.
 
 **UI:**
-- Onboarding Carousel — 3 screens explaining the app value (AI analysis, 2 photos, voice note)
-- Login Screen — App Logo, prominent "Continue with Google" button, and a highly visible "Continue as Guest (Judge Mode)" button.
+- Onboarding Carousel — 3 screens explaining the app value
+- Login Screen — App Logo, "Continue with Google" button, and "Continue as Guest" button
 
 **Logic:**
 - Google OAuth via Supabase Auth `signInWithOAuth`
 - Guest Mode via Supabase Auth Anonymous sign-ins (`signInAnonymously`)
 - Session persistence via Supabase Auth state listener
 - Auto-redirect to `/` (Dashboard) on successful login or guest entry
-- Show Onboarding only on first app launch
 
-### 03 Database Schema
+## Phase 4 — Database Schema & Profile
+
+### 04 Database Schema & State
 All Supabase tables and storage buckets created before any data is written.
 
 **Logic:**
-- Create `cats` table with all columns from `architecture.md` (id, user_id, name, avatar_url, breed, age_years, base_weight_kg)
-- Create `health_checks` table with all columns from `architecture.md`
-- Create `cat_avatars` storage bucket with authenticated access only
-- Create `cat_photos` storage bucket with authenticated access only
-- Create `voice_notes` storage bucket with authenticated access only
-- Row Level Security (RLS) policies on all tables and buckets — always filter by `user_id`
+- Create `cats` table (id, user_id, name, breed, age_years, base_weight_kg, avatar_url)
+- Create `health_checks` table (id, cat_id, top_photo_url, side_photo_url, voice_note_url, text_note, bcs_score, classification, ai_reasoning, recommendations, status)
+- Create `cat_avatars`, `cat_photos`, `voice_notes`, and `user_avatars` storage buckets
+- Row Level Security (RLS) policies on all tables and buckets
+- Global state context (`ActiveCatContext`) to manage the selected cat
 
-## Phase 2 — Profile & Dashboard
-
-### 04 Profile Page — Full UI
-Build the complete profile page UI with mock data. No save logic yet.
+### 05 Profile Page — Full UI
+Build the complete profile page UI.
 
 **UI:**
-- Profile Needs Attention Banner — visually indicates if required fields (Name, Base Weight) are missing
-- Profile Information Form:
-  - Cat Name (Text input, required)
-  - Breed (Text input, optional)
-  - Age in Years (Number input, required)
-  - Base Weight in kg (Number input, required)
-- "Save Profile" primary button at the bottom
+- Profile Needs Attention Banner
+- Profile Information Form (Avatar, Name, Breed, Age, Base Weight)
+- Absolute Overlay Pattern for Seamless Edit Transitions
+- Horizontal Cat Selector Pills
 
-### 05 Profile Save Logic
+### 06 Profile Save Logic
 Wire profile form to Supabase DB.
 
 **Logic:**
-- Custom hook/service saves form fields to `cats` table in Supabase
-- Form pre-fills automatically with existing data on return visits (fetching from Supabase on mount)
-- Toast notification displays success or error on save
+- Fetch existing profile on mount
+- Save/Update `cats` table on submit
+- Upload avatar photo to `cat_avatars` bucket
+- Add success/error Toast notifications
 
-### 06 Dashboard Page — Full UI
-Build the main landing view with mock data. No fetch logic yet.
+### 07 Dashboard Page — Full UI
+Build the main landing view with mock data.
 
 **UI:**
-- Welcome Header — "Hello [User], how is [Cat Name] doing today?"
-- "Incomplete Profile" Warning Banner (conditionally rendered)
-- "Start New Health Check" large CTA card with camera icon
-- Recent Checks Summary Widget — shows last recorded BCS score, last recorded weight, and date
+- Welcome Header (Split Screen Dark Header Layout)
+- Incomplete Profile Warning Banner
+- Start New Health Check CTA card
+- Recent Checks Summary Widget
 
-### 07 Dashboard Logic
+### 08 Dashboard Logic
 Wire dashboard to Supabase DB.
 
 **Logic:**
-- Fetch active cat profile from `cats` table on mount
-- Conditionally render the "Incomplete Profile" banner if `cats.base_weight_kg` or `cats.age_years` is null
-- Fetch the single most recent row from `health_checks` for the active cat to populate the Summary Widget
+- Fetch active cat profile from `cats` table
+- Fetch the single most recent row from `health_checks` for the active cat
 
-## Phase 3 — Camera & AI Analysis
+## Phase 5 — Camera & AI Analysis
 
-### 08 Camera Interface — Full UI
-Build the camera capture flow visually with mock data.
+### 09 Camera Interface — Full UI
+Build the camera capture flow visually.
 
 **UI:**
-- Camera Viewfinder — Full screen camera preview
-- "Top-down" silhouette overlay (semi-transparent cat outline from above)
-- "Side-profile" silhouette overlay (semi-transparent cat outline from the side)
-- Capture Button (shutter)
-- Voice Note Button — Microphone icon, "Hold to record observations" text
-- Processing Screen — Fun loading animation while AI analyzes
+- Camera Viewfinder with top-down and side-profile silhouette overlays
+- Voice Note / Text Note context entry screen
+- Processing/Loading screen with animated progress bar and rotating text
+- Implement Implicit State Routing (hiding URL query params from user using React Context)
 
-### 09 Camera Capture & Upload Logic
+### 10 Camera Capture & Upload Logic
 Implement the data collection flow up to the cloud.
 
 **Logic:**
-- Request Camera and Microphone permissions on mount (handling iOS/Android and Web browser prompts)
-- `expo-camera` captures high-quality images (must ensure Web compatibility) and `expo-image-manipulator` compresses them locally
-- `expo-av` records audio and saves temporarily (must ensure Web compatibility)
-- Upload photos to Supabase `cat_photos` bucket (using `user_id/cat_id/timestamp.jpg`)
-- Upload audio to Supabase `voice_notes` bucket
-- Retrieve public/signed URLs for the uploaded files
+- Request Camera and Microphone permissions
+- Capture high-quality images and compress them locally
+- Record and save audio note or text fallback
+- Upload all media to Supabase Storage (`cat_photos`, `voice_notes`)
+- Navigate to processing screen
 
-### 10 AI Workflow & Extraction Logic
+### 11 AI Workflow & Extraction Logic (Temporal + Anthropic + OpenAI)
 Trigger the Temporal workflow to process the media and extract the BCS score.
 
 **Logic:**
-- App sends POST request to backend API route triggering Temporal Workflow (passing `cat_id`, photo URLs, audio URL)
-- Temporal worker calls Amazon Transcribe API with audio URL to extract raw text
-- If transcribed text is empty — skip text context, but proceed with photos
-- Temporal worker calls Amazon Bedrock (Claude 4.3 Sonnet) passing the photos and the transcribed text
-- Claude 4.3 Sonnet returns structured JSON matching the DB schema (`bcs_score`, `ai_reasoning`, `recommendations`)
+- App sends POST request to backend API route triggering Temporal Workflow
+- Temporal worker calls OpenAI Whisper API with audio URL to extract raw text (if voice note is present)
+- Temporal worker calls Anthropic API (Claude 5 Sonnet) passing photos and text context
+- Claude returns structured JSON matching the DB schema
 - Temporal worker inserts the structured JSON results into the `health_checks` table
 - App listens to Supabase Realtime for the new `health_checks` row to appear, then navigates to Results screen
 
-## Phase 4 — Results & History
+## Phase 6 — Results & History
 
-### 11 Results Screen — Full UI & Logic
+### 12 Results Screen — Full UI & Logic
 Build the post-analysis view and wire it directly.
 
-**UI:**
-- BCS Score Gauge — Visual indicator (1-9 scale) highlighting the cat's score
-- AI Reasoning — Text block explaining why the score was given based on the photos
-- Recommendations — Bulleted list of actionable advice
-
-**Logic:**
+**UI & Logic:**
+- BCS Score Gauge (1-9 scale)
+- AI Reasoning text block
+- Recommendations list
 - Fetch the specific `health_checks` row by ID passed from the Camera flow
-- Populate UI fields directly from DB row
 
-### 12 History & Trends — Full UI & Logic
+### 13 History & Trends — Full UI & Logic
 Build the historical tracking view and wire it.
 
-**UI:**
-- History List — Chronological list of past health checks (Date, BCS Score, Thumbnail)
-- Trend Chart — Line chart showing BCS progression over time
-
-**Logic:**
+**UI & Logic:**
+- History List (rows of past checks)
+- Trend Chart (line chart showing BCS progression)
 - Fetch all `health_checks` for the `cat_id`, ordered by `created_at` descending
-- Format data for the Line Chart component
-- Map over results to render the History List

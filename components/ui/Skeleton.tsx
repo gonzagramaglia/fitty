@@ -14,7 +14,7 @@ type SkeletonProps = {
 
 /**
  * Skeleton provides a generic animated placeholder for loading states.
- * It uses Reanimated to pulse opacity, indicating background activity.
+ * It uses React Native's Animated API to pulse opacity, indicating background activity.
  *
  * @param props - Styling configuration including width, height, and border radius.
  */

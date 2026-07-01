@@ -31,7 +31,12 @@ export function useHealthCheck(id: string) {
 
   useEffect(() => {
     async function fetchHealthCheck() {
-      if (!id) return;
+      if (!id) {
+        setIsLoading(false);
+        setHealthCheck(null);
+        setError(null);
+        return;
+      }
 
       setIsLoading(true);
       setError(null);

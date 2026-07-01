@@ -28,10 +28,15 @@ export function useHistory() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchHistory() {
       if (!activeCatId) {
-        setHistory([]);
-        setIsLoading(false);
+        if (!cancelled) {
+          setHistory([]);
+          setError(null);
+          setIsLoading(false);
+        }
         return;
       }
 
@@ -51,16 +56,27 @@ export function useHistory() {
           .order("created_at", { ascending: false });
 
         if (fetchError) throw fetchError;
-        setHistory(data as HealthCheckRecord[]);
+        
+        if (!cancelled) {
+          setHistory((data ?? []) as HealthCheckRecord[]);
+        }
       } catch (err: any) {
-        console.error("[useHistory] error fetching history", err);
-        setError(err.message || "Failed to fetch history");
+        if (!cancelled) {
+          console.error("[useHistory] error fetching history", err);
+          setError(err.message || "Failed to fetch history");
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     }
 
     fetchHistory();
+
+    return () => {
+      cancelled = true;
+    };
   }, [activeCatId]);
 
   return { history, isLoading, error };

@@ -26,28 +26,30 @@ export default function HistoryScreen() {
     }, [])
   );
 
-  useEffect(() => {
-    const fetchCats = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase
-        .from('cats')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
-      if (data) setAllCats(data);
-    };
-    fetchCats();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCats = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase
+          .from('cats')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true });
+        if (data) setAllCats(data);
+      };
+      fetchCats();
+    }, [activeCatId])
+  );
 
-  useEffect(() => {
-    const subscription = DeviceEventEmitter.addListener('tabPress', (tabName) => {
-      if (tabName === 'history') {
+  useFocusEffect(
+    useCallback(() => {
+      // Clear selection when leaving the history screen
+      return () => {
         setSelectedCheckId(null);
-      }
-    });
-    return () => subscription.remove();
-  }, [setSelectedCheckId]);
+      };
+    }, [setSelectedCheckId])
+  );
 
   if (selectedCheckId) {
     return <HistoryDetailView />;
@@ -224,7 +226,7 @@ export default function HistoryScreen() {
             </View>
           </View>
           
-          <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
+          <ScrollView ref={scrollViewRef} className="flex-1 px-6" showsVerticalScrollIndicator={false}>
           {chartData.length > 1 && (
             <View className="mb-6">
               <TrendChart data={chartData} />

@@ -3,9 +3,11 @@ require('dotenv').config({ path: '.env' });
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const targetCatId = process.env.MOCK_CAT_ID;
+const targetUserId = process.env.MOCK_USER_ID;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase credentials');
+if (!supabaseUrl || !supabaseKey || !targetCatId || !targetUserId) {
+  console.error('Missing Supabase credentials or MOCK_CAT_ID/MOCK_USER_ID');
   process.exit(1);
 }
 
@@ -15,20 +17,25 @@ async function run() {
   const { data: checks, error } = await supabase
     .from('health_checks')
     .select('*')
+    .eq('cat_id', targetCatId)
+    .eq('user_id', targetUserId)
     .order('created_at', { ascending: true });
 
-  if (error || checks.length === 0) return;
+  if (error) throw error;
+  if (!checks || checks.length === 0) {
+    throw new Error('No checks found for the provided cat and user IDs');
+  }
 
   // We need exactly 6 records to match the sequence: 7 -> 6 -> 5 -> 4 -> 5 -> 5
-  const catId = checks[0].cat_id;
-  const userId = checks[0].user_id;
+  const catId = targetCatId;
+  const userId = targetUserId;
   const validTopPhoto = checks.find(c => c.top_photo_url)?.top_photo_url || null;
   const validSidePhoto = checks.find(c => c.side_photo_url)?.side_photo_url || null;
 
   // If there are less than 6, create the missing ones
   const needed = 6 - checks.length;
   for (let i = 0; i < needed; i++) {
-    const { data: newCheck } = await supabase.from('health_checks').insert({
+    const { data: newCheck, error: insertError } = await supabase.from('health_checks').insert({
       cat_id: catId,
       user_id: userId,
       bcs_score: 5,
@@ -36,6 +43,7 @@ async function run() {
       top_photo_url: validTopPhoto,
       side_photo_url: validSidePhoto,
     }).select();
+    if (insertError) throw insertError;
     if (newCheck) checks.push(newCheck[0]);
   }
 
@@ -43,7 +51,12 @@ async function run() {
   const targetChecks = checks.slice(0, 6);
   if (checks.length > 6) {
     for (let i = 6; i < checks.length; i++) {
-      await supabase.from('health_checks').delete().eq('id', checks[i].id);
+      const { error: deleteError } = await supabase.from('health_checks')
+        .delete()
+        .eq('cat_id', catId)
+        .eq('user_id', userId)
+        .eq('id', checks[i].id);
+      if (deleteError) throw deleteError;
     }
   }
 
@@ -116,10 +129,11 @@ async function run() {
     const newDate = new Date(`2026-0${i + 2}-02T12:00:00Z`); // Feb to Jul
     const data = mockData[i];
     
-    await supabase
+    const { error: updateError } = await supabase
       .from('health_checks')
       .update({
         bcs_score: data.score,
+        status: 'completed',
         created_at: newDate.toISOString(),
         top_photo_url: validTopPhoto,
         side_photo_url: validSidePhoto,
@@ -127,7 +141,11 @@ async function run() {
         recommendations: data.recommendations,
         text_note: data.text_note,
       })
+      .eq('cat_id', targetCatId)
+      .eq('user_id', targetUserId)
       .eq('id', check.id);
+      
+    if (updateError) throw updateError;
       
     console.log(`Updated check ${i + 1}: Date=${newDate.toISOString()} Score=${data.score}`);
   }

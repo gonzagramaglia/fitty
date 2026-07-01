@@ -34,9 +34,8 @@ export default function CameraLayout() {
 
   return (
     <CameraContext.Provider value={{ processingState, setProcessingState }}>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
         <Stack.Screen name="index" />
-        <Stack.Screen name="processing" />
       </Stack>
     </CameraContext.Provider>
   );

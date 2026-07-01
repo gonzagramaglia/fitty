@@ -33,7 +33,7 @@ export function RecommendationsList({ recommendations }: Props) {
           const description = isString ? null : rec.description;
 
           return (
-            <View key={index} className="flex-row items-start">
+            <View key={`${title}-${index}`} className="flex-row items-start">
               <View className="mt-0.5 mr-3">
                 <CheckCircle2 color="#74B7B5" size={18} />
               </View>

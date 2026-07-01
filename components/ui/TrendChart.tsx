@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Dimensions, Platform } from "react-native";
+import { View, Text, useWindowDimensions, Platform } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { Defs, LinearGradient, Stop } from "react-native-svg";
 
@@ -41,7 +41,7 @@ export function TrendChart({ data }: Props) {
 
   // We need the screen width to calculate chart width minus paddings
   // Container padding: px-6 (24px * 2 = 48) + card padding: p-6 (24px * 2 = 48) => 96
-  const windowWidth = Dimensions.get("window").width;
+  const { width: windowWidth } = useWindowDimensions();
   const containerWidth = Platform.OS === 'web' ? Math.min(windowWidth, 400) : windowWidth;
   const chartWidth = containerWidth - 96; // Adjust based on parent padding
 

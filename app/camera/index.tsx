@@ -141,7 +141,7 @@ export default function CameraScreen() {
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       quality: 0.8,
     });
@@ -216,26 +216,26 @@ export default function CameraScreen() {
       });
 
       // Simulate backend processing time
-      setTimeout(async () => {
-        const { error } = await supabase.from('health_checks').insert({
-          cat_id: activeCatId,
-          user_id: userId,
-          top_photo_url: topPhoto || null,
-          side_photo_url: sidePhoto || null,
-          bcs_score: 7,
-          classification: "Overweight",
-          ai_reasoning: "The top-down photo shows a significantly widened abdominal profile without a discernible waistline. The side profile reveals a noticeable abdominal pad. Ribs are not easily palpable.",
-          recommendations: [
-            "Reduce daily caloric intake by 10%.",
-            "Encourage 15 minutes of active play twice a day.",
-            "Switch to a high-protein, low-carb wet food diet."
-          ],
-          status: "completed"
-        });
-        if (error) console.error("Mock insert error", error);
-      }, 3000);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      const { error } = await supabase.from('health_checks').insert({
+        cat_id: activeCatId,
+        user_id: userId,
+        top_photo_url: topPhoto || null,
+        side_photo_url: sidePhoto || null,
+        bcs_score: 7,
+        classification: "Overweight",
+        ai_reasoning: "The top-down photo shows a significantly widened abdominal profile without a discernible waistline. The side profile reveals a noticeable abdominal pad. Ribs are not easily palpable.",
+        recommendations: [
+          { title: "Nutrition", description: "Reduce daily caloric intake by 10%." },
+          { title: "Exercise", description: "Encourage 15 minutes of active play twice a day." },
+          { title: "Diet", description: "Switch to a high-protein, low-carb wet food diet." }
+        ],
+        status: "completed"
+      });
+      if (error) throw error;
     } catch (error) {
       console.error("Failed to finalize capture:", error);
+      setProcessingState({ hasVoiceNote: false, hasTextNote: false });
       setStep('voice'); // revert on error
     }
   };

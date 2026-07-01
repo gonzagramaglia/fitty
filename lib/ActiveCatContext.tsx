@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 
@@ -71,17 +71,22 @@ export const ActiveCatProvider = ({ children }: { children: React.ReactNode }) =
     loadActiveCat();
   }, []);
 
-  const setActiveCatId = async (id: string | null) => {
+  const setActiveCatId = useCallback(async (id: string | null) => {
     if (id) {
       await AsyncStorage.setItem('active_cat_id', id);
     } else {
       await AsyncStorage.removeItem('active_cat_id');
     }
     setActiveCatIdState(id);
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({ activeCatId, setActiveCatId, selectedCheckId, setSelectedCheckId, isLoading }),
+    [activeCatId, setActiveCatId, selectedCheckId, isLoading]
+  );
 
   return (
-    <ActiveCatContext.Provider value={{ activeCatId, setActiveCatId, selectedCheckId, setSelectedCheckId, isLoading }}>
+    <ActiveCatContext.Provider value={value}>
       {children}
     </ActiveCatContext.Provider>
   );

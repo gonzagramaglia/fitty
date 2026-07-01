@@ -10,6 +10,8 @@ import { BCSGauge } from "../../components/ui/BCSGauge";
 import { AIReasoningCard } from "../../components/ui/AIReasoningCard";
 import { RecommendationsList } from "../../components/ui/RecommendationsList";
 import { Skeleton } from "../../components/ui/Skeleton";
+import { ChatModal } from "../../components/ui/ChatModal";
+import { Bot, MessageCircle } from "lucide-react-native";
 
 /**
  * HistoryDetailView is the comprehensive screen displaying a single health check record.
@@ -21,9 +23,18 @@ export default function HistoryDetailView() {
   const insets = useSafeAreaInsets();
   const { selectedCheckId, setSelectedCheckId } = useActiveCat();
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [chatVisible, setChatVisible] = useState(false);
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
   
   // Need to handle missing ID gracefully since we rely on Context now
   const { healthCheck, isLoading, error } = useHealthCheck(selectedCheckId || '');
+
+  // Initialize chat history once health check is loaded
+  React.useEffect(() => {
+    if (healthCheck?.chat_history) {
+      setChatHistory(healthCheck.chat_history);
+    }
+  }, [healthCheck?.chat_history]);
 
   const headerPadding = Platform.OS === 'web' ? 48 : Math.max(insets.top, 20);
 
@@ -238,6 +249,29 @@ export default function HistoryDetailView() {
             )}
           </View>
         </Modal>
+      )}
+
+      {/* Ask Vet AI FAB */}
+      {!expandedImage && (
+        <TouchableOpacity 
+          className="absolute bottom-8 right-6 bg-[#1A303F] px-6 py-4 rounded-full flex-row items-center shadow-lg border border-white/10"
+          style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 }}
+          onPress={() => setChatVisible(true)}
+        >
+          <MessageCircle color="white" size={20} className="mr-2" />
+          <Text className="text-white font-bold text-base tracking-wide">Ask Vet AI</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Chat Modal */}
+      {healthCheck && (
+        <ChatModal 
+          visible={chatVisible} 
+          onClose={() => setChatVisible(false)} 
+          healthCheckId={healthCheck.id} 
+          initialHistory={chatHistory} 
+          onHistoryUpdate={setChatHistory} 
+        />
       )}
     </View>
     </>

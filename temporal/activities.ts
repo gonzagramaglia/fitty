@@ -101,7 +101,7 @@ async function getImageBase64(url: string): Promise<{ data: string; media_type: 
 /**
  * Prompts Claude 3.5 Sonnet to analyze the images and return a structured BCS result.
  */
-export async function analyzeImages(topPhotoUrl: string, sidePhotoUrl: string, contextText: string): Promise<any> {
+export async function analyzeImages(topPhotoUrl: string, sidePhotoUrl: string, contextText: string, recentHistory?: any[]): Promise<any> {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error("No ANTHROPIC_API_KEY found. Cannot analyze images.");
   }
@@ -112,9 +112,16 @@ export async function analyzeImages(topPhotoUrl: string, sidePhotoUrl: string, c
     getImageBase64(sidePhotoUrl)
   ]);
 
+  let historyContext = '';
+  if (recentHistory && recentHistory.length > 0) {
+    historyContext = `\nPast BCS Scores for context (from newest to oldest):\n`;
+    historyContext += recentHistory.map(h => `- Date: ${new Date(h.created_at).toLocaleDateString()}, Score: ${h.bcs_score} (${h.classification})`).join('\n');
+    historyContext += `\nUse this history to understand if the cat is improving, maintaining, or worsening when writing your ai_reasoning and recommendations.\n`;
+  }
+
   const prompt = `You are a veterinary AI assistant specialized in assessing feline Body Condition Score (BCS).
 I will provide you with two photos of a cat: a top-down view and a side profile view.
-${contextText ? `\nAdditional context from the owner: "${contextText}"\n` : ''}
+${contextText ? `\nAdditional context from the owner: "${contextText}"\n` : ''}${historyContext}
 
 Analyze the cat's physical shape, paying attention to the waistline from above, the abdominal tuck from the side, and any visible fat deposits.
 
@@ -255,4 +262,23 @@ export async function saveFailedResultToDatabase(
   }
 
   console.log("Successfully saved failed health check to Supabase.");
+}
+
+/**
+ * Fetches the recent history of completed health checks for a cat.
+ */
+export async function fetchRecentHistory(catId: string, limit: number): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('health_checks')
+    .select('created_at, bcs_score, classification')
+    .eq('cat_id', catId)
+    .eq('status', 'completed')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  
+  if (error) {
+    console.error("Failed to fetch recent history:", error);
+    return [];
+  }
+  return data || [];
 }

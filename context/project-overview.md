@@ -30,6 +30,11 @@ This directly ties into the **World Cat Domination Day** theme by driving positi
 - All logs are saved. User can view a visual timeline of BCS and weight trends over time.
 - Users can review past photos, AI reasoning, and recommendations.
 
+### 4. Contextual AI Chat
+- Users can have a back-and-forth conversation with Vet AI about a specific health check.
+- The AI maintains context of the cat's profile, the specific check's photos, and the BCS result.
+- Chat history is persisted and users can edit or delete their past messages.
+
 ---
 
 ## Data Architecture — Key Separation
@@ -55,6 +60,7 @@ This directly ties into the **World Cat Domination Day** theme by driving positi
 - Anthropic Claude 5 Sonnet integration for BCS scoring and reasoning.
 - Reliable backend AI processing queue.
 - History page with interactive trend charts.
+- Contextual AI Chat for follow-up questions on health checks.
 - **English UI** (mandatory for the hackathon).
 
 ## Features Out of Scope

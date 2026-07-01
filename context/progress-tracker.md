@@ -98,3 +98,13 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] Build History List UI (rows of past checks)
   - [x] Build Trend Chart UI (line chart)
   - [x] Fetch and format data from `health_checks`
+
+## Phase 7 — AI Contextual Chat
+- [x] **14 Contextual Q&A Interface**
+  - [x] Update `health_checks` table with `chat_history` JSONB column
+  - [x] Build "Ask Vet AI" Floating Action Button in `HistoryDetailView`
+  - [x] Build Chat Modal UI (message bubbles, input field)
+  - [x] Scaffold `temporal/server.ts` standalone Express API route (bypassing Expo API routes for Vercel/Render compatibility)
+  - [x] Implement Anthropic Claude integration for Q&A with health check context
+  - [x] Connect UI to backend with strict rate limiting (5 req/min) and 500-char validation
+  - [x] Persist chat messages to Supabase and implement UI edit/delete functions

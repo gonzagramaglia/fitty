@@ -10,7 +10,7 @@ Every piece of business logic extracted into `lib/` must have a corresponding un
 
 - **Pure logic** (validators, formatters, helpers) → unit test in `__tests__/`
 - **UI behaviour** → manual test documented in `docs/testing.md`
-- **External services** (Supabase, Temporal, AWS) → mocked in unit tests, manual E2E documented
+- **External services** (Supabase, Temporal, Anthropic) → mocked in unit tests, manual E2E documented
 
 The `docs/testing.md` file is a living document updated at the end of every phase. It serves as the test report submitted with the hackathon.
 
@@ -147,3 +147,17 @@ Build the historical tracking view and wire it.
 - History List (rows of past checks)
 - Trend Chart (line chart showing BCS progression)
 - Fetch all `health_checks` for the `cat_id`, ordered by `created_at` descending
+
+## Phase 7 — AI Contextual Chat
+
+### 14 Contextual Q&A Interface
+Build an interactive chat interface to ask follow-up questions about a specific health check.
+
+**UI & Logic:**
+- Update `health_checks` table with `chat_history` JSONB column via SQL migration
+- Build "Ask Vet AI" Floating Action Button in `HistoryDetailView`
+- Build Chat Modal UI (message bubbles, input field)
+- Scaffold `temporal/server.ts` standalone Express API route (bypassing Expo API routes)
+- Implement Anthropic Claude integration for Q&A with health check context
+- Connect UI to backend with strict rate limiting (5 req/min) and 500-char validation
+- Persist chat messages to Supabase and implement UI edit/delete functions

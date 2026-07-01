@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { LogBox } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import Head from "expo-router/head";
 import { supabase } from "../lib/supabase";
@@ -23,7 +24,10 @@ if (typeof window !== 'undefined') {
         msg.includes('Unknown event handler property `onResponderRelease`') ||
         msg.includes('Unknown event handler property `onResponderTerminate`') ||
         msg.includes('Unknown event handler property `onPressIn`') ||
-        msg.includes('Unknown event handler property `onPressOut`')
+        msg.includes('Unknown event handler property `onPressOut`') ||
+        msg.includes('TouchableMixin is deprecated') ||
+        msg.includes('Invalid DOM property `transform-origin`') ||
+        msg.includes('Did you mean `transformOrigin`')
       ) {
         return;
       }
@@ -33,6 +37,13 @@ if (typeof window !== 'undefined') {
 }
 
 export default function RootLayout() {
+  // Ignore specific yellow box warnings in the UI
+  LogBox.ignoreLogs([
+    'Unknown event handler property',
+    'TouchableMixin is deprecated',
+    'Invalid DOM property'
+  ]);
+
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState(false);
   const segments = useSegments();

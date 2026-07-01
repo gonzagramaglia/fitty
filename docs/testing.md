@@ -30,7 +30,7 @@ Phase 1 consists entirely of project scaffolding, Expo Router setup, and basic U
 
 ### Phase 2 — Core Business Logic
 
-Tests the core AI output validation layer. Every score returned by AWS Bedrock (Claude) is validated before being written to the database.
+Tests the core AI output validation layer. Every score returned by Anthropic (Claude) is validated before being written to the database.
 
 | Test | Input | Expected | Result |
 |------|-------|----------|--------|
@@ -209,6 +209,18 @@ Tests the backend worker logic that handles OpenAI, Anthropic, and Supabase inte
 | Results — Recommendations | Record has structured recommendations | Displays title and description bullet points | ✅ |
 | Results — AI Reasoning | Record has reasoning text | Displays AI Reasoning card with Brain icon | ✅ |
 
+### Phase 7 — AI Contextual Chat
+
+| Feature | Condition | Expected Outcome | Result |
+|---------|-----------|-----------------|--------|
+| Chat — Backend Start | `yarn worker` running | Express server starts on port 3001 along with Temporal worker | ✅ |
+| Chat — Rate Limiting | Send >5 messages in 1 minute | API blocks request with 429 status and error message | ✅ |
+| Chat — Input Validation | Send >500 characters | API blocks request with 400 status | ✅ |
+| Chat — Send Message | Valid input, API up | Optimistic UI updates immediately, AI response follows shortly | ✅ |
+| Chat — Delete Message | Tap Trash icon on user msg | Prompts confirmation. Deletes msg + AI response from UI and DB | ✅ |
+| Chat — Edit Message | Tap Pencil icon on user msg | Prompts warning. Truncates subsequent history, sets input | ✅ |
+| Chat — Auto-Scroll | Send or receive message | ScrollView automatically scrolls to bottom of chat | ✅ |
+
 ---
 
-*This document is updated at the end of each phase. Last updated: Phase 6.*
+*This document is updated at the end of each phase. Last updated: Phase 7.*

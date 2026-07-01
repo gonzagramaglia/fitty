@@ -2,7 +2,7 @@ import { proxyActivities } from '@temporalio/workflow';
 import type * as activities from './activities';
 
 // Set up the activities for the workflow
-const { transcribeAudio, analyzeImages, saveResultToDatabase, saveFailedResultToDatabase } = proxyActivities<typeof activities>({
+const { transcribeAudio, analyzeImages, saveResultToDatabase, saveFailedResultToDatabase, fetchRecentHistory } = proxyActivities<typeof activities>({
   startToCloseTimeout: '1 minute',
   retry: {
     initialInterval: '2 seconds',
@@ -53,8 +53,16 @@ export async function analyzeHealthCheck(args: AnalyzeHealthCheckArgs): Promise<
   }
 
   try {
+    // 1b. Fetch recent history for better context
+    let recentHistory: any[] = [];
+    try {
+      recentHistory = await fetchRecentHistory(args.catId, 5);
+    } catch (err) {
+      console.warn('Failed to fetch recent history, proceeding without it', err);
+    }
+
     // 2. Run the AI Model (Anthropic Claude 5 Sonnet)
-    const aiResult = await analyzeImages(args.topPhotoUrl, args.sidePhotoUrl, contextText);
+    const aiResult = await analyzeImages(args.topPhotoUrl, args.sidePhotoUrl, contextText, recentHistory);
 
     // 3. Save to Supabase
     await saveResultToDatabase(

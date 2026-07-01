@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { Worker, NativeConnection } from '@temporalio/worker';
 import * as activities from './activities';
+import { startChatServer } from './server';
 
 /**
  * Initializes and starts the Temporal worker for processing AI tasks.
@@ -44,6 +45,9 @@ async function run() {
 
   console.log(`Worker connected to ${connectionOptions.address}`);
   console.log(`Listening on task queue: fitty-ai-tasks in namespace: ${process.env.TEMPORAL_NAMESPACE || 'default'}`);
+  
+  // Start the chat Express server
+  startChatServer();
   
   await worker.run();
   

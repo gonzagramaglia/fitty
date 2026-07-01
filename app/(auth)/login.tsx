@@ -20,8 +20,8 @@ const ONBOARDING_SLIDES = [
   },
   {
     id: "3",
-    title: "Instant Results",
-    description: "Get an accurate BCS score and actionable insights immediately.",
+    title: "Results & AI Chat",
+    description: "Get an accurate BCS score and chat with Vet AI about your cat's health.",
     image: require("../../assets/images/fitty-onboarding-how-it-works-3.png"),
   },
 ];

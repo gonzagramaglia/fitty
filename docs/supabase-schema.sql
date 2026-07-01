@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS health_checks (
     classification TEXT,
     ai_reasoning TEXT,
     recommendations JSONB,
+    chat_history JSONB DEFAULT '[]'::jsonb,
     status TEXT DEFAULT 'pending',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL

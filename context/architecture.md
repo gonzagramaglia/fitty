@@ -49,7 +49,8 @@
 ├── lib/
 │   ├── supabase.ts         → Supabase client initialization
 │   ├── temporal.ts         → Temporal client & workflow triggers
-│   └── ai.ts               → AWS Bedrock / AI utility functions
+│   ├── supabaseHelpers.ts  → Wrappers for error handling
+│   └── ai.ts               → Anthropic / AI utility functions
 └── assets/                 → Images, fonts, icons
 ├── __tests__/              → Unit tests mirroring lib/ structure
 │   ├── bcsValidator.test.ts
@@ -67,7 +68,7 @@
 |--------|------|
 | `app/` | Expo Router pages and layouts only. Minimal business logic. |
 | `components/` | Reusable UI only. No direct database mutations or data fetching. |
-| `lib/` | Third-party client initialization (Supabase, Temporal, AWS) and shared utilities only. |
+| `lib/` | Third-party client initialization (Supabase, Temporal, Anthropic) and shared utilities only. |
 | `hooks/` | Custom React hooks for data fetching, Supabase subscriptions, and state management. |
 | `temporal/` | All Temporal workflows and activities. Fully isolated from React/Expo code. |
 

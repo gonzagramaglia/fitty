@@ -237,11 +237,7 @@ export default function CameraScreen() {
       
       if (error) throw error;
       
-      // Fallback navigation in case realtime subscription in ProcessingScreen doesn't fire
-      setTimeout(() => {
-        setSelectedCheckId(data.id);
-        router.push('/(tabs)/history');
-      }, 500);
+      // Realtime subscription in ProcessingScreen will catch this insert and show the success screen.
     } catch (error) {
       console.error("Failed to finalize capture:", error);
       setProcessingState({ hasVoiceNote: false, hasTextNote: false });
@@ -282,16 +278,18 @@ export default function CameraScreen() {
       {/* Main Content Area */}
       <View style={{ flex: 1 }}>
         {step !== 'voice' ? (
-          <View className="flex-1 rounded-[40px] overflow-hidden bg-black/5" style={{ marginBottom: 120, marginTop: 120 }}>
+          <View className="flex-1 rounded-[40px] overflow-hidden bg-black/5" style={{ marginBottom: 144, marginTop: 120 }}>
             {currentPhoto ? (
               <>
-                <Image source={{ uri: currentPhoto }} style={{ flex: 1 }} resizeMode="cover" />
+                <Image source={{ uri: currentPhoto }} style={{ flex: 1, borderRadius: 40, overflow: 'hidden' }} resizeMode="cover" />
                 <SilhouetteOverlay type={step === 'top' ? 'top' : 'side'} />
               </>
             ) : (
-              <CameraView style={{ flex: 1 }} facing="back" ref={cameraRef}>
-                <SilhouetteOverlay type={step === 'top' ? 'top' : 'side'} />
-              </CameraView>
+              <View style={{ flex: 1, borderRadius: 40, overflow: 'hidden' }}>
+                <CameraView style={{ flex: 1 }} facing="back" ref={cameraRef}>
+                  <SilhouetteOverlay type={step === 'top' ? 'top' : 'side'} />
+                </CameraView>
+              </View>
             )}
 
             {/* Instructional Text Overlay */}

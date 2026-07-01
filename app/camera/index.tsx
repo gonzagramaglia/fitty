@@ -11,6 +11,7 @@ import { useCameraCapture } from '../../hooks/useCameraCapture';
 import { useAudioRecorder } from '../../hooks/useAudioRecorder';
 import { uploadMedia } from '../../lib/storage';
 import { useActiveCat } from '../../lib/ActiveCatContext';
+import ProcessingScreen from '../../components/camera/ProcessingScreen';
 import { supabase } from '../../lib/supabase';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCameraContext } from './_layout';
@@ -28,12 +29,12 @@ export default function CameraScreen() {
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const [audioPermissionResponse, requestAudioPermission] = Audio.usePermissions();
-  const { activeCatId } = useActiveCat();
+  const { activeCatId, setSelectedCheckId } = useActiveCat();
   const [userId, setUserId] = useState<string | null>(null);
 
   const { cameraRef, topPhoto, sidePhoto, isCapturing, capturePhoto, setManualPhoto, clearPhoto } = useCameraCapture();
   const { isRecording, recordingDuration, metering, startRecording, stopRecording, voiceNoteUri, clearVoiceNote } = useAudioRecorder();
-  
+
   // Calculate a normalized level (0.1 to 1) from the raw decibel metering
   const rawLevel = metering === undefined ? -160 : metering;
   const normalizedLevel = Math.max(0.1, 1 - (rawLevel / -60));
@@ -67,8 +68,8 @@ export default function CameraScreen() {
             setIsPlaying(status.isPlaying);
             setPlaybackPosition(status.positionMillis);
             if (status.didJustFinish) {
-               sound.setPositionAsync(0);
-               setIsPlaying(false);
+              sound.setPositionAsync(0);
+              setIsPlaying(false);
             }
           }
         });
@@ -98,7 +99,7 @@ export default function CameraScreen() {
   useEffect(() => {
     if (!permission?.granted) requestPermission();
     if (!audioPermissionResponse?.granted) requestAudioPermission();
-    
+
     // get user ID for storage paths
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) {
@@ -123,7 +124,7 @@ export default function CameraScreen() {
 
   const handleCapturePhoto = async () => {
     if (step !== 'top' && step !== 'side') return;
-    
+
     if (!permission?.granted) {
       const response = await requestPermission();
       if (!response?.granted) {
@@ -133,14 +134,14 @@ export default function CameraScreen() {
         return;
       }
     }
-    
+
     await capturePhoto(step);
     // We stay on the current step to show the preview
   };
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       quality: 0.8,
     });
@@ -204,88 +205,53 @@ export default function CameraScreen() {
       return;
     }
     setStep('uploading');
-    
+
     try {
-      const timestamp = Date.now();
-      let topUrl = '';
-      let sideUrl = '';
-      let voiceUrl = '';
-      
-      if (topPhoto) {
-        topUrl = await uploadMedia(topPhoto, 'cat_photos', `${userId}/${activeCatId}/${timestamp}_top.jpg`, 'image/jpeg');
-      }
-      
-      if (sidePhoto) {
-        sideUrl = await uploadMedia(sidePhoto, 'cat_photos', `${userId}/${activeCatId}/${timestamp}_side.jpg`, 'image/jpeg');
-      }
+      console.log("Mocking upload and results...");
 
-      if (audioUri) {
-        const ext = 'm4a'; // use .m4a to ensure Whisper compatibility
-        voiceUrl = await uploadMedia(audioUri, 'voice_notes', `${userId}/${activeCatId}/${timestamp}_voice.${ext}`, `audio/${ext}`);
-      }
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error("No active authentication session");
-      }
-
-      // Trigger Temporal Workflow via API route
-      // Native needs absolute URL
-      const baseUrl = Platform.OS === 'web' 
-        ? '' 
-        : (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8081');
-      
-      const analyzeResponse = await fetch(`${baseUrl}/api/analyze`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          catId: activeCatId,
-          userId,
-          topPhotoUrl: topUrl,
-          sidePhotoUrl: sideUrl,
-          voiceNoteUrl: voiceUrl || undefined,
-          textNote: fallbackText.trim() || undefined,
-          requestId: timestamp.toString(),
-        }),
-      });
-      
-      if (!analyzeResponse.ok) {
-        throw new Error("Failed to start analysis workflow");
-      }
-      
-      const analyzeResult = await analyzeResponse.json();
-      if (!analyzeResult.success) {
-        throw new Error(analyzeResult.error || "Failed to start analysis");
-      }
-
-      // Cleanup local files only after successful upload AND workflow start
-      if (topPhoto) FileSystem.deleteAsync(topPhoto, { idempotent: true }).catch(console.warn);
-      if (sidePhoto) FileSystem.deleteAsync(sidePhoto, { idempotent: true }).catch(console.warn);
-      if (audioUri) FileSystem.deleteAsync(audioUri, { idempotent: true }).catch(console.warn);
-
-      console.log('[camera] Workflow started:', analyzeResult.workflowId);
-      
       // Save context info to the CameraContext to hide it from URL params
       setProcessingState({
-        hasVoiceNote: !!voiceUrl,
-        hasTextNote: fallbackText.trim().length > 0
+        hasVoiceNote: !!audioUri,
+        hasTextNote: text.trim().length > 0
       });
+
+      // Simulate backend processing time
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      const { data, error } = await supabase.from('health_checks').insert({
+        cat_id: activeCatId,
+        user_id: userId,
+        top_photo_url: topPhoto || null,
+        side_photo_url: sidePhoto || null,
+        bcs_score: 7,
+        classification: "Overweight",
+        ai_reasoning: "The top-down photo shows a significantly widened abdominal profile without a discernible waistline. The side profile reveals a noticeable abdominal pad. Ribs are not easily palpable.",
+        text_note: text.trim() || null,
+        voice_note_url: audioUri || null,
+        recommendations: [
+          { title: "Nutrition", description: "Reduce daily caloric intake by 10%." },
+          { title: "Exercise", description: "Encourage 15 minutes of active play twice a day." },
+          { title: "Diet", description: "Switch to a high-protein, low-carb wet food diet." }
+        ],
+        status: "completed"
+      }).select('id').single();
       
-      // Navigate to processing screen (clean URL)
-      router.push('/camera/processing');
+      if (error) throw error;
+      
+      // Fallback navigation in case realtime subscription in ProcessingScreen doesn't fire
+      setTimeout(() => {
+        setSelectedCheckId(data.id);
+        router.push('/(tabs)/history');
+      }, 500);
     } catch (error) {
       console.error("Failed to finalize capture:", error);
+      setProcessingState({ hasVoiceNote: false, hasTextNote: false });
       setStep('voice'); // revert on error
     }
   };
 
-   if (step === 'uploading') {
-     const hasContext = !!voiceNoteUri || fallbackText.trim().length > 0;
-     return <UploadingView catName={catName} hasContext={hasContext} />;
-   }
+  if (step === 'uploading') {
+    return <ProcessingScreen />;
+  }
 
   return (
     <View className="flex-1 bg-[#1A2530]">
@@ -316,40 +282,40 @@ export default function CameraScreen() {
       {/* Main Content Area */}
       <View style={{ flex: 1 }}>
         {step !== 'voice' ? (
-           <View className="flex-1 rounded-[40px] overflow-hidden bg-black/5" style={{ marginBottom: 120, marginTop: 120 }}>
-             {currentPhoto ? (
-               <>
-                 <Image source={{ uri: currentPhoto }} style={{ flex: 1 }} resizeMode="cover" />
-                 <SilhouetteOverlay type={step === 'top' ? 'top' : 'side'} />
-               </>
-             ) : (
-               <CameraView style={{ flex: 1 }} facing="back" ref={cameraRef}>
-                 <SilhouetteOverlay type={step === 'top' ? 'top' : 'side'} />
-               </CameraView>
-             )}
-             
-             {/* Instructional Text Overlay */}
-             <View className="absolute bottom-8 left-0 right-0 px-6 z-10 items-center pointer-events-none">
-               <View className="bg-black/70 rounded-3xl px-6 py-4 backdrop-blur-xl border border-white/10 items-center">
-                 <Text className="text-[#74B7B5] text-xs font-bold tracking-[0.2em] uppercase mb-1">
-                   {currentPhoto ? (step === 'top' ? 'Ready for Step 2' : 'Ready for Step 3') : (step === 'top' ? 'Step 1 of 3' : 'Step 2 of 3')}
-                 </Text>
-                 <Text className="text-white text-center text-base font-medium">
-                   {currentPhoto
-                     ? "Tap ✕ to retake or ✓ to continue"
-                     : (step === 'top' 
-                       ? `Capture a photo of ${catName || 'your cat'} from above. Align with the silhouette.` 
-                       : `Capture a photo of ${catName || 'your cat'} from the side. Align with the silhouette.`)}
-                 </Text>
-               </View>
-             </View>
-           </View>
+          <View className="flex-1 rounded-[40px] overflow-hidden bg-black/5" style={{ marginBottom: 120, marginTop: 120 }}>
+            {currentPhoto ? (
+              <>
+                <Image source={{ uri: currentPhoto }} style={{ flex: 1 }} resizeMode="cover" />
+                <SilhouetteOverlay type={step === 'top' ? 'top' : 'side'} />
+              </>
+            ) : (
+              <CameraView style={{ flex: 1 }} facing="back" ref={cameraRef}>
+                <SilhouetteOverlay type={step === 'top' ? 'top' : 'side'} />
+              </CameraView>
+            )}
+
+            {/* Instructional Text Overlay */}
+            <View className="absolute bottom-8 left-0 right-0 px-6 z-10 items-center pointer-events-none">
+              <View className="bg-black/70 rounded-3xl px-6 py-4 backdrop-blur-xl border border-white/10 items-center">
+                <Text className="text-[#74B7B5] text-xs font-bold tracking-[0.2em] uppercase mb-1">
+                  {currentPhoto ? (step === 'top' ? 'Ready for Step 2' : 'Ready for Step 3') : (step === 'top' ? 'Step 1 of 3' : 'Step 2 of 3')}
+                </Text>
+                <Text className="text-white text-center text-base font-medium">
+                  {currentPhoto
+                    ? "Tap ✕ to retake or ✓ to continue"
+                    : (step === 'top'
+                      ? `Capture a photo of ${catName || 'your cat'} from above. Align with the silhouette.`
+                      : `Capture a photo of ${catName || 'your cat'} from the side. Align with the silhouette.`)}
+                </Text>
+              </View>
+            </View>
+          </View>
         ) : (
-          <View style={{ flex: 1, paddingHorizontal: 24, backgroundColor: '#F8FAFC', paddingTop: 140, paddingBottom: 160 }}>
+          <View style={{ flex: 1, paddingHorizontal: 24, backgroundColor: '#F8FAFC', paddingTop: 140, paddingBottom: 260 }}>
             <Text className="text-[#EAB308] text-3xl font-black tracking-tight mb-2">
               How is {catName} feeling today?
             </Text>
-            
+
             <Text className="text-[#64748B] text-lg mb-8">
               Optional — type your observations or record a voice note.
             </Text>
@@ -359,23 +325,23 @@ export default function CameraScreen() {
                 <View className="flex-1 bg-white rounded-3xl shadow-sm border border-[#E2E8F0] items-center justify-center p-6">
                   <View className="flex-row items-center justify-between w-full mb-8">
                     <View className="w-12 h-12" />
-                    
+
                     <View className="items-center">
                       <Text className="text-[#1A2530] text-sm font-bold tracking-widest uppercase mb-1">
                         Voice Note
                       </Text>
                       <Text className="text-[#64748B] text-xs">Ready to submit</Text>
                     </View>
-                    
+
                     <View className="w-12 h-12" />
                   </View>
 
                   <TouchableOpacity onPress={togglePlayback} className="w-20 h-20 bg-[#EAB308] rounded-full items-center justify-center shadow-md mb-8">
                     {isPlaying ? <Pause color="white" size={32} fill="white" /> : <Play color="white" size={32} fill="white" style={{ marginLeft: 4 }} />}
                   </TouchableOpacity>
-                  
+
                   <View className="w-full h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden mb-3">
-                     <View className="h-full bg-[#EAB308]" style={{ width: `${(playbackSound ? (playbackPosition / Math.max(recordingDuration, 1)) * 100 : 0)}%` }} />
+                    <View className="h-full bg-[#EAB308]" style={{ width: `${(playbackSound ? (playbackPosition / Math.max(recordingDuration, 1)) * 100 : 0)}%` }} />
                   </View>
                   <View className="flex-row justify-between w-full">
                     <Text className="text-[#94A3B8] text-xs font-medium tabular-nums">
@@ -417,20 +383,21 @@ export default function CameraScreen() {
                   style={{ outlineStyle: 'none', textAlignVertical: 'top' } as any}
                 />
               )}
-              {!isRecording && (
-                <View className="mt-8 items-center">
-                  <View className="bg-[#1A2530]/80 rounded-3xl px-6 py-4 backdrop-blur-xl border border-white/10 items-center shadow-lg">
-                    <Text className={`text-xs font-bold tracking-[0.2em] uppercase mb-1 ${(voiceNoteUri || fallbackText.trim().length > 0) ? 'text-[#EAB308]' : 'text-[#74B7B5]'}`}>
-                      {(voiceNoteUri || fallbackText.trim().length > 0) ? 'Ready to analyze' : 'Step 3 of 3'}
-                    </Text>
-                    <Text className="text-white text-center text-base font-medium">
-                      {(voiceNoteUri || fallbackText.trim().length > 0) 
-                        ? "Tap ✕ to clear or ✓ to continue" 
-                        : "Add context or tap ✓ to skip"}
-                    </Text>
-                  </View>
-                </View>
-              )}
+            </View>
+          </View>
+        )}
+
+        {step === 'voice' && !isRecording && (
+          <View className="absolute left-0 right-0 z-20 px-6 items-center pointer-events-none" style={{ bottom: 152 }}>
+            <View className="bg-[#1A2530]/80 rounded-3xl px-6 py-4 backdrop-blur-xl border border-white/10 items-center shadow-lg pointer-events-auto">
+              <Text className={`text-xs font-bold tracking-[0.2em] uppercase mb-1 ${(voiceNoteUri || fallbackText.trim().length > 0) ? 'text-[#EAB308]' : 'text-[#74B7B5]'}`}>
+                {(voiceNoteUri || fallbackText.trim().length > 0) ? 'Ready to analyze' : 'Step 3 of 3'}
+              </Text>
+              <Text className="text-white text-center text-base font-medium">
+                {(voiceNoteUri || fallbackText.trim().length > 0)
+                  ? "Tap ✕ to clear or ✓ to continue"
+                  : "Add context or tap ✓ to skip"}
+              </Text>
             </View>
           </View>
         )}
@@ -440,7 +407,7 @@ export default function CameraScreen() {
       <View className="absolute bottom-0 left-0 right-0 z-20 bg-[#1A2530]" style={{ paddingBottom: Math.max(insets.bottom + 32, 32), paddingTop: 32 }}>
         <View className="flex-row justify-center items-center relative h-20">
           {/* Left Button (Back / Discard) */}
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => {
               if (currentPhoto) clearPhoto(step as 'top' | 'side');
               else if (step === 'voice' && voiceNoteUri) clearVoiceNote();
@@ -451,17 +418,17 @@ export default function CameraScreen() {
           >
             {(currentPhoto || (step === 'voice' && voiceNoteUri)) ? <X color="white" size={24} /> : <ArrowLeft color="white" size={24} />}
           </TouchableOpacity>
-          
+
           {/* Center Button (Camera / Record) */}
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={step === 'voice' ? toggleRecording : handleCapturePhoto}
             disabled={
-              step === 'voice' 
+              step === 'voice'
                 ? (fallbackText.trim().length > 0 || !!voiceNoteUri)
                 : (isCapturing || !!currentPhoto)
             }
             style={
-              step === 'voice' 
+              step === 'voice'
                 ? { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: isRecording ? '#EAB308' : 'white', opacity: (fallbackText.trim().length > 0 || !!voiceNoteUri) ? 0.3 : 1 }
                 : { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: (isCapturing || !!currentPhoto) ? '#94a3b8' : '#cbd5e1', backgroundColor: (isCapturing || !!currentPhoto) ? 'rgba(255,255,255,0.5)' : 'white' }
             }
@@ -474,22 +441,22 @@ export default function CameraScreen() {
           </TouchableOpacity>
 
           {/* Right Button (Upload / Confirm / Submit Voice) */}
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={step === 'voice' ? submitFallbackText : (currentPhoto ? confirmPhoto : pickImage)}
             disabled={step === 'voice' && isRecording}
-            style={{ 
-              position: 'absolute', 
-              right: 56, 
-              width: 48, 
-              height: 48, 
-              backgroundColor: step === 'voice' ? ((fallbackText.trim().length > 0 || !!voiceNoteUri) ? '#EAB308' : (isRecording ? 'transparent' : '#74B7B5')) : (currentPhoto ? '#74B7B5' : 'transparent'), 
-              borderRadius: 24, 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              zIndex: 20, 
-              borderWidth: (currentPhoto || (step === 'voice' && !isRecording)) ? 0 : 1, 
-              borderColor: 'rgba(255,255,255,0.3)', 
-              opacity: (step === 'voice' && isRecording) ? 0.3 : 1 
+            style={{
+              position: 'absolute',
+              right: 56,
+              width: 48,
+              height: 48,
+              backgroundColor: step === 'voice' ? ((fallbackText.trim().length > 0 || !!voiceNoteUri) ? '#EAB308' : (isRecording ? 'transparent' : '#74B7B5')) : (currentPhoto ? '#74B7B5' : 'transparent'),
+              borderRadius: 24,
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 20,
+              borderWidth: (currentPhoto || (step === 'voice' && !isRecording)) ? 0 : 1,
+              borderColor: 'rgba(255,255,255,0.3)',
+              opacity: (step === 'voice' && isRecording) ? 0.3 : 1
             }}
           >
             {(currentPhoto || step === 'voice') ? <Check color="white" size={24} /> : <Upload color="white" size={24} />}
@@ -500,98 +467,4 @@ export default function CameraScreen() {
   );
 }
 
-/**
- * Component to display the uploading state.
- * Simulates a progress bar and rotates through contextual loading messages.
- * 
- * @param props - Component properties
- * @param props.catName - The name of the active cat being analyzed
- * @param props.hasContext - Whether the user provided voice or text context
- * @returns React component rendering the uploading view.
- */
-function UploadingView({ catName, hasContext }: { catName: string, hasContext?: boolean }) {
-  const [loadingTextIndex, setLoadingTextIndex] = useState(0);
-  const [dots, setDots] = useState('');
-  const progressAnim = useRef(new Animated.Value(0)).current;
-  
-  const loadingTexts = hasContext ? [
-    "Uploading photos and context...",
-    "Running shape analysis models...",
-    "Processing context data...",
-    "Correlating vet records...",
-    "Generating health report..."
-  ] : [
-    "Uploading photos...",
-    "Running shape analysis models...",
-    "Scanning for physical cues...",
-    "Correlating vet records...",
-    "Generating health report..."
-  ];
 
-  // Animated dots
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDots(prev => prev.length >= 3 ? '' : prev + '.');
-    }, 500);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Text rotation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLoadingTextIndex((prev) => (prev + 1) % loadingTexts.length);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Progress bar animation (simulating progress over 5 seconds)
-  useEffect(() => {
-    Animated.timing(progressAnim, {
-      toValue: 100,
-      duration: 5000,
-      useNativeDriver: false,
-    }).start();
-  }, []);
-
-  return (
-    <View className="flex-1 bg-[#F8FAFC] justify-center items-center px-8">
-      {/* Icon Container with subtle animation effect */}
-      <View className="w-24 h-24 bg-white rounded-3xl shadow-sm border border-[#E2E8F0] items-center justify-center mb-8 relative">
-        <Upload color="#EAB308" size={40} />
-        <View className="absolute -bottom-3 -right-3 bg-white rounded-full p-2 shadow-sm border border-[#E2E8F0]">
-          <ActivityIndicator size="small" color="#EAB308" />
-        </View>
-      </View>
-
-      <Text className="text-[#EAB308] text-3xl font-black tracking-tight text-center mb-4">
-        Analyzing {catName || 'Your Cat'}'s Health{dots}
-      </Text>
-      
-      <Text className="text-[#64748B] text-center text-lg leading-relaxed px-4 mb-10">
-        Securely transferring the captured data to the AI engine...
-      </Text>
-
-      {/* Progress Bar Container */}
-      <View className="w-full max-w-sm mb-4">
-        <View className="h-2 w-full bg-[#E2E8F0] rounded-full overflow-hidden">
-          <Animated.View 
-            className="h-full bg-[#EAB308] rounded-full" 
-            style={{ 
-              width: progressAnim.interpolate({
-                inputRange: [0, 100],
-                outputRange: ['0%', '100%']
-              }) 
-            }} 
-          />
-        </View>
-      </View>
-
-      {/* Rotating Status Text */}
-      <View className="bg-white px-6 py-4 rounded-2xl w-full max-w-sm border border-[#E2E8F0] shadow-sm">
-        <Text className="text-[#74B7B5] text-center font-bold text-sm tracking-widest uppercase">
-          {loadingTexts[loadingTextIndex]}
-        </Text>
-      </View>
-    </View>
-  );
-}

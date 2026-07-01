@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Text } from 'react-native';
+import { View, TouchableOpacity, Text, DeviceEventEmitter } from 'react-native';
 import { House, Clock, User, Camera } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
@@ -29,6 +29,8 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
 
           if (!isFocused && !event.defaultPrevented) {
             navigation.navigate(route.name);
+          } else if (isFocused) {
+            DeviceEventEmitter.emit('tabPress', route.name);
           }
         };
 

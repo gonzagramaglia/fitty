@@ -9,6 +9,12 @@ import { Platform } from 'react-native';
  * 
  * @returns Object containing the camera ref, captured photo URIs, state, and capture functions.
  */
+/**
+ * useCameraCapture is a custom hook that manages the camera lifecycle, permissions,
+ * and state for taking photos.
+ *
+ * @returns An object containing camera refs, state, and control functions.
+ */
 export function useCameraCapture() {
   const cameraRef = useRef<CameraView>(null);
   const [topPhoto, setTopPhoto] = useState<string | null>(null);

@@ -1,6 +1,12 @@
 import React from "react";
 import { Platform, View, StyleSheet, Text } from "react-native";
 
+/**
+ * WebFrame is a wrapper component that constrains the app's maximum width
+ * on the web, simulating a mobile device viewport in the browser.
+ *
+ * @param props - Contains the children elements to wrap.
+ */
 export function WebFrame({ children }: { children: React.ReactNode }) {
   if (Platform.OS !== "web") {
     return <>{children}</>;

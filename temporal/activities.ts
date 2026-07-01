@@ -123,7 +123,7 @@ You must respond ONLY with a valid JSON object matching exactly this schema, wit
   "bcs_score": number (1-9),
   "classification": string (e.g., "Underweight", "Ideal", "Overweight", "Obese"),
   "ai_reasoning": string (a detailed explanation of why this score was given based on visual cues in the photos),
-  "recommendations": string[] (an array of 3-4 actionable recommendations for the owner)
+  "recommendations": { "title": string, "description": string }[] (an array of 3-4 actionable recommendations for the owner, with a short title and a descriptive sentence)
 }`;
 
   console.log("Sending prompt to Claude 5 Sonnet...");

@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, DeviceEventEmitter, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../lib/supabase';
+import { Skeleton } from '../../components/ui/Skeleton';
 import { useActiveCat } from '../../lib/ActiveCatContext';
 import { AlertCircle, ChevronRight, Activity, Plus, Camera } from 'lucide-react-native';
-import { useCallback } from 'react';
 
 /**
  * DashboardScreen represents the main landing page of the application.
@@ -17,13 +17,14 @@ import { useCallback } from 'react';
 export default function DashboardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { activeCatId, setActiveCatId, isLoading: isCatLoading } = useActiveCat();
+  const { activeCatId, setActiveCatId, setSelectedCheckId, isLoading: isCatLoading } = useActiveCat();
   
   const [user, setUser] = useState<any>(null);
   const [allCats, setAllCats] = useState<any[]>([]);
   const [cat, setCat] = useState<any>(null);
   const [latestCheck, setLatestCheck] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const fetchDashboardData = async () => {
     if (isCatLoading) return;
@@ -77,6 +78,7 @@ export default function DashboardScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchDashboardData();
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
     }, [activeCatId, isCatLoading])
   );
 
@@ -85,8 +87,45 @@ export default function DashboardScreen() {
 
   if (isLoading || isCatLoading) {
     return (
-      <View className="flex-1 bg-surface items-center justify-center">
-        <ActivityIndicator size="large" color="#74B7B5" />
+      <View className="flex-1 bg-surface">
+        <ScrollView ref={scrollViewRef} className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} bounces={false}>
+          <View 
+            className="bg-[#1A2530] rounded-b-[2.5rem] px-6 pb-8 mb-6" 
+            style={{ paddingTop: Platform.OS === 'web' ? 72 : Math.max(insets.top + 16, 60) }}
+          >
+            {/* Skeleton Welcome Header */}
+            <View className="flex-row items-center justify-between mb-10">
+              <View>
+                <Skeleton width={100} height={16} borderRadius={4} className="mb-2 bg-white/10" />
+                <Skeleton width={180} height={36} borderRadius={8} className="bg-white/10" />
+              </View>
+              <Skeleton width={56} height={56} borderRadius={28} className="bg-white/10" />
+            </View>
+
+            {/* Skeleton Cat Selector Tags */}
+            <View className="mb-2">
+              <Skeleton width={80} height={12} borderRadius={4} className="mb-3 bg-white/10" />
+              <View className="flex-row">
+                <Skeleton width={100} height={40} borderRadius={20} className="mr-3 bg-white/20" />
+                <Skeleton width={80} height={40} borderRadius={20} className="mr-3 bg-white/10" />
+                <Skeleton width={80} height={40} borderRadius={20} className="bg-white/10" />
+              </View>
+            </View>
+          </View>
+
+          {/* Main Content Skeleton */}
+          <View className="px-6 mt-2">
+            {/* Active Cat Sneak Peek Skeleton */}
+            <Skeleton width="100%" height={100} borderRadius={16} className="mb-8" />
+            
+            {/* New Health Check CTA Skeleton */}
+            <Skeleton width="100%" height={130} borderRadius={32} className="mb-8" />
+            
+            {/* Recent Checks Skeleton */}
+            <Skeleton width={120} height={20} borderRadius={6} className="mb-4" />
+            <Skeleton width="100%" height={250} borderRadius={16} className="mb-4" />
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -112,7 +151,7 @@ export default function DashboardScreen() {
 
   return (
     <View className="flex-1 bg-surface">
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} bounces={false}>
+      <ScrollView ref={scrollViewRef} className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} bounces={false}>
         
         {/* Dark Header Container */}
         <View 
@@ -238,9 +277,9 @@ export default function DashboardScreen() {
           </View>
         </TouchableOpacity>
 
-        {/* Recent Checks */}
+        {/* Recent Check */}
         <View className="mb-5 flex-row justify-between items-center">
-          <Text className="text-text-primary font-black text-2xl tracking-tight">Recent Checks</Text>
+          <Text className="text-text-primary font-black text-2xl tracking-tight">Recent Check</Text>
           <TouchableOpacity onPress={() => router.push('/history')} className="bg-surface-tertiary px-4 py-1.5 rounded-full">
             <Text className="text-primary-cool-dark font-bold text-sm">See all</Text>
           </TouchableOpacity>
@@ -248,10 +287,13 @@ export default function DashboardScreen() {
 
         {latestCheck ? (
           <TouchableOpacity 
-            onPress={() => router.push(`/history/${latestCheck.id}`)}
+            onPress={() => {
+              setSelectedCheckId(latestCheck.id);
+              router.push('/history');
+            }}
             className="bg-background border border-border rounded-2xl p-5 shadow-sm mb-4"
           >
-            <View className="flex-row justify-between items-center mb-3">
+            <View className="flex-row justify-between items-center mb-4">
               <Text className="text-text-secondary font-medium">
                 {new Date(latestCheck.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
               </Text>
@@ -262,11 +304,13 @@ export default function DashboardScreen() {
               </View>
             </View>
             <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-text-primary font-bold text-lg">BCS Score</Text>
-                <Text className="text-primary-cool font-black text-3xl mt-1">{latestCheck.bcs_score || '-'}<Text className="text-lg text-text-secondary font-bold">/9</Text></Text>
+              <Text className="text-text-primary font-bold text-lg">BCS Score</Text>
+              <View className="flex-row items-center">
+                <Text className="text-primary-cool font-black text-3xl mr-3">
+                  {latestCheck.bcs_score || '-'}<Text className="text-lg text-text-secondary font-bold">/9</Text>
+                </Text>
+                <ChevronRight size={24} color="#94a3b8" />
               </View>
-              <ChevronRight size={24} color="#94a3b8" />
             </View>
           </TouchableOpacity>
         ) : (

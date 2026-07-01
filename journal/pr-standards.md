@@ -93,6 +93,7 @@ When GitHub asks for the Extended Description during the merge, use this bullet 
 | #3 | `feat/02-testing-infrastructure` | 02 Testing | ✅ Merged |
 | #4 | `feat/03-auth-logic` | 03 Auth | ✅ Merged |
 | #5 | `feat/04-profile-dashboard` | 04 Profile & Dashboard | ✅ Merged |
-| #6 | `feat/05-camera-and-ai-analysis` | 05 Camera & AI Analysis | 🔄 Open |
+| #6 | `feat/05-camera-and-ai-analysis` | 05 Camera & AI Analysis | ✅ Merged |
+| #7 | `feat/06-results-and-history` | 06 Results & History | 🔄 Open |
 
 *(Update this table every time a PR is opened or merged.)*

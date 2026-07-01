@@ -40,6 +40,11 @@ export function useCameraCapture() {
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
       );
 
+      // Clean up original uncompressed photo
+      FileSystem.deleteAsync(photo.uri, { idempotent: true }).catch(err => 
+        console.warn("[useCameraCapture] Failed to delete original photo", err)
+      );
+
       if (step === 'top') {
         setTopPhoto(manipResult.uri);
       } else {

@@ -190,7 +190,7 @@ Tests the backend worker logic that handles OpenAI, Anthropic, and Supabase inte
 | Submission Flow | Tap Analyze button | Uploads to Supabase Storage, calls API | ✅ |
 | Temporal Worker execution | API triggers Temporal | Worker receives task, calls Claude/Whisper | ✅ |
 | Realtime DB listening | App in Processing state | Subscribes to Supabase `cat_health_checks` | ✅ |
-| Error Handling | API fails / Timeout | App shows error state, allows retry | ✅ | |
+| Error Handling | API fails / Timeout | App shows error state, allows retry | ✅ |
 
 ---
 

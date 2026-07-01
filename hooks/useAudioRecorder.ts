@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Audio } from 'expo-av';
 import { Platform } from 'react-native';
 
@@ -15,6 +15,18 @@ export function useAudioRecorder() {
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [metering, setMetering] = useState<number>(-160);
   const recordingRef = useRef<Audio.Recording | null>(null);
+
+  useEffect(() => {
+    return () => {
+      const rec = recordingRef.current;
+      if (rec) {
+        recordingRef.current = null;
+        rec.stopAndUnloadAsync().catch((error) => {
+          console.warn('[useAudioRecorder] Failed to clean up recording', error);
+        });
+      }
+    };
+  }, []);
 
   /**
    * Starts a new audio recording session.

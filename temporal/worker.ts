@@ -32,9 +32,23 @@ async function run() {
     taskQueue: 'fitty-ai-tasks',
   });
   
+  // Register graceful shutdown handlers
+  process.on('SIGINT', () => {
+    console.log('Received SIGINT, shutting down worker...');
+    worker.shutdown();
+  });
+  process.on('SIGTERM', () => {
+    console.log('Received SIGTERM, shutting down worker...');
+    worker.shutdown();
+  });
+
   console.log(`Worker connected to ${connectionOptions.address}`);
   console.log(`Listening on task queue: fitty-ai-tasks in namespace: ${process.env.TEMPORAL_NAMESPACE || 'default'}`);
+  
   await worker.run();
+  
+  // Close connection after worker has gracefully stopped
+  await connection.close();
 }
 
 run().catch((err) => {

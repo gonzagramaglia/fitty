@@ -132,7 +132,7 @@ User updates profile → App writes directly to Supabase DB (No AI/Temporal need
 | `photo_top_url` | text | Supabase Storage URL |
 | `photo_side_url` | text | Supabase Storage URL |
 | `voice_note_url` | text | (Optional) Supabase Storage URL for the audio |
-| `transcribed_notes`| text | Text transcribed by OpenAI Whisper |
+| `text_note`| text | Text transcribed by OpenAI Whisper |
 | `bcs_score` | integer | 1 to 9 scale |
 | `ai_reasoning` | text | Explanation provided by Claude 5 Sonnet |
 | `recommendations` | text[] | Array of actionable advice |

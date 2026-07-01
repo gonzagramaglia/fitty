@@ -14,10 +14,14 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// We use the service role key for the backend worker to bypass RLS when inserting
+const supabaseUrl = process.env.SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY for the Temporal worker.');
+}
 const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ''
+  supabaseUrl,
+  supabaseServiceKey
 );
 
 /**
@@ -29,15 +33,30 @@ export async function transcribeAudio(audioUrl: string): Promise<string> {
     return "";
   }
 
-  console.log(`Downloading audio for transcription: ${audioUrl}`);
+  console.log('Downloading audio for transcription...');
   const response = await fetch(audioUrl);
   if (!response.ok) throw new Error(`Failed to download audio: ${response.statusText}`);
   
   const arrayBuffer = await response.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   
+  let ext = '.m4a'; // default
+  try {
+    const urlExt = path.extname(new URL(audioUrl).pathname);
+    if (urlExt) {
+      ext = urlExt;
+    } else {
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('webm')) ext = '.webm';
+      else if (contentType?.includes('mpeg')) ext = '.mp3';
+      else if (contentType?.includes('wav')) ext = '.wav';
+    }
+  } catch (e) {
+    // Ignore URL parse error
+  }
+
   // We need to write to a temp file because OpenAI SDK expects a file stream
-  const tempFilePath = path.join(os.tmpdir(), `audio-${Date.now()}.m4a`);
+  const tempFilePath = path.join(os.tmpdir(), `audio-${Date.now()}${ext}`);
   fs.writeFileSync(tempFilePath, buffer);
 
   try {
@@ -109,7 +128,7 @@ You must respond ONLY with a valid JSON object matching exactly this schema, wit
 
   console.log("Sending prompt to Claude 5 Sonnet...");
   const response = await anthropic.messages.create({
-    model: 'claude-5-sonnet-latest',
+    model: 'claude-sonnet-5',
     max_tokens: 1024,
     temperature: 0.1,
     messages: [
@@ -190,6 +209,7 @@ export async function saveResultToDatabase(
     side_photo_url: sidePhotoUrl,
     voice_note_url: voiceNoteUrl,
     text_note: textNote,
+    status: 'completed',
     bcs_score: aiResult.bcs_score,
     classification: aiResult.classification,
     ai_reasoning: aiResult.ai_reasoning,
@@ -202,4 +222,37 @@ export async function saveResultToDatabase(
   }
 
   console.log("Successfully saved health check to Supabase.");
+}
+
+/**
+ * Inserts a failed health check record into Supabase.
+ */
+export async function saveFailedResultToDatabase(
+  catId: string, 
+  userId: string, 
+  topPhotoUrl: string, 
+  sidePhotoUrl: string, 
+  voiceNoteUrl: string | undefined, 
+  textNote: string, 
+  errorMessage: string
+): Promise<void> {
+  console.log(`Saving failed result to DB for cat: ${catId}`);
+  
+  const { error } = await supabase.from('health_checks').insert({
+    cat_id: catId,
+    user_id: userId,
+    top_photo_url: topPhotoUrl,
+    side_photo_url: sidePhotoUrl,
+    voice_note_url: voiceNoteUrl,
+    text_note: textNote,
+    status: 'failed',
+    ai_reasoning: `Analysis failed: ${errorMessage}`
+  });
+
+  if (error) {
+    console.error("Failed to insert failed health check into database:", error);
+    throw error;
+  }
+
+  console.log("Successfully saved failed health check to Supabase.");
 }

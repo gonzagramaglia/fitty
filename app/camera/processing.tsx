@@ -22,7 +22,8 @@ export default function ProcessingScreen() {
   
   const [dots, setDots] = useState('');
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
-  const [hasError, setHasError] = useState(false);
+  const [isTakingLong, setIsTakingLong] = useState(false);
+  const [hasFailed, setHasFailed] = useState(false);
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   const hasContext = hasVoiceNote || hasTextNote;
@@ -43,7 +44,7 @@ export default function ProcessingScreen() {
 
   // Subscribe to Supabase Realtime for the new health_checks row
   useEffect(() => {
-    if (!activeCatId || hasError) return;
+    if (!activeCatId) return;
 
     const channel = supabase
       .channel('health-check-result')
@@ -56,57 +57,59 @@ export default function ProcessingScreen() {
           filter: `cat_id=eq.${activeCatId}`,
         },
         (payload) => {
-          const newRecord = payload.new as { id: string };
-          if (newRecord?.id) {
-            console.log('[processing] Health check result received:', newRecord.id);
-            // Clear transient state before leaving
-            setProcessingState({ hasVoiceNote: false, hasTextNote: false });
-            router.replace(`/history/${newRecord.id}`);
+          const newRecord = payload.new as { id: string; status: string };
+          if (newRecord?.id && typeof newRecord.id === 'string') {
+            console.log('[processing] Health check result received:', newRecord.id, 'status:', newRecord.status);
+            
+            if (newRecord.status === 'failed') {
+              setHasFailed(true);
+            } else {
+              // Clear transient state before leaving
+              setProcessingState({ hasVoiceNote: false, hasTextNote: false });
+              router.replace(`/history/${newRecord.id}`);
+            }
           }
         }
       )
       .subscribe();
 
-    // Timeout mechanism: fail gracefully after 45 seconds if no result
+    // Instead of failing, we show a reassurance message after 30 seconds
+    // to highlight Temporal's durable execution capabilities.
     const timeoutId = setTimeout(() => {
-      console.warn('[processing] Timeout reached while waiting for Temporal workflow.');
-      setHasError(true);
-      supabase.removeChannel(channel);
-    }, 45000);
+      console.log('[processing] Analysis taking longer than usual.');
+      setIsTakingLong(true);
+    }, 30000);
 
     return () => {
       clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
-  }, [activeCatId, router, hasError, setProcessingState]);
+  }, [activeCatId, router, setProcessingState]);
 
   // Animated dots
   useEffect(() => {
-    if (hasError) return;
     const interval = setInterval(() => {
       setDots(prev => prev.length >= 3 ? '' : prev + '.');
     }, 500);
     return () => clearInterval(interval);
-  }, [hasError]);
+  }, []);
 
   // Text rotation
   useEffect(() => {
-    if (hasError) return;
     const interval = setInterval(() => {
       setLoadingTextIndex((prev) => (prev + 1) % loadingTexts.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, [hasError, loadingTexts.length]);
+  }, [loadingTexts.length]);
 
   // Progress bar animation (simulating progress over 20 seconds)
   useEffect(() => {
-    if (hasError) return;
     Animated.timing(progressAnim, {
       toValue: 90, // Only go to 90% — last 10% is instant on result arrival
       duration: 20000,
       useNativeDriver: false,
     }).start();
-  }, [hasError]);
+  }, []);
 
   const getContextText = () => {
     if (hasVoiceNote) return ' and your voice note';
@@ -114,7 +117,7 @@ export default function ProcessingScreen() {
     return '';
   };
 
-  if (hasError) {
+  if (hasFailed) {
     return (
       <View className="flex-1 bg-[#F8FAFC] justify-center items-center px-8">
         <View className="w-24 h-24 bg-red-50 rounded-3xl items-center justify-center mb-8 border border-red-100">
@@ -122,11 +125,11 @@ export default function ProcessingScreen() {
         </View>
 
         <Text className="text-[#1A303F] text-3xl font-black tracking-tight text-center mb-4">
-          Analysis Timeout
+          Analysis Failed
         </Text>
         
         <Text className="text-[#64748B] text-center text-lg leading-relaxed px-4 mb-10">
-          The AI engine is taking longer than expected. This could be due to heavy server load or an issue analyzing the photos.
+          We encountered an issue while analyzing the photos and could not complete the health check. Please ensure the photos are clear and try again.
         </Text>
 
         <TouchableOpacity 
@@ -137,6 +140,34 @@ export default function ProcessingScreen() {
           }}
         >
           <Text className="text-white font-bold text-lg">Go Back & Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (isTakingLong) {
+    return (
+      <View className="flex-1 bg-[#F8FAFC] justify-center items-center px-8">
+        <View className="w-24 h-24 bg-blue-50 rounded-3xl items-center justify-center mb-8 border border-blue-100">
+          <Sparkles color="#3B82F6" size={40} />
+        </View>
+
+        <Text className="text-[#1A303F] text-3xl font-black tracking-tight text-center mb-4">
+          Durable Execution
+        </Text>
+        
+        <Text className="text-[#64748B] text-center text-lg leading-relaxed px-4 mb-10">
+          The AI analysis is taking a bit longer than usual. Thanks to <Text className="font-bold text-blue-500">Temporal.io</Text>, your request is running durably in the background. You can safely leave this screen and check your dashboard later!
+        </Text>
+
+        <TouchableOpacity 
+          className="bg-primary-cool w-full py-4 rounded-2xl flex-row justify-center shadow-sm"
+          onPress={() => {
+            setProcessingState({ hasVoiceNote: false, hasTextNote: false });
+            router.replace('/(tabs)');
+          }}
+        >
+          <Text className="text-white font-bold text-lg">Go to Dashboard</Text>
         </TouchableOpacity>
       </View>
     );

@@ -2,7 +2,7 @@ import { proxyActivities } from '@temporalio/workflow';
 import type * as activities from './activities';
 
 // Set up the activities for the workflow
-const { transcribeAudio, analyzeImages, saveResultToDatabase } = proxyActivities<typeof activities>({
+const { transcribeAudio, analyzeImages, saveResultToDatabase, saveFailedResultToDatabase } = proxyActivities<typeof activities>({
   startToCloseTimeout: '1 minute',
   retry: {
     initialInterval: '2 seconds',
@@ -52,17 +52,31 @@ export async function analyzeHealthCheck(args: AnalyzeHealthCheckArgs): Promise<
     }
   }
 
-  // 2. Run the AI Model (Anthropic Claude 3.5 Sonnet)
-  const aiResult = await analyzeImages(args.topPhotoUrl, args.sidePhotoUrl, contextText);
+  try {
+    // 2. Run the AI Model (Anthropic Claude 5 Sonnet)
+    const aiResult = await analyzeImages(args.topPhotoUrl, args.sidePhotoUrl, contextText);
 
-  // 3. Save to Supabase
-  await saveResultToDatabase(
-    args.catId, 
-    args.userId, 
-    args.topPhotoUrl, 
-    args.sidePhotoUrl, 
-    args.voiceNoteUrl, 
-    contextText, 
-    aiResult
-  );
+    // 3. Save to Supabase
+    await saveResultToDatabase(
+      args.catId, 
+      args.userId, 
+      args.topPhotoUrl, 
+      args.sidePhotoUrl, 
+      args.voiceNoteUrl, 
+      contextText, 
+      aiResult
+    );
+  } catch (error: any) {
+    console.error('Workflow failed during AI analysis or saving:', error);
+    await saveFailedResultToDatabase(
+      args.catId, 
+      args.userId, 
+      args.topPhotoUrl, 
+      args.sidePhotoUrl, 
+      args.voiceNoteUrl, 
+      contextText, 
+      error.message || 'Unknown error occurred during analysis.'
+    );
+    throw error;
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Platform, ActivityIndicator, TextInput, StyleSheet, Image, Animated } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Audio } from 'expo-av';
@@ -212,29 +212,35 @@ export default function CameraScreen() {
       let voiceUrl = '';
       
       if (topPhoto) {
-        const { publicUrl } = await uploadMedia(topPhoto, 'cat_photos', `${userId}/${activeCatId}/${timestamp}_top.jpg`, 'image/jpeg');
-        if (publicUrl) topUrl = publicUrl;
-        FileSystem.deleteAsync(topPhoto, { idempotent: true }).catch(console.warn);
+        topUrl = await uploadMedia(topPhoto, 'cat_photos', `${userId}/${activeCatId}/${timestamp}_top.jpg`, 'image/jpeg');
       }
       
       if (sidePhoto) {
-        const { publicUrl } = await uploadMedia(sidePhoto, 'cat_photos', `${userId}/${activeCatId}/${timestamp}_side.jpg`, 'image/jpeg');
-        if (publicUrl) sideUrl = publicUrl;
-        FileSystem.deleteAsync(sidePhoto, { idempotent: true }).catch(console.warn);
+        sideUrl = await uploadMedia(sidePhoto, 'cat_photos', `${userId}/${activeCatId}/${timestamp}_side.jpg`, 'image/jpeg');
       }
 
       if (audioUri) {
-        // usually expo-av saves as .m4a or .caf
-        const ext = Platform.OS === 'ios' ? 'caf' : 'm4a';
-        const { publicUrl } = await uploadMedia(audioUri, 'voice_notes', `${userId}/${activeCatId}/${timestamp}_voice.${ext}`, `audio/${ext}`);
-        if (publicUrl) voiceUrl = publicUrl;
-        FileSystem.deleteAsync(audioUri, { idempotent: true }).catch(console.warn);
+        const ext = 'm4a'; // use .m4a to ensure Whisper compatibility
+        voiceUrl = await uploadMedia(audioUri, 'voice_notes', `${userId}/${activeCatId}/${timestamp}_voice.${ext}`, `audio/${ext}`);
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("No active authentication session");
       }
 
       // Trigger Temporal Workflow via API route
-      const analyzeResponse = await fetch('/api/analyze', {
+      // Native needs absolute URL
+      const baseUrl = Platform.OS === 'web' 
+        ? '' 
+        : (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8081');
+      
+      const analyzeResponse = await fetch(`${baseUrl}/api/analyze`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
           catId: activeCatId,
           userId,
@@ -242,6 +248,7 @@ export default function CameraScreen() {
           sidePhotoUrl: sideUrl,
           voiceNoteUrl: voiceUrl || undefined,
           textNote: fallbackText.trim() || undefined,
+          requestId: timestamp.toString(),
         }),
       });
       
@@ -251,12 +258,15 @@ export default function CameraScreen() {
       
       const analyzeResult = await analyzeResponse.json();
       if (!analyzeResult.success) {
-        console.error('[camera] Failed to start analysis:', analyzeResult.error);
-        setStep('voice');
-        return;
+        throw new Error(analyzeResult.error || "Failed to start analysis");
       }
 
-      console.log('[camera] Workflow started:', analyzeResult.data.workflowId);
+      // Cleanup local files only after successful upload AND workflow start
+      if (topPhoto) FileSystem.deleteAsync(topPhoto, { idempotent: true }).catch(console.warn);
+      if (sidePhoto) FileSystem.deleteAsync(sidePhoto, { idempotent: true }).catch(console.warn);
+      if (audioUri) FileSystem.deleteAsync(audioUri, { idempotent: true }).catch(console.warn);
+
+      console.log('[camera] Workflow started:', analyzeResult.workflowId);
       
       // Save context info to the CameraContext to hide it from URL params
       setProcessingState({

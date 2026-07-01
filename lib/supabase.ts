@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // A custom storage adapter that avoids accessing window on the server (SSR)
-const customStorageAdapter: any = {
+const customStorageAdapter: import('@supabase/supabase-js').SupportedStorage = {
   getItem: (key: string) => {
     if (typeof window === 'undefined') return Promise.resolve(null);
     return AsyncStorage.getItem(key);

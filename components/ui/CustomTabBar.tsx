@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
 import { House, Clock, User, Camera } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 /**
  * CustomTabBar is a custom bottom navigation bar for the application.
@@ -11,7 +12,6 @@ import { House, Clock, User, Camera } from 'lucide-react-native';
  * @returns The rendered React element for the custom tab bar.
  */
 export function CustomTabBar({ state, descriptors, navigation }: any) {
-  const { useRouter } = require('expo-router');
   const router = useRouter();
 
   return (

@@ -19,12 +19,13 @@ jest.mock('openai', () => {
 });
 
 jest.mock('@anthropic-ai/sdk', () => {
+  const createMock = jest.fn().mockResolvedValue({
+    content: [{ text: '```json\n{"bcs_score": 5, "classification": "Ideal", "ai_reasoning": "Looks perfect from both angles", "recommendations": ["Keep doing what you are doing"]}\n```' }]
+  });
   return jest.fn().mockImplementation(() => {
     return {
       messages: {
-        create: jest.fn().mockResolvedValue({
-          content: [{ text: '```json\n{"bcs_score": 5, "classification": "Ideal", "ai_reasoning": "Looks perfect from both angles", "recommendations": ["Keep doing what you are doing"]}\n```' }]
-        })
+        create: createMock
       }
     };
   });
@@ -86,6 +87,13 @@ describe('Temporal Activities — AI Workflow', () => {
       expect(result.classification).toBe('Ideal');
       expect(result.ai_reasoning).toBe('Looks perfect from both angles');
       expect(result.recommendations.length).toBe(1);
+      
+      const anthropic = new Anthropic({ apiKey: 'dummy' });
+      expect(anthropic.messages.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: 'claude-sonnet-5'
+        })
+      );
     });
 
     it('throws an error if ANTHROPIC_API_KEY is missing', async () => {
@@ -104,8 +112,22 @@ describe('Temporal Activities — AI Workflow', () => {
       };
       
       await saveResultToDatabase('cat-id-123', 'user-id-456', 'top', 'side', undefined, 'no note', mockAiResult);
-      // Since createClient is mocked, this should not throw an error if successful.
-      expect(true).toBe(true);
+      
+      const { createClient } = require('@supabase/supabase-js');
+      const supabase = createClient();
+      expect(supabase.from().insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cat_id: 'cat-id-123',
+          user_id: 'user-id-456',
+          photo_top_url: 'top',
+          photo_side_url: 'side',
+          status: 'completed',
+          bcs_score: 5,
+          classification: "Ideal",
+          ai_reasoning: "Looks perfect",
+          recommendations: ["Keep it up"]
+        })
+      );
     });
   });
 });

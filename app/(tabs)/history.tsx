@@ -114,7 +114,7 @@ export default function HistoryScreen() {
   const chartData = history.map((record) => ({
     date: record.created_at,
     score: record.bcs_score,
-  }));
+  })).reverse();
 
   return (
     <View className="flex-1 bg-surface">

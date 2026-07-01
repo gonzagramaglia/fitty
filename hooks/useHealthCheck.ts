@@ -30,11 +30,15 @@ export function useHealthCheck(id: string) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchHealthCheck() {
       if (!id) {
-        setIsLoading(false);
-        setHealthCheck(null);
-        setError(null);
+        if (!cancelled) {
+          setIsLoading(false);
+          setHealthCheck(null);
+          setError(null);
+        }
         return;
       }
 
@@ -53,16 +57,26 @@ export function useHealthCheck(id: string) {
           .single();
 
         if (fetchError) throw fetchError;
-        setHealthCheck(data as HealthCheckDetail);
+        if (!cancelled) {
+          setHealthCheck(data as HealthCheckDetail);
+        }
       } catch (err: any) {
-        console.error("[useHealthCheck] error fetching health check detail", err);
-        setError(err.message || "Failed to fetch health check details");
+        if (!cancelled) {
+          console.error("[useHealthCheck] error fetching health check detail", err);
+          setError(err.message || "Failed to fetch health check details");
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     }
 
     fetchHealthCheck();
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   return { healthCheck, isLoading, error };

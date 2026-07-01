@@ -111,7 +111,9 @@ export function TrendChart({ data }: Props) {
           const getPercent = (i: number) => (i / xMax) * 100;
 
           const getSegmentColor = (i: number) => {
-            if (scores[i + 1] === 5) return 'rgba(16, 185, 129, 0.8)'; // green
+            const score = scores[i + 1];
+            if (score === 5) return 'rgba(16, 185, 129, 0.8)'; // green
+            if (score <= 2 || score >= 8) return 'rgba(239, 68, 68, 0.8)'; // red
             return 'rgba(234, 179, 8, 0.8)'; // yellow
           };
 

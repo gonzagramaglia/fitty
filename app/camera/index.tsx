@@ -29,7 +29,7 @@ export default function CameraScreen() {
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const [audioPermissionResponse, requestAudioPermission] = Audio.usePermissions();
-  const { activeCatId } = useActiveCat();
+  const { activeCatId, setSelectedCheckId } = useActiveCat();
   const [userId, setUserId] = useState<string | null>(null);
 
   const { cameraRef, topPhoto, sidePhoto, isCapturing, capturePhoto, setManualPhoto, clearPhoto } = useCameraCapture();
@@ -217,7 +217,7 @@ export default function CameraScreen() {
 
       // Simulate backend processing time
       await new Promise((resolve) => setTimeout(resolve, 3000));
-      const { error } = await supabase.from('health_checks').insert({
+      const { data, error } = await supabase.from('health_checks').insert({
         cat_id: activeCatId,
         user_id: userId,
         top_photo_url: topPhoto || null,
@@ -225,14 +225,23 @@ export default function CameraScreen() {
         bcs_score: 7,
         classification: "Overweight",
         ai_reasoning: "The top-down photo shows a significantly widened abdominal profile without a discernible waistline. The side profile reveals a noticeable abdominal pad. Ribs are not easily palpable.",
+        text_note: text.trim() || null,
+        voice_note_url: audioUri || null,
         recommendations: [
           { title: "Nutrition", description: "Reduce daily caloric intake by 10%." },
           { title: "Exercise", description: "Encourage 15 minutes of active play twice a day." },
           { title: "Diet", description: "Switch to a high-protein, low-carb wet food diet." }
         ],
         status: "completed"
-      });
+      }).select('id').single();
+      
       if (error) throw error;
+      
+      // Fallback navigation in case realtime subscription in ProcessingScreen doesn't fire
+      setTimeout(() => {
+        setSelectedCheckId(data.id);
+        router.push('/(tabs)/history');
+      }, 500);
     } catch (error) {
       console.error("Failed to finalize capture:", error);
       setProcessingState({ hasVoiceNote: false, hasTextNote: false });

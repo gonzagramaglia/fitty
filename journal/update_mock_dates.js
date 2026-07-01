@@ -31,6 +31,10 @@ async function run() {
   const userId = targetUserId;
   const validTopPhoto = checks.find(c => c.top_photo_url)?.top_photo_url || null;
   const validSidePhoto = checks.find(c => c.side_photo_url)?.side_photo_url || null;
+  
+  if (!validTopPhoto || !validSidePhoto) {
+    throw new Error('No valid top or side photo URL found in existing checks.');
+  }
 
   // If there are less than 6, create the missing ones
   const needed = 6 - checks.length;
@@ -39,6 +43,7 @@ async function run() {
       cat_id: catId,
       user_id: userId,
       bcs_score: 5,
+      classification: 'Ideal',
       status: 'completed',
       top_photo_url: validTopPhoto,
       side_photo_url: validSidePhoto,
@@ -128,11 +133,17 @@ async function run() {
     const check = checks[i];
     const newDate = new Date(`2026-0${i + 2}-02T12:00:00Z`); // Feb to Jul
     const data = mockData[i];
+    let classification = 'Ideal';
+    if (data.score <= 3) classification = 'Underweight';
+    else if (data.score === 4) classification = 'Slightly Underweight';
+    else if (data.score >= 7) classification = 'Overweight';
+    else if (data.score === 6) classification = 'Slightly Overweight';
     
     const { error: updateError } = await supabase
       .from('health_checks')
       .update({
         bcs_score: data.score,
+        classification,
         status: 'completed',
         created_at: newDate.toISOString(),
         top_photo_url: validTopPhoto,

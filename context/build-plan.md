@@ -118,13 +118,13 @@ Implement the data collection flow up to the cloud.
 - Upload all media to Supabase Storage (`cat_photos`, `voice_notes`)
 - Navigate to processing screen
 
-### 11 AI Workflow & Extraction Logic (Temporal + AWS)
+### 11 AI Workflow & Extraction Logic (Temporal + Anthropic + OpenAI)
 Trigger the Temporal workflow to process the media and extract the BCS score.
 
 **Logic:**
 - App sends POST request to backend API route triggering Temporal Workflow
-- Temporal worker calls AWS Transcribe API with audio URL to extract raw text (if voice note is present)
-- Temporal worker calls AWS Bedrock (Claude 4.3 Sonnet) passing photos and text context
+- Temporal worker calls OpenAI Whisper API with audio URL to extract raw text (if voice note is present)
+- Temporal worker calls Anthropic API (Claude 5 Sonnet) passing photos and text context
 - Claude returns structured JSON matching the DB schema
 - Temporal worker inserts the structured JSON results into the `health_checks` table
 - App listens to Supabase Realtime for the new `health_checks` row to appear, then navigates to Results screen

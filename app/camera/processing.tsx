@@ -1,17 +1,25 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, ActivityIndicator, Animated } from 'react-native';
 import { Sparkles } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { useCameraContext } from './_layout';
+import { supabase } from '../../lib/supabase';
+import { useActiveCat } from '../../lib/ActiveCatContext';
 
 /**
  * Screen displayed while the AI is processing the captured health check data.
- * Simulates a loading state while awaiting the Temporal workflow completion.
- * 
+ * Subscribes to Supabase Realtime to detect when the Temporal workflow
+ * has finished inserting the result into the health_checks table.
+ * Automatically navigates to the Results screen once the row appears.
+ *
  * @returns React component rendering the processing view.
  */
 export default function ProcessingScreen() {
+  const router = useRouter();
   const { processingState } = useCameraContext();
+  const { activeCatId } = useActiveCat();
   const { hasVoiceNote, hasTextNote } = processingState;
+  
   const [dots, setDots] = useState('');
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -32,6 +40,35 @@ export default function ProcessingScreen() {
     "Generating final health report..."
   ];
 
+  // Subscribe to Supabase Realtime for the new health_checks row
+  useEffect(() => {
+    if (!activeCatId) return;
+
+    const channel = supabase
+      .channel('health-check-result')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'health_checks',
+          filter: `cat_id=eq.${activeCatId}`,
+        },
+        (payload) => {
+          const newRecord = payload.new as { id: string };
+          if (newRecord?.id) {
+            console.log('[processing] Health check result received:', newRecord.id);
+            router.replace(`/history/${newRecord.id}`);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeCatId, router]);
+
   // Animated dots
   useEffect(() => {
     const interval = setInterval(() => {
@@ -48,12 +85,12 @@ export default function ProcessingScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  // Progress bar animation (simulating progress over 15 seconds)
+  // Progress bar animation (simulating progress over 20 seconds)
   useEffect(() => {
     Animated.timing(progressAnim, {
-      toValue: 100,
-      duration: 15000,
-      useNativeDriver: false, // width animation doesn't support native driver
+      toValue: 90, // Only go to 90% — last 10% is instant on result arrival
+      duration: 20000,
+      useNativeDriver: false,
     }).start();
   }, []);
 
@@ -78,7 +115,7 @@ export default function ProcessingScreen() {
       </Text>
       
       <Text className="text-[#64748B] text-center text-lg leading-relaxed px-4 mb-10">
-        Claude 4.3 Sonnet is currently <Text className="font-bold text-[#1A303F]">evaluating the top & side photos{getContextText()}</Text> to determine the BCS score.
+        Claude 5 Sonnet is currently <Text className="font-bold text-[#1A303F]">evaluating the top & side photos{getContextText()}</Text> to determine the BCS score.
       </Text>
 
       {/* Progress Bar Container */}

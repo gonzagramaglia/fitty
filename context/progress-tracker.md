@@ -80,13 +80,13 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] Capture & compress top and side photos
   - [x] Record & save audio note
   - [x] Upload all media to Supabase Storage
-- [ ] **11 AI Workflow & Extraction Logic (Temporal + AWS)**
-  - [ ] Scaffold Expo API route for webhook/trigger (`app/api/temporal+api.ts`)
-  - [ ] Create Temporal workflow file
-  - [ ] Implement AWS Transcribe activity (Audio → Text)
-  - [ ] Implement AWS Bedrock activity (Photos + Text → BCS JSON)
-  - [ ] Insert result into `health_checks` table
-  - [ ] App listens via Realtime for new DB row to navigate
+- [x] **11 AI Workflow & Extraction Logic (Temporal + Anthropic + OpenAI)**
+  - [x] Scaffold Expo API route for webhook/trigger (`app/api/analyze+api.ts`)
+  - [x] Create Temporal workflow file
+  - [x] Implement OpenAI Whisper activity (Audio → Text)
+  - [x] Implement Anthropic API activity (Photos + Text → BCS JSON)
+  - [x] Insert result into `health_checks` table
+  - [x] App listens via Realtime for new DB row to navigate
 
 ## Phase 6 — Results & History
 - [ ] **12 Results Screen — Full UI & Logic**

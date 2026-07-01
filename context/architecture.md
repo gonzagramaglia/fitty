@@ -8,8 +8,8 @@
 | State Management | React Context + AsyncStorage | Global state for the active cat ID (`ActiveCatContext`) |
 | Auth + DB + Storage | Supabase | Entire backend (User sessions, Postgres DB, Photo storage) |
 | Durable Execution | Temporal.io | Reliable orchestration of AI workflows, retries, and background jobs |
-| AI Model (Vision & Logic) | Amazon Bedrock (Claude 4.3 Sonnet) | Extracting visual features from photos, scoring BCS, and generating reasoning |
-| AI Model (Audio) | Amazon Transcribe | Transcribing user voice notes into text for the AI context |
+| AI Model (Vision & Logic) | Anthropic API (Claude 5 Sonnet) | Extracting visual features from photos, scoring BCS, and generating reasoning |
+| AI Model (Audio) | OpenAI API (Whisper) | Transcribing user voice notes into text for the AI context |
 | Security & CI/CD | Aikido Security | Automated vulnerability scanning and code security checks in GitHub Actions |
 
 ---
@@ -81,9 +81,9 @@ App directly uploads photos to Supabase Storage
   ↓
 App triggers Temporal Workflow (passing photo URLs and voice audio)
   ↓
-Temporal worker calls AWS Transcribe (converts audio → text)
+Temporal worker calls OpenAI Whisper API (converts audio → text)
   ↓
-Temporal worker calls AWS Bedrock (Claude 4.3 Sonnet) with photos + text
+Temporal worker calls Anthropic API (Claude 5 Sonnet) with photos + text
   ↓
 Temporal worker writes BCS result, reasoning, and transcribed text to Supabase `health_checks` table
   ↓
@@ -132,9 +132,9 @@ User updates profile → App writes directly to Supabase DB (No AI/Temporal need
 | `photo_top_url` | text | Supabase Storage URL |
 | `photo_side_url` | text | Supabase Storage URL |
 | `voice_note_url` | text | (Optional) Supabase Storage URL for the audio |
-| `transcribed_notes`| text | Text transcribed by Amazon Transcribe |
+| `transcribed_notes`| text | Text transcribed by OpenAI Whisper |
 | `bcs_score` | integer | 1 to 9 scale |
-| `ai_reasoning` | text | Explanation provided by Claude 4.3 Sonnet |
+| `ai_reasoning` | text | Explanation provided by Claude 5 Sonnet |
 | `recommendations` | text[] | Array of actionable advice |
 | `created_at` | timestamp | When the check was performed |
 
@@ -148,7 +148,7 @@ Rules the AI agent must never violate when writing or modifying code:
 - Temporal workflow code never imports from UI components or Expo routes. Workflows must be completely decoupled from the frontend.
 - All Supabase mutations (writes/updates) must use the properly initialized Supabase client and respect TypeScript types.
 - No hardcoded hex values or raw color strings in styles — always use design tokens from a centralized theme file (e.g., `ui-tokens`).
-- Every AWS Bedrock (Claude) and Transcribe API call must be wrapped in try/catch and orchestrated through Temporal. Failures are handled gracefully, never thrown directly to crash the mobile app.
+- Every OpenAI and Anthropic API call must be wrapped in try/catch and orchestrated through Temporal. Failures are handled gracefully, never thrown directly to crash the mobile app.
 - The `cats` profile table is never modified automatically by an AI health check result. The AI only inserts new records into the `health_checks` table.
 - Before saving a new health check, ensure the photos have successfully uploaded to Supabase Storage and valid URLs are returned.
 - Always scope Supabase queries to the current authenticated user — never query or update records without enforcing Row Level Security (RLS).

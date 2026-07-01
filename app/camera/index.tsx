@@ -219,8 +219,32 @@ export default function CameraScreen() {
         if (publicUrl) voiceUrl = publicUrl;
       }
 
-      // TODO: Trigger Temporal Workflow with the URLs and fallbackText
-      console.log("Uploads complete:", { topUrl, sideUrl, voiceUrl, fallbackText });
+      // Trigger Temporal Workflow via API route
+      const analyzeResponse = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          catId: activeCatId,
+          userId,
+          topPhotoUrl: topUrl,
+          sidePhotoUrl: sideUrl,
+          voiceNoteUrl: voiceUrl || undefined,
+          textNote: fallbackText.trim() || undefined,
+        }),
+      });
+      
+      if (!analyzeResponse.ok) {
+        throw new Error("Failed to start analysis workflow");
+      }
+      
+      const analyzeResult = await analyzeResponse.json();
+      if (!analyzeResult.success) {
+        console.error('[camera] Failed to start analysis:', analyzeResult.error);
+        setStep('voice');
+        return;
+      }
+
+      console.log('[camera] Workflow started:', analyzeResult.data.workflowId);
       
       // Save context info to the CameraContext to hide it from URL params
       setProcessingState({

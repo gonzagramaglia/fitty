@@ -8,6 +8,7 @@ import { useFocusEffect } from 'expo-router';
 import { useActiveCat } from '../../lib/ActiveCatContext';
 import { supabase } from '../../lib/supabase';
 import { validateCatProfile, FieldError } from '../../lib/catProfileValidator';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 /**
  * ProfileScreen provides the interface for managing owner and cat profiles.
@@ -43,6 +44,13 @@ export default function ProfileScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<FieldError[]>([]);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   // Computed state for UI
   const isComplete = name.trim() !== '' && age.trim() !== '' && weight.trim() !== '';
@@ -298,14 +306,80 @@ export default function ProfileScreen() {
 
   const getFieldError = (field: string) => errors.find(e => e.field === field)?.message;
 
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-surface">
+        <View className="flex-1 bg-surface">
+          <ScrollView ref={scrollViewRef} className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} bounces={false}>
+            {/* Skeleton Dark Header Container */}
+            <View 
+              className="bg-[#1A2530] rounded-b-[2.5rem] px-6 pb-6 mb-6" 
+              style={{ paddingTop: Platform.OS === 'web' ? 72 : Math.max(insets.top + 16, 60) }}
+            >
+              <View className="mb-8 flex-row items-center justify-between">
+                <View className="flex-1 mr-4">
+                  <Text className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Owner Profile</Text>
+                  <Skeleton width={150} height={36} borderRadius={8} className="bg-white/10" />
+                </View>
+                <Skeleton width={56} height={56} borderRadius={28} className="bg-white/10 border-2 border-[#2A3B4C]" />
+              </View>
+
+              <View className="mb-2">
+                <Text className="text-white/60 text-xs font-bold uppercase tracking-widest mb-3">Manage Your Cats</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+                  <Skeleton width={120} height={40} borderRadius={20} className="mr-3 bg-white/20" />
+                  <Skeleton width={100} height={40} borderRadius={20} className="mr-3 bg-white/10" />
+                  <Skeleton width={100} height={40} borderRadius={20} className="bg-white/10" />
+                </ScrollView>
+              </View>
+            </View>
+
+            {/* Skeleton Body */}
+            <View className="px-6 pt-6">
+              <Skeleton width={160} height={28} borderRadius={8} className="mb-8" />
+              
+              <View className="items-center mb-10">
+                <Skeleton width={128} height={128} borderRadius={32} />
+                <Skeleton width={120} height={16} borderRadius={4} className="mt-4" />
+              </View>
+
+              <View className="flex-row gap-4 mb-5">
+                <View style={{ flex: 2 }}>
+                  <Skeleton width={80} height={20} borderRadius={4} className="mb-2" />
+                  <Skeleton width="100%" height={56} borderRadius={16} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Skeleton width={40} height={20} borderRadius={4} className="mb-2" />
+                  <Skeleton width="100%" height={56} borderRadius={16} />
+                </View>
+              </View>
+
+              <View className="mb-5">
+                <Skeleton width={60} height={20} borderRadius={4} className="mb-2" />
+                <Skeleton width="100%" height={56} borderRadius={16} />
+              </View>
+              
+              <View className="mb-8">
+                <Skeleton width={60} height={20} borderRadius={4} className="mb-2" />
+                <Skeleton width="100%" height={56} borderRadius={16} />
+              </View>
+
+              <Skeleton width="100%" height={56} borderRadius={28} />
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView className="flex-1 bg-surface">
+    <View className="flex-1 bg-surface">
     <KeyboardAvoidingView 
       style={{ flex: 1 }} 
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View className="flex-1 bg-surface">
-        <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} bounces={false}>
+        <ScrollView ref={scrollViewRef} className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} bounces={false}>
           
           {/* Dark Header Container */}
           <View 
@@ -370,6 +444,12 @@ export default function ProfileScreen() {
             <View className="mb-2">
               <Text className="text-white/60 text-xs font-bold uppercase tracking-widest mb-3">Manage Your Cats</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+                {isLoading && cats.length === 0 && (
+                  <>
+                    <Skeleton width={100} height={40} borderRadius={20} className="mr-3 bg-white/20" />
+                    <Skeleton width={80} height={40} borderRadius={20} className="mr-3 bg-white/20" />
+                  </>
+                )}
                 {[...cats].sort((a, b) => a.id === activeCatId ? -1 : b.id === activeCatId ? 1 : 0).map(c => (
                   <TouchableOpacity
                     key={c.id}
@@ -387,13 +467,15 @@ export default function ProfileScreen() {
                   </TouchableOpacity>
                 ))}
                 
-                <TouchableOpacity
-                  onPress={() => setIsCreatingNew(true)}
-                  className={`flex-row items-center px-4 py-2 rounded-full ${isCreatingNew ? 'bg-[#74B7B5]' : 'border border-dashed border-[#74B7B5] bg-transparent'}`}
-                >
-                  <Plus size={18} color={isCreatingNew ? 'white' : '#74B7B5'} />
-                  <Text className={`font-semibold ml-1 ${isCreatingNew ? 'text-white' : 'text-[#74B7B5]'}`}>Add Cat</Text>
-                </TouchableOpacity>
+                {!isLoading && (
+                  <TouchableOpacity
+                    onPress={() => setIsCreatingNew(true)}
+                    className={`flex-row items-center px-4 py-2 rounded-full ${isCreatingNew ? 'bg-[#74B7B5]' : 'border border-dashed border-[#74B7B5] bg-transparent'}`}
+                  >
+                    <Plus size={18} color={isCreatingNew ? 'white' : '#74B7B5'} />
+                    <Text className={`font-semibold ml-1 ${isCreatingNew ? 'text-white' : 'text-[#74B7B5]'}`}>Add Cat</Text>
+                  </TouchableOpacity>
+                )}
               </ScrollView>
             </View>
           </View>
@@ -514,6 +596,6 @@ export default function ProfileScreen() {
         </ScrollView>
       </View>
     </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }

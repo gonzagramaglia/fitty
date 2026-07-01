@@ -89,12 +89,12 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] App listens via Realtime for new DB row to navigate
 
 ## Phase 6 — Results & History
-- [ ] **12 Results Screen — Full UI & Logic**
-  - [ ] Build BCS Score Gauge component
-  - [ ] Build AI Reasoning card
-  - [ ] Build Recommendations list
-  - [ ] Fetch data by `id` and populate UI
-- [ ] **13 History & Trends — Full UI & Logic**
-  - [ ] Build History List UI (rows of past checks)
-  - [ ] Build Trend Chart UI (line chart)
-  - [ ] Fetch and format data from `health_checks`
+- [x] **12 Results Screen — Full UI & Logic**
+  - [x] Build BCS Score Gauge component
+  - [x] Build AI Reasoning card
+  - [x] Build Recommendations list
+  - [x] Fetch data by `id` and populate UI
+- [x] **13 History & Trends — Full UI & Logic**
+  - [x] Build History List UI (rows of past checks)
+  - [x] Build Trend Chart UI (line chart)
+  - [x] Fetch and format data from `health_checks`

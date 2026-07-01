@@ -14,11 +14,11 @@ export default function Root({ children }: PropsWithChildren) {
         <title>Fitty | AI Cat Health Tracker</title>
         <meta name="description" content="Fitty - AI Cat Health Tracker" />
 
-        <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicons/favicon-16x16.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicons/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="96x96" href="/assets/favicons/favicon-96x96.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicons/apple-icon-180x180.png" />
-        <link rel="manifest" href="/assets/favicons/manifest.json" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicons/favicon-96x96.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-icon-180x180.png" />
+        <link rel="manifest" href="/favicons/manifest.json" />
 
         <style dangerouslySetInnerHTML={{ __html: `
           body {

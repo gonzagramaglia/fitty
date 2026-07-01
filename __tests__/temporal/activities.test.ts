@@ -20,7 +20,7 @@ jest.mock('openai', () => {
 
 jest.mock('@anthropic-ai/sdk', () => {
   const createMock = jest.fn().mockResolvedValue({
-    content: [{ text: '```json\n{"bcs_score": 5, "classification": "Ideal", "ai_reasoning": "Looks perfect from both angles", "recommendations": ["Keep doing what you are doing"]}\n```' }]
+    content: [{ text: '```json\n{"bcs_score": 5, "classification": "Ideal", "ai_reasoning": "Looks perfect from both angles", "recommendations": [{"title": "Keep it up", "description": "Maintain the current feeding and play routine."}]}\n```' }]
   });
   return jest.fn().mockImplementation(() => {
     return {
@@ -108,7 +108,7 @@ describe('Temporal Activities — AI Workflow', () => {
         bcs_score: 5,
         classification: "Ideal",
         ai_reasoning: "Looks perfect",
-        recommendations: ["Keep it up"]
+        recommendations: [{ title: "Keep it up", description: "Good job" }]
       };
       
       await saveResultToDatabase('cat-id-123', 'user-id-456', 'top', 'side', undefined, 'no note', mockAiResult);
@@ -119,13 +119,13 @@ describe('Temporal Activities — AI Workflow', () => {
         expect.objectContaining({
           cat_id: 'cat-id-123',
           user_id: 'user-id-456',
-          photo_top_url: 'top',
-          photo_side_url: 'side',
+          top_photo_url: 'top',
+          side_photo_url: 'side',
           status: 'completed',
           bcs_score: 5,
           classification: "Ideal",
           ai_reasoning: "Looks perfect",
-          recommendations: ["Keep it up"]
+          recommendations: [{ title: "Keep it up", description: "Good job" }]
         })
       );
     });

@@ -7143,6 +7143,11 @@ path-scurry@^2.0.2:
     lru-cache "^11.0.0"
     minipass "^7.1.2"
 
+paths-js@^0.4.11:
+  version "0.4.11"
+  resolved "https://registry.yarnpkg.com/paths-js/-/paths-js-0.4.11.tgz#b2a9d5f94ee9949aa8fee945f78a12abff44599e"
+  integrity sha512-3mqcLomDBXOo7Fo+UlaenG6f71bk1ZezPQy2JCmYHy2W2k5VKpP+Jbin9H0bjXynelTbglCqdFhSEkeIkKTYUA==
+
 picocolors@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/picocolors/-/picocolors-1.1.1.tgz#3d321af3eab939b083c8f929a1d12cda81c26b6b"
@@ -7426,6 +7431,13 @@ react-freeze@^1.0.0:
   version "19.2.7"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.2.7.tgz#57668ee86a78574a542b0a539455212b2c086df2"
   integrity sha512-kZFnouyVv7eP/Phmrlo9FK+zcAdriZJvzxXHF1Sl1P377WSGe2G/JxVolhTrB/jeV47lKImhNUsijjHAAbcl/A==
+
+react-native-chart-kit@^7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/react-native-chart-kit/-/react-native-chart-kit-7.0.1.tgz#8d89dc36da41ad087b0a7213814b272a0f9777ab"
+  integrity sha512-NHJc7LpMAJ1N1idlfEqhFEKJu5GZYLNmp5YxpFIaRjWACdOzJ9/FFcg2O25BEIE47uAwfWCaab9jhGpShagh5A==
+  dependencies:
+    paths-js "^0.4.11"
 
 react-native-css-interop@0.2.6:
   version "0.2.6"

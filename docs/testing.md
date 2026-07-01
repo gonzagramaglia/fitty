@@ -192,6 +192,23 @@ Tests the backend worker logic that handles OpenAI, Anthropic, and Supabase inte
 | Realtime DB listening | App in Processing state | Subscribes to Supabase `cat_health_checks` | ✅ |
 | Error Handling | API fails / Timeout | App shows error state, allows retry | ✅ |
 
+### Phase 6 — Results & History
+
+| Feature | Condition | Expected Outcome | Result |
+|---------|-----------|-----------------|--------|
+| Results — Fetch Logic | Open `history/[id]` | Fetches record by ID and populates UI | ✅ |
+| Results — BCS Gauge | Render gauge component | Correctly highlights Ideal/Underweight/Overweight colors based on score | ✅ |
+| Results — Image Fallbacks | No images in record | Shows "No image" placeholders gracefully | ✅ |
+| History — Fetch Logic | Open History Tab | Fetches all completed checks for active cat | ✅ |
+| History — Empty State | No history exists | Shows "No history yet" placeholder card | ✅ |
+| History — Trend Chart | At least 2 checks exist | Line chart renders correctly with min/max scale 1-9 | ✅ |
+| History — List Rows | Checks exist | Renders a row for each check, sorted newest first | ✅ |
+| History — Tab Reset | Click active History tab | Clears detail view, returns to main history list | ✅ |
+| Navigation | Click History Row | Navigates to `history/[id]` | ✅ |
+| Results — Notes UI | Record has voice/text notes | Displays 'Additional Context' card with appropriate Mic/File icon | ✅ |
+| Results — Recommendations | Record has structured recommendations | Displays title and description bullet points | ✅ |
+| Results — AI Reasoning | Record has reasoning text | Displays AI Reasoning card with Brain icon | ✅ |
+
 ---
 
-*This document is updated at the end of each phase. Last updated: Phase 5.*
+*This document is updated at the end of each phase. Last updated: Phase 6.*

@@ -10,6 +10,8 @@ import { supabase } from './supabase';
 type ActiveCatContextType = {
   activeCatId: string | null;
   setActiveCatId: (id: string | null) => Promise<void>;
+  selectedCheckId: string | null;
+  setSelectedCheckId: (id: string | null) => void;
   isLoading: boolean;
 };
 
@@ -19,6 +21,8 @@ type ActiveCatContextType = {
 const ActiveCatContext = createContext<ActiveCatContextType>({
   activeCatId: null,
   setActiveCatId: async () => {},
+  selectedCheckId: null,
+  setSelectedCheckId: () => {},
   isLoading: true,
 });
 
@@ -31,6 +35,7 @@ const ActiveCatContext = createContext<ActiveCatContextType>({
  */
 export const ActiveCatProvider = ({ children }: { children: React.ReactNode }) => {
   const [activeCatId, setActiveCatIdState] = useState<string | null>(null);
+  const [selectedCheckId, setSelectedCheckId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -76,7 +81,7 @@ export const ActiveCatProvider = ({ children }: { children: React.ReactNode }) =
   };
 
   return (
-    <ActiveCatContext.Provider value={{ activeCatId, setActiveCatId, isLoading }}>
+    <ActiveCatContext.Provider value={{ activeCatId, setActiveCatId, selectedCheckId, setSelectedCheckId, isLoading }}>
       {children}
     </ActiveCatContext.Provider>
   );

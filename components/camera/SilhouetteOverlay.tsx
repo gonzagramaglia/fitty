@@ -13,6 +13,12 @@ const { width, height } = Dimensions.get('window');
  * for the photo. Uses react-native-svg for precise cat shapes.
  * Includes a neon scanner animation going up and down.
  */
+/**
+ * SilhouetteOverlay renders a semi-transparent dashed outline to guide the user
+ * when taking photos of their cat. It switches between 'top' and 'side' views.
+ *
+ * @param props - Component props containing the type of silhouette to render ('top' | 'side').
+ */
 export function SilhouetteOverlay({ type }: SilhouetteOverlayProps) {
   const scanAnim = useRef(new Animated.Value(0)).current;
 

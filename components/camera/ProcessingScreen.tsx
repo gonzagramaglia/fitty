@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { View, Text, ActivityIndicator, Animated, TouchableOpacity } from 'react-native';
-import { Sparkles, AlertCircle } from 'lucide-react-native';
+import { Sparkles, AlertCircle, Home } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useCameraContext } from './_layout';
+import { useCameraContext } from '../../app/camera/_layout';
 import { supabase } from '../../lib/supabase';
 import { useActiveCat } from '../../lib/ActiveCatContext';
 
@@ -17,9 +17,9 @@ import { useActiveCat } from '../../lib/ActiveCatContext';
 export default function ProcessingScreen() {
   const router = useRouter();
   const { processingState, setProcessingState } = useCameraContext();
-  const { activeCatId } = useActiveCat();
+  const { activeCatId, setSelectedCheckId } = useActiveCat();
   const { hasVoiceNote, hasTextNote } = processingState;
-  
+
   const [dots, setDots] = useState('');
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [isTakingLong, setIsTakingLong] = useState(false);
@@ -60,13 +60,14 @@ export default function ProcessingScreen() {
           const newRecord = payload.new as { id: string; status: string };
           if (newRecord?.id && typeof newRecord.id === 'string') {
             console.log('[processing] Health check result received:', newRecord.id, 'status:', newRecord.status);
-            
+
             if (newRecord.status === 'failed') {
               setHasFailed(true);
             } else {
               // Clear transient state before leaving
               setProcessingState({ hasVoiceNote: false, hasTextNote: false });
-              router.replace(`/history/${newRecord.id}`);
+              setSelectedCheckId(newRecord.id);
+              router.replace('/(tabs)/history');
             }
           }
         }
@@ -127,12 +128,12 @@ export default function ProcessingScreen() {
         <Text className="text-[#1A303F] text-3xl font-black tracking-tight text-center mb-4">
           Analysis Failed
         </Text>
-        
+
         <Text className="text-[#64748B] text-center text-lg leading-relaxed px-4 mb-10">
           We encountered an issue while analyzing the photos and could not complete the health check. Please ensure the photos are clear and try again.
         </Text>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           className="bg-primary-cool w-full py-4 rounded-2xl flex-row justify-center shadow-sm"
           onPress={() => {
             setProcessingState({ hasVoiceNote: false, hasTextNote: false });
@@ -155,19 +156,20 @@ export default function ProcessingScreen() {
         <Text className="text-[#1A303F] text-3xl font-black tracking-tight text-center mb-4">
           Durable Execution
         </Text>
-        
+
         <Text className="text-[#64748B] text-center text-lg leading-relaxed px-4 mb-10">
           The AI analysis is taking a bit longer than usual. Thanks to <Text className="font-bold text-blue-500">Temporal.io</Text>, your request is running durably in the background. You can safely leave this screen and check your dashboard later!
         </Text>
 
-        <TouchableOpacity 
-          className="bg-primary-cool w-full py-4 rounded-2xl flex-row justify-center shadow-sm"
+        <TouchableOpacity
+          className="bg-primary-cool w-full py-4 rounded-2xl flex-row items-center justify-center shadow-sm"
           onPress={() => {
             setProcessingState({ hasVoiceNote: false, hasTextNote: false });
             router.replace('/(tabs)');
           }}
         >
-          <Text className="text-white font-bold text-lg">Go to Dashboard</Text>
+          <Home color="white" size={20} style={{ marginRight: 8 }} />
+          <Text className="text-white font-bold text-lg">Go to Home</Text>
         </TouchableOpacity>
       </View>
     );
@@ -186,22 +188,22 @@ export default function ProcessingScreen() {
       <Text className="text-[#EAB308] text-3xl font-black tracking-tight text-center mb-4">
         Analyzing Health{dots}
       </Text>
-      
-      <Text className="text-[#64748B] text-center text-lg leading-relaxed px-4 mb-10">
+
+      <Text className="text-[#64748B] text-center text-lg leading-relaxed px-4 mb-6">
         Claude 5 Sonnet is currently <Text className="font-bold text-[#1A303F]">evaluating the top & side photos{getContextText()}</Text> to determine the BCS score.
       </Text>
 
       {/* Progress Bar Container */}
       <View className="w-full max-w-sm mb-4">
         <View className="h-2 w-full bg-[#E2E8F0] rounded-full overflow-hidden">
-          <Animated.View 
-            className="h-full bg-[#EAB308] rounded-full" 
-            style={{ 
+          <Animated.View
+            className="h-full bg-[#EAB308] rounded-full"
+            style={{
               width: progressAnim.interpolate({
                 inputRange: [0, 100],
                 outputRange: ['0%', '100%']
-              }) 
-            }} 
+              })
+            }}
           />
         </View>
       </View>

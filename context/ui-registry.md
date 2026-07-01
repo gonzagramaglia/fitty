@@ -107,3 +107,27 @@ After building any component — update this file with the component name, file 
 - **Provider:** Create a `CameraContext` in the `_layout.tsx` to hold state.
 - **Write:** Set the state immediately before calling `router.push('/target')`.
 - **Read:** Use the context hook in the destination screen to read the clean state.
+
+### BCS Gauge
+**File:** `components/ui/BCSGauge.tsx`
+**Description:** Visual horizontal indicator mapping a 1-9 score to underweight, ideal, or overweight.
+**Key Patterns:**
+- **Dynamic Backgrounds:** Uses `bg-primary-cool`, `bg-success`, `bg-warning`, and `bg-error` based on the score threshold.
+- **Gauge Track:** Parent container uses `h-2 w-full bg-border rounded-full overflow-hidden relative` while the inner fill is `absolute top-0 bottom-0 left-0 rounded-full`.
+- **Labeling:** Text aligned using `flex-row justify-between items-end` for the score and `flex-row justify-between` for min/max labels below.
+
+### Trend Chart Container
+**File:** `components/ui/TrendChart.tsx`
+**Description:** Wrapper card for the line chart visualizing score history.
+**Key Patterns:**
+- **Container:** Standard card pattern `bg-background border border-border rounded-2xl p-6 shadow-sm`.
+- **Empty State:** Re-uses the exact same container padding and styling but centers a fallback text `text-text-muted text-sm` using `items-center justify-center`.
+- **Chart Theme:** Transparent background mapped to the view, styling lines and grid using the predefined token colors instead of raw hexes.
+
+### History Row Card
+**File:** `components/ui/HistoryCard.tsx`
+**Description:** Interactive row summarizing a past health check.
+**Key Patterns:**
+- **Container:** Touchable card `bg-background border border-border rounded-2xl p-4 flex-row items-center shadow-sm mb-3`.
+- **Thumbnail:** Left-aligned `w-12 h-12 rounded-xl bg-surface-secondary mr-4`. Fallback uses `items-center justify-center` for text.
+- **Action Indicator:** Right chevron using `ChevronRight color="#cbd5e1"` (matches border-muted token).

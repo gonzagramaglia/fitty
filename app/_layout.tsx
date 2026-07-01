@@ -8,6 +8,30 @@ import { ActiveCatProvider } from "../lib/ActiveCatContext";
 // @ts-ignore
 import "../global.css";
 
+if (typeof window !== 'undefined') {
+  const originalConsoleError = console.error;
+  console.error = (...args: any[]) => {
+    if (typeof args[0] === 'string') {
+      const msg = args[0];
+      if (
+        msg.includes('Unknown event handler property `onDataPointClick`') ||
+        msg.includes('Invalid DOM property `transform-origin`') ||
+        msg.includes('Unknown event handler property `onStartShouldSetResponder`') ||
+        msg.includes('Unknown event handler property `onResponderTerminationRequest`') ||
+        msg.includes('Unknown event handler property `onResponderGrant`') ||
+        msg.includes('Unknown event handler property `onResponderMove`') ||
+        msg.includes('Unknown event handler property `onResponderRelease`') ||
+        msg.includes('Unknown event handler property `onResponderTerminate`') ||
+        msg.includes('Unknown event handler property `onPressIn`') ||
+        msg.includes('Unknown event handler property `onPressOut`')
+      ) {
+        return;
+      }
+    }
+    originalConsoleError(...args);
+  };
+}
+
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState(false);

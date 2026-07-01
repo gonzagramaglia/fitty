@@ -8,6 +8,12 @@ import { Platform } from 'react-native';
  * 
  * @returns Object containing recording state, voice note URI, and control functions.
  */
+/**
+ * useAudioRecorder is a custom hook that manages Expo Audio recording state.
+ * It handles permission requests, starting, stopping, and storing the URI of the recorded audio.
+ *
+ * @returns Object containing recording state, URI, and control functions.
+ */
 export function useAudioRecorder() {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [voiceNoteUri, setVoiceNoteUri] = useState<string | null>(null);

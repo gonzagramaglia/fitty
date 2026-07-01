@@ -114,7 +114,11 @@ export default function CameraScreen() {
   }, [activeCatId]);
 
   const handleClose = () => {
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/');
+    }
   };
 
   const handleCapturePhoto = async () => {
@@ -164,7 +168,11 @@ export default function CameraScreen() {
     } else if (step === 'voice') {
       setStep('side');
     } else {
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/');
+      }
     }
   };
 
@@ -270,7 +278,7 @@ export default function CameraScreen() {
    }
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-[#1A2530]">
       {/* Header Area Wrapper */}
       <View className="absolute top-0 left-0 right-0 z-20 bg-[#1A2530]" style={{ paddingBottom: 20, paddingTop: Math.max(insets.top + 32, 32) }}>
         <View className="flex-row justify-between items-center px-6 mb-4">
@@ -546,11 +554,11 @@ function UploadingView({ catName, hasContext }: { catName: string, hasContext?: 
       </View>
 
       <Text className="text-[#EAB308] text-3xl font-black tracking-tight text-center mb-4">
-        Uploading Data{dots}
+        Analyzing {catName || 'Your Cat'}'s Health{dots}
       </Text>
       
       <Text className="text-[#64748B] text-center text-lg leading-relaxed px-4 mb-10">
-        Securely transferring {catName || 'your cat'}'s data for analysis...
+        Securely transferring the captured data to the AI engine...
       </Text>
 
       {/* Progress Bar Container */}

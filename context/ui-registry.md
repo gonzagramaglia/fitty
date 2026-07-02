@@ -131,3 +131,13 @@ After building any component — update this file with the component name, file 
 - **Container:** Touchable card `bg-background border border-border rounded-2xl p-4 flex-row items-center shadow-sm mb-3`.
 - **Thumbnail:** Left-aligned `w-12 h-12 rounded-xl bg-surface-secondary mr-4`. Fallback uses `items-center justify-center` for text.
 - **Action Indicator:** Right chevron using `ChevronRight color="#cbd5e1"` (matches border-muted token).
+
+### Contextual AI Chat Modal
+**File:** `components/ui/ChatModal.tsx`
+**Description:** Sliding bottom sheet modal containing a back-and-forth chat interface with Vet AI.
+**Key Patterns:**
+- **Modal Container:** Full screen overlay with `bg-black/50` wrapper and a bottom-anchored content pane `bg-surface-secondary mt-12 rounded-t-[2.5rem] flex-1`.
+- **Message Bubbles (User):** Right-aligned using `self-end`. Background `bg-primary-cool` with `rounded-tr-sm` to indicate the tail.
+- **Message Bubbles (AI):** Left-aligned using `self-start`. Background `bg-white border border-border` with `rounded-tl-sm`. Uses `flex-row` with an avatar on the left.
+- **Input Area:** Sticky footer using `pb-[insets.bottom || 24] pt-4 px-6 bg-white border-t border-border`.
+- **Inline Actions:** Edit and Delete icons `flex-row space-x-3 mt-1` embedded under user messages.

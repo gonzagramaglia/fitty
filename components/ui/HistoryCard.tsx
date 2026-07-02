@@ -1,10 +1,11 @@
-import { View, Text, Image, TouchableOpacity } from "react-native";
+import { View, Text, Image, TouchableOpacity, ImageSourcePropType } from "react-native";
 import { ChevronRight, FileText, Mic } from "lucide-react-native";
+import { getBcsTextColor, getBcsBgColor } from "../../lib/bcs";
 
 type Props = {
   dateString: string;
   bcsScore: number;
-  thumbnailUrl?: string;
+  thumbnailUrl?: string | ImageSourcePropType;
   hasTextNote?: boolean;
   hasVoiceNote?: boolean;
   onPress: () => void;
@@ -25,19 +26,8 @@ export function HistoryCard({ dateString, bcsScore, thumbnailUrl, hasTextNote, h
     year: "numeric",
   }).format(date);
 
-  const isIdeal = bcsScore === 5;
-  const isExtreme = bcsScore <= 2 || bcsScore >= 8;
-  
-  let scoreColorClass = "text-warning-dark";
-  let scoreBgClass = "bg-warning-light";
-
-  if (isIdeal) {
-    scoreColorClass = "text-success-dark";
-    scoreBgClass = "bg-success-light";
-  } else if (isExtreme) {
-    scoreColorClass = "text-error-dark";
-    scoreBgClass = "bg-error-light";
-  }
+  const scoreColorClass = getBcsTextColor(bcsScore);
+  const scoreBgClass = getBcsBgColor(bcsScore);
 
   return (
     <TouchableOpacity
@@ -47,7 +37,7 @@ export function HistoryCard({ dateString, bcsScore, thumbnailUrl, hasTextNote, h
     >
       {thumbnailUrl ? (
         <Image
-          source={{ uri: thumbnailUrl }}
+          source={typeof thumbnailUrl === 'string' ? { uri: thumbnailUrl } : thumbnailUrl}
           className="w-12 h-12 rounded-xl bg-surface-secondary mr-4"
           style={{ width: 48, height: 48 }}
         />

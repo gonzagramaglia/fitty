@@ -112,6 +112,7 @@ export function useAudioRecorder() {
     recordingDuration,
     metering,
     voiceNoteUri,
+    setVoiceNoteUri,
     startRecording,
     stopRecording,
     clearVoiceNote

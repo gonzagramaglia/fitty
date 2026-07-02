@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useCameraContext } from '../../app/camera/_layout';
 import { supabase } from '../../lib/supabase';
 import { useActiveCat } from '../../lib/ActiveCatContext';
+import { BCSGauge } from '../ui/BCSGauge';
 
 /**
  * Screen displayed while the AI is processing the captured health check data.
@@ -24,7 +25,17 @@ export default function ProcessingScreen() {
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [isTakingLong, setIsTakingLong] = useState(false);
   const [hasFailed, setHasFailed] = useState(false);
+  const [successData, setSuccessData] = useState<{ id: string; score: number } | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
   const progressAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.is_anonymous) {
+        setIsGuest(true);
+      }
+    });
+  }, []);
 
   const hasContext = hasVoiceNote || hasTextNote;
 
@@ -57,17 +68,14 @@ export default function ProcessingScreen() {
           filter: `cat_id=eq.${activeCatId}`,
         },
         (payload) => {
-          const newRecord = payload.new as { id: string; status: string };
+          const newRecord = payload.new as { id: string; status: string; bcs_score?: number };
           if (newRecord?.id && typeof newRecord.id === 'string') {
             console.log('[processing] Health check result received:', newRecord.id, 'status:', newRecord.status);
 
             if (newRecord.status === 'failed') {
               setHasFailed(true);
             } else {
-              // Clear transient state before leaving
-              setProcessingState({ hasVoiceNote: false, hasTextNote: false });
-              setSelectedCheckId(newRecord.id);
-              router.replace('/(tabs)/history');
+              setSuccessData({ id: newRecord.id, score: newRecord.bcs_score || 5 });
             }
           }
         }
@@ -146,6 +154,39 @@ export default function ProcessingScreen() {
     );
   }
 
+  if (successData) {
+    return (
+      <View className="flex-1 bg-[#F8FAFC] justify-center items-center px-8">
+        <View className="w-24 h-24 bg-green-50 rounded-3xl items-center justify-center mb-8 border border-green-100 shadow-sm">
+          <Sparkles color="#10B981" size={40} />
+        </View>
+
+        <Text className="text-[#1A303F] text-3xl font-black tracking-tight text-center mb-2">
+          Analysis Complete!
+        </Text>
+
+        <Text className="text-[#64748B] text-center text-base leading-relaxed px-4 mb-8">
+          The AI has finished reviewing the photos and notes.
+        </Text>
+
+        <View className="w-full bg-white p-6 rounded-3xl shadow-sm border border-[#E2E8F0] mb-8">
+          <BCSGauge score={successData.score} />
+        </View>
+
+        <TouchableOpacity
+          className="bg-[#1A2530] w-full py-4 rounded-2xl flex-row justify-center shadow-md"
+          onPress={() => {
+            setProcessingState({ hasVoiceNote: false, hasTextNote: false });
+            setSelectedCheckId(successData.id);
+            router.replace('/(tabs)/history');
+          }}
+        >
+          <Text className="text-white font-bold text-lg">View Full Health Report</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   if (isTakingLong) {
     return (
       <View className="flex-1 bg-[#F8FAFC] justify-center items-center px-8">
@@ -214,6 +255,15 @@ export default function ProcessingScreen() {
           {loadingTexts[loadingTextIndex]}
         </Text>
       </View>
+
+      {isGuest && (
+        <View className="bg-blue-50/80 px-4 py-3 rounded-xl border border-blue-200 w-full max-w-sm flex-row items-center mt-6">
+          <AlertCircle color="#3B82F6" size={20} style={{ marginRight: 12, marginTop: 2 }} className="self-start" />
+          <Text className="text-blue-800 text-sm flex-1 leading-relaxed">
+            <Text className="font-bold">Judge Mode Simulation:</Text> This analysis is simulated. For the real AI experience, please log in with a Google account.
+          </Text>
+        </View>
+      )}
     </View>
   );
 }

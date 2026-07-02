@@ -62,3 +62,13 @@
     --color-overlay: #1A303Fcc;
   }
 }
+
+/* Hide scrollbar inside the app frame */
+.web-frame-content ::-webkit-scrollbar {
+  display: none;
+}
+
+.web-frame-content * {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

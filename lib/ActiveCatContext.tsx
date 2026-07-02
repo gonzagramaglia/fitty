@@ -7,12 +7,31 @@ import { supabase } from './supabase';
  * Provides the ID of the currently selected cat, a function to change it, 
  * and a loading state indicating if the initial fetch is complete.
  */
+/**
+ * Represents the shape of the ActiveCatContext.
+ * Provides the ID of the currently selected cat, a function to change it,
+ * a loading state indicating if the initial fetch is complete,
+ * and centralized guest modal state to prevent duplicate modal rendering.
+ */
 type ActiveCatContextType = {
+  /** The ID of the currently active cat profile. */
   activeCatId: string | null;
+  /** Updates the active cat ID and persists it to AsyncStorage. */
   setActiveCatId: (id: string | null) => Promise<void>;
+  /** The ID of the currently selected health check for detail view. */
   selectedCheckId: string | null;
+  /** Sets the selected health check ID for navigation to detail view. */
   setSelectedCheckId: (id: string | null) => void;
+  /** Whether the initial cat data fetch is still in progress. */
   isLoading: boolean;
+  /** Shows the centralized guest limit modal with an optional custom message. */
+  showGuestModal: (message?: string) => void;
+  /** Whether the guest limit modal is currently visible. */
+  guestModalVisible: boolean;
+  /** The message displayed in the guest limit modal. */
+  guestModalMessage: string;
+  /** Hides the guest limit modal. */
+  hideGuestModal: () => void;
 };
 
 /**
@@ -24,6 +43,10 @@ const ActiveCatContext = createContext<ActiveCatContextType>({
   selectedCheckId: null,
   setSelectedCheckId: () => {},
   isLoading: true,
+  showGuestModal: () => {},
+  guestModalVisible: false,
+  guestModalMessage: '',
+  hideGuestModal: () => {},
 });
 
 /**
@@ -37,6 +60,17 @@ export const ActiveCatProvider = ({ children }: { children: React.ReactNode }) =
   const [activeCatId, setActiveCatIdState] = useState<string | null>(null);
   const [selectedCheckId, setSelectedCheckId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [guestModalVisible, setGuestModalVisible] = useState(false);
+  const [guestModalMessage, setGuestModalMessage] = useState('');
+
+  const showGuestModal = useCallback((message?: string) => {
+    setGuestModalMessage(message || "You cannot perform more scans in this simulated experience. For the real Fitty experience, please log in with a Google account.");
+    setGuestModalVisible(true);
+  }, []);
+
+  const hideGuestModal = useCallback(() => {
+    setGuestModalVisible(false);
+  }, []);
 
   useEffect(() => {
     const loadActiveCat = async () => {
@@ -81,8 +115,8 @@ export const ActiveCatProvider = ({ children }: { children: React.ReactNode }) =
   }, []);
 
   const value = useMemo(
-    () => ({ activeCatId, setActiveCatId, selectedCheckId, setSelectedCheckId, isLoading }),
-    [activeCatId, setActiveCatId, selectedCheckId, isLoading]
+    () => ({ activeCatId, setActiveCatId, selectedCheckId, setSelectedCheckId, isLoading, showGuestModal, guestModalVisible, guestModalMessage, hideGuestModal }),
+    [activeCatId, setActiveCatId, selectedCheckId, isLoading, showGuestModal, guestModalVisible, guestModalMessage, hideGuestModal]
   );
 
   return (

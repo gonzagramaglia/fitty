@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Platform, ActivityIndicator, TextInput, StyleSheet, Image, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, ActivityIndicator, TextInput, StyleSheet, Image, Animated, Modal } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Audio } from 'expo-av';
 import { useRouter } from 'expo-router';
@@ -31,13 +31,25 @@ export default function CameraScreen() {
   const [audioPermissionResponse, requestAudioPermission] = Audio.usePermissions();
   const { activeCatId, setSelectedCheckId } = useActiveCat();
   const [userId, setUserId] = useState<string | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
+  const [showJudgeWarning, setShowJudgeWarning] = useState(false);
 
   const { cameraRef, topPhoto, sidePhoto, isCapturing, capturePhoto, setManualPhoto, clearPhoto } = useCameraCapture();
-  const { isRecording, recordingDuration, metering, startRecording, stopRecording, voiceNoteUri, clearVoiceNote } = useAudioRecorder();
+  const { isRecording: _isRecording, recordingDuration: _recordingDuration, metering, startRecording, stopRecording, voiceNoteUri, clearVoiceNote, setVoiceNoteUri } = useAudioRecorder();
+
+  // Guest simulation states
+  const [isGuestRecording, setIsGuestRecording] = useState(false);
+  const [guestRecordingDuration, setGuestRecordingDuration] = useState(0);
+  const [guestNormalizedLevel, setGuestNormalizedLevel] = useState(0.1);
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const guestRecordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const isRecording = isGuest ? isGuestRecording : _isRecording;
+  const recordingDuration = isGuest ? guestRecordingDuration : _recordingDuration;
 
   // Calculate a normalized level (0.1 to 1) from the raw decibel metering
   const rawLevel = metering === undefined ? -160 : metering;
-  const normalizedLevel = Math.max(0.1, 1 - (rawLevel / -60));
+  const normalizedLevel = isGuest ? guestNormalizedLevel : Math.max(0.1, 1 - (rawLevel / -60));
 
   // States: 'top' -> 'side' -> 'voice' -> 'uploading'
   const [step, setStep] = useState<'top' | 'side' | 'voice' | 'uploading'>('top');
@@ -53,6 +65,8 @@ export default function CameraScreen() {
       if (playbackSound) {
         playbackSound.unloadAsync();
       }
+      if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+      if (guestRecordingIntervalRef.current) clearInterval(guestRecordingIntervalRef.current);
     };
   }, [playbackSound]);
 
@@ -101,9 +115,14 @@ export default function CameraScreen() {
     if (!audioPermissionResponse?.granted) requestAudioPermission();
 
     // get user ID for storage paths
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (data.session?.user) {
         setUserId(data.session.user.id);
+        const isUserGuest = data.session.user.is_anonymous === true;
+        setIsGuest(isUserGuest);
+
+        // If guest already has health checks, guard is handled at tabs layout level
+        if (isUserGuest) setShowJudgeWarning(true);
       }
     });
 
@@ -125,6 +144,15 @@ export default function CameraScreen() {
   const handleCapturePhoto = async () => {
     if (step !== 'top' && step !== 'side') return;
 
+    if (isGuest) {
+      // Auto-load mock images for Hackathon Judges
+      const mockImg = step === 'top'
+        ? require('../../assets/images/cat-top-view.png')
+        : require('../../assets/images/cat-side-view.png');
+      setManualPhoto(step as 'top' | 'side', mockImg as any);
+      return;
+    }
+
     if (!permission?.granted) {
       const response = await requestPermission();
       if (!response?.granted) {
@@ -140,6 +168,15 @@ export default function CameraScreen() {
   };
 
   const pickImage = async () => {
+    if (isGuest) {
+      // Auto-load mock images for Hackathon Judges using local require
+      const mockImg = step === 'top'
+        ? require('../../assets/images/cat-top-view.png')
+        : require('../../assets/images/cat-side-view.png');
+      setManualPhoto(step as 'top' | 'side', mockImg as any);
+      return;
+    }
+
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -178,6 +215,37 @@ export default function CameraScreen() {
   };
 
   const toggleRecording = async () => {
+    if (isGuest) {
+      if (!isGuestRecording) {
+        setIsGuestRecording(true);
+        setGuestRecordingDuration(0);
+        const startTime = Date.now();
+        
+        guestRecordingIntervalRef.current = setInterval(() => {
+          const duration = Date.now() - startTime;
+          setGuestRecordingDuration(duration);
+          setGuestNormalizedLevel(Math.random() * 0.8 + 0.2); // Random audio level
+          
+          if (duration >= 7000) {
+            clearInterval(guestRecordingIntervalRef.current!);
+            guestRecordingIntervalRef.current = null;
+            setIsGuestRecording(false);
+            setVoiceNoteUri("https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-fitty.mp3");
+          }
+        }, 100);
+      } else {
+        // stop early
+        if (guestRecordingIntervalRef.current) {
+          clearInterval(guestRecordingIntervalRef.current);
+          guestRecordingIntervalRef.current = null;
+        }
+        setIsGuestRecording(false);
+        setGuestRecordingDuration(7000);
+        setVoiceNoteUri("https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-fitty.mp3");
+      }
+      return;
+    }
+
     if (!isRecording) {
       if (!audioPermissionResponse?.granted) {
         const response = await requestAudioPermission();
@@ -217,31 +285,102 @@ export default function CameraScreen() {
 
       // Simulate backend processing time
       await new Promise((resolve) => setTimeout(resolve, 3000));
+      
+      // If the user is a guest (Hackathon Judge), insert past records to show a trend progression
+      if (isGuest) {
+        const mockPhoto = typeof topPhoto === 'string' ? topPhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg';
+        const mockSidePhoto = typeof sidePhoto === 'string' ? sidePhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg';
+
+        const seedRecords = [
+          {
+            cat_id: activeCatId, user_id: userId,
+            created_at: new Date(new Date().getFullYear(), 0, 1).toISOString(),
+            top_photo_url: mockPhoto, side_photo_url: mockSidePhoto,
+            bcs_score: 4, classification: "Underweight",
+            ai_reasoning: "Ribs are easily palpable with minimal fat covering. A slight abdominal tuck is visible from the side.",
+            text_note: "Started using Fitty! Coding Kitty seems a bit underweight.",
+            voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-fitty.mp3",
+            recommendations: [{ title: "Nutrition", description: "Increase daily caloric intake by 10% to promote healthy weight gain." }],
+            status: "completed"
+          },
+          {
+            cat_id: activeCatId, user_id: userId,
+            created_at: new Date(new Date().getFullYear(), 1, 1).toISOString(),
+            top_photo_url: mockPhoto, side_photo_url: mockSidePhoto,
+            bcs_score: 4, classification: "Underweight",
+            ai_reasoning: "Ribs are easily palpable with minimal fat covering. A slight abdominal tuck is visible from the side.",
+            text_note: "Coding Kitty is eating better but hasn't gained much weight yet.",
+            voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-eating-better.mp3",
+            recommendations: [{ title: "Nutrition", description: "Continue high-calorie kitten/recovery food in small, frequent meals." }],
+            status: "completed"
+          },
+          {
+            cat_id: activeCatId, user_id: userId,
+            created_at: new Date(new Date().getFullYear(), 2, 1).toISOString(),
+            top_photo_url: mockPhoto, side_photo_url: mockSidePhoto,
+            bcs_score: 5, classification: "Ideal",
+            ai_reasoning: "Well-proportioned. Ribs are palpable without excess fat covering. A clear waist is observed behind the ribs.",
+            text_note: "We reached the ideal weight! Awesome progress.",
+            voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-ideal-weight.mp3",
+            recommendations: [{ title: "Nutrition", description: "Maintain current diet and portion sizes." }],
+            status: "completed"
+          },
+          {
+            cat_id: activeCatId, user_id: userId,
+            created_at: new Date(new Date().getFullYear(), 3, 1).toISOString(),
+            top_photo_url: mockPhoto, side_photo_url: mockSidePhoto,
+            bcs_score: 6, classification: "Overweight",
+            ai_reasoning: "Ribs palpable with slight excess fat covering. Waist is discernible from above but not prominent.",
+            text_note: "We might have overfed him a bit with treats lately.",
+            voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-overfed.mp3",
+            recommendations: [{ title: "Nutrition", description: "Cut back on treats and reduce portions slightly." }],
+            status: "completed"
+          },
+          {
+            cat_id: activeCatId, user_id: userId,
+            created_at: new Date(new Date().getFullYear(), 4, 1).toISOString(),
+            top_photo_url: mockPhoto, side_photo_url: mockSidePhoto,
+            bcs_score: 5, classification: "Ideal",
+            ai_reasoning: "Well-proportioned. Ribs are palpable without excess fat covering. A clear waist is observed behind the ribs.",
+            text_note: "Coding Kitty is looking much healthier now!",
+            voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-much-healthier.mp3",
+            recommendations: [{ title: "Nutrition", description: "Maintain current diet and portion sizes." }, { title: "Exercise", description: "Continue with daily active play sessions." }],
+            status: "completed"
+          },
+        ];
+
+        for (const record of seedRecords) {
+          const { error: seedError } = await supabase.from('health_checks').insert(record);
+          if (seedError) {
+            console.error('[camera] Guest seed insert failed:', seedError);
+            throw new Error('Failed to seed mock health check data');
+          }
+        }
+      }
+
+      // 2. Insert recent record (June 1st for Guests, or Current Date for real users)
       const { data, error } = await supabase.from('health_checks').insert({
         cat_id: activeCatId,
         user_id: userId,
-        top_photo_url: topPhoto || null,
-        side_photo_url: sidePhoto || null,
-        bcs_score: 7,
-        classification: "Overweight",
-        ai_reasoning: "The top-down photo shows a significantly widened abdominal profile without a discernible waistline. The side profile reveals a noticeable abdominal pad. Ribs are not easily palpable.",
-        text_note: text.trim() || null,
+        created_at: new Date().toISOString(),
+        top_photo_url: typeof topPhoto === 'string' ? topPhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
+        side_photo_url: typeof sidePhoto === 'string' ? sidePhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
+        bcs_score: 5,
+        classification: "Ideal",
+        ai_reasoning: "Well-proportioned. Ribs are palpable without excess fat covering. A clear waist is observed behind the ribs.",
+        text_note: text.trim() || "I've noticed Coding Kitty is full of energy and maintaining the new diet perfectly.",
         voice_note_url: audioUri || null,
         recommendations: [
-          { title: "Nutrition", description: "Reduce daily caloric intake by 10%." },
-          { title: "Exercise", description: "Encourage 15 minutes of active play twice a day." },
-          { title: "Diet", description: "Switch to a high-protein, low-carb wet food diet." }
+          { title: "Nutrition", description: "Maintain current diet and portion sizes." },
+          { title: "Exercise", description: "Continue with daily active play sessions." },
+          { title: "Hydration", description: "Ensure fresh water is always available." }
         ],
         status: "completed"
       }).select('id').single();
       
       if (error) throw error;
       
-      // Fallback navigation in case realtime subscription in ProcessingScreen doesn't fire
-      setTimeout(() => {
-        setSelectedCheckId(data.id);
-        router.push('/(tabs)/history');
-      }, 500);
+      // Realtime subscription in ProcessingScreen will catch this insert and show the success screen.
     } catch (error) {
       console.error("Failed to finalize capture:", error);
       setProcessingState({ hasVoiceNote: false, hasTextNote: false });
@@ -282,20 +421,30 @@ export default function CameraScreen() {
       {/* Main Content Area */}
       <View style={{ flex: 1 }}>
         {step !== 'voice' ? (
-          <View className="flex-1 rounded-[40px] overflow-hidden bg-black/5" style={{ marginBottom: 120, marginTop: 120 }}>
+          <View className="flex-1 rounded-[40px] overflow-hidden bg-black/5" style={{ marginBottom: 144, marginTop: 120 }}>
             {currentPhoto ? (
               <>
-                <Image source={{ uri: currentPhoto }} style={{ flex: 1 }} resizeMode="cover" />
+                <Image 
+                  source={
+                    (typeof currentPhoto === 'string' && (currentPhoto.startsWith('file:') || currentPhoto.startsWith('http:') || currentPhoto.startsWith('data:'))) 
+                      ? { uri: currentPhoto } 
+                      : currentPhoto
+                  } 
+                  style={{ width: '100%', height: '100%', borderRadius: 40, overflow: 'hidden' }} 
+                  resizeMode="cover" 
+                />
                 <SilhouetteOverlay type={step === 'top' ? 'top' : 'side'} />
               </>
             ) : (
-              <CameraView style={{ flex: 1 }} facing="back" ref={cameraRef}>
-                <SilhouetteOverlay type={step === 'top' ? 'top' : 'side'} />
-              </CameraView>
+              <View style={{ flex: 1, borderRadius: 40, overflow: 'hidden' }}>
+                <CameraView style={{ flex: 1 }} facing="back" ref={cameraRef}>
+                  <SilhouetteOverlay type={step === 'top' ? 'top' : 'side'} />
+                </CameraView>
+              </View>
             )}
 
             {/* Instructional Text Overlay */}
-            <View className="absolute bottom-8 left-0 right-0 px-6 z-10 items-center pointer-events-none">
+            <View className="absolute bottom-4 left-0 right-0 px-6 z-10 items-center pointer-events-none">
               <View className="bg-black/70 rounded-3xl px-6 py-4 backdrop-blur-xl border border-white/10 items-center">
                 <Text className="text-[#74B7B5] text-xs font-bold tracking-[0.2em] uppercase mb-1">
                   {currentPhoto ? (step === 'top' ? 'Ready for Step 2' : 'Ready for Step 3') : (step === 'top' ? 'Step 1 of 3' : 'Step 2 of 3')}
@@ -356,22 +505,45 @@ export default function CameraScreen() {
                 </View>
               ) : isRecording ? (
                 <View className="flex-1 bg-[#FEFCE8] rounded-3xl shadow-sm border border-[#FDE047] items-center justify-center">
-                  <View className="flex-row items-center justify-center space-x-1.5 h-16 mb-8">
+                  <View className="flex-row items-center justify-center space-x-1.5 h-12 mb-6">
                     <View className="w-2 bg-[#EAB308] rounded-full" style={{ height: Math.max(8, normalizedLevel * 24) }} />
                     <View className="w-2 bg-[#EAB308] rounded-full" style={{ height: Math.max(12, normalizedLevel * 48) }} />
                     <View className="w-2 bg-[#EAB308] rounded-full" style={{ height: Math.max(16, normalizedLevel * 64) }} />
                     <View className="w-2 bg-[#EAB308] rounded-full" style={{ height: Math.max(12, normalizedLevel * 48) }} />
                     <View className="w-2 bg-[#EAB308] rounded-full" style={{ height: Math.max(8, normalizedLevel * 24) }} />
                   </View>
-                  <Text className="text-[#EAB308] text-sm font-bold tracking-[0.2em] uppercase mb-4">
+                  <Text className="text-[#EAB308] text-xs font-bold tracking-[0.2em] uppercase mb-2">
                     Recording Note
                   </Text>
-                  <Text className="text-[#1A2530] text-7xl font-black tabular-nums tracking-tighter">
+                  <Text className="text-[#1A2530] text-7xl font-black tabular-nums tracking-tighter mb-4">
                     {Math.floor(recordingDuration / 60000).toString().padStart(2, '0')}:
                     {Math.floor((recordingDuration % 60000) / 1000).toString().padStart(2, '0')}
                   </Text>
-                  <Text className="text-[#94A3B8] font-medium mt-6">Maximum duration 2:00</Text>
+                  <Text className="text-[#94A3B8] font-medium">Maximum duration 2:00</Text>
                 </View>
+              ) : isGuest ? (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    if (typingIntervalRef.current) return;
+                    const textToType = "I've noticed Coding Kitty is full of energy and maintaining the new diet perfectly.";
+                    setFallbackText('');
+                    let i = 0;
+                    typingIntervalRef.current = setInterval(() => {
+                      setFallbackText(textToType.substring(0, i + 1));
+                      i++;
+                      if (i === textToType.length) {
+                        clearInterval(typingIntervalRef.current!);
+                        typingIntervalRef.current = null;
+                      }
+                    }, 30);
+                  }}
+                  className="bg-white rounded-3xl shadow-sm flex-1 border border-[#E2E8F0] px-6 py-6"
+                >
+                  <Text className={fallbackText ? "text-[#1A2530] text-lg" : "text-[#94A3B8] text-lg"}>
+                    {fallbackText || "Type here or tap the mic below..."}
+                  </Text>
+                </TouchableOpacity>
               ) : (
                 <TextInput
                   className="text-[#1A2530] text-lg py-6 bg-white px-6 rounded-3xl shadow-sm flex-1 border border-[#E2E8F0] focus:border-primary-cool transition-colors"
@@ -387,16 +559,18 @@ export default function CameraScreen() {
           </View>
         )}
 
-        {step === 'voice' && !isRecording && (
-          <View className="absolute left-0 right-0 z-20 px-6 items-center pointer-events-none" style={{ bottom: 152 }}>
+        {step === 'voice' && (
+          <View className="absolute left-0 right-0 z-20 px-6 items-center pointer-events-none" style={{ bottom: 160 }}>
             <View className="bg-[#1A2530]/80 rounded-3xl px-6 py-4 backdrop-blur-xl border border-white/10 items-center shadow-lg pointer-events-auto">
-              <Text className={`text-xs font-bold tracking-[0.2em] uppercase mb-1 ${(voiceNoteUri || fallbackText.trim().length > 0) ? 'text-[#EAB308]' : 'text-[#74B7B5]'}`}>
-                {(voiceNoteUri || fallbackText.trim().length > 0) ? 'Ready to analyze' : 'Step 3 of 3'}
+              <Text className={`text-xs font-bold tracking-[0.2em] uppercase mb-1 ${(voiceNoteUri || fallbackText.trim().length > 0) ? 'text-[#EAB308]' : (isRecording ? 'text-[#EAB308]' : 'text-[#74B7B5]')}`}>
+                {isRecording ? 'Listening...' : (voiceNoteUri || fallbackText.trim().length > 0) ? 'Ready to analyze' : 'Step 3 of 3'}
               </Text>
               <Text className="text-white text-center text-base font-medium">
-                {(voiceNoteUri || fallbackText.trim().length > 0)
-                  ? "Tap ✕ to clear or ✓ to continue"
-                  : "Add context or tap ✓ to skip"}
+                {isRecording
+                  ? "Tap stop when finished"
+                  : (voiceNoteUri || fallbackText.trim().length > 0)
+                    ? "Tap ✕ to clear or ✓ to continue"
+                    : "Add context or tap ✓ to skip"}
               </Text>
             </View>
           </View>
@@ -410,13 +584,22 @@ export default function CameraScreen() {
           <TouchableOpacity
             onPress={() => {
               if (currentPhoto) clearPhoto(step as 'top' | 'side');
-              else if (step === 'voice' && voiceNoteUri) clearVoiceNote();
+              else if (step === 'voice' && (voiceNoteUri || fallbackText.trim().length > 0)) {
+                if (voiceNoteUri) clearVoiceNote();
+                if (fallbackText) {
+                  if (typingIntervalRef.current) {
+                    clearInterval(typingIntervalRef.current);
+                    typingIntervalRef.current = null;
+                  }
+                  setFallbackText('');
+                }
+              }
               else handleBack();
             }}
             disabled={step === 'voice' && isRecording}
             style={{ position: 'absolute', left: 56, width: 48, height: 48, backgroundColor: 'transparent', borderRadius: 24, alignItems: 'center', justifyContent: 'center', zIndex: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', opacity: (step === 'voice' && isRecording) ? 0.3 : 1 }}
           >
-            {(currentPhoto || (step === 'voice' && voiceNoteUri)) ? <X color="white" size={24} /> : <ArrowLeft color="white" size={24} />}
+            {(currentPhoto || (step === 'voice' && (voiceNoteUri || fallbackText.trim().length > 0))) ? <X color="white" size={24} /> : <ArrowLeft color="white" size={24} />}
           </TouchableOpacity>
 
           {/* Center Button (Camera / Record) */}
@@ -463,6 +646,42 @@ export default function CameraScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Judge Mode Warning Modal */}
+      <Modal
+        transparent
+        visible={showJudgeWarning}
+        animationType="fade"
+        onRequestClose={() => setShowJudgeWarning(false)}
+      >
+        <TouchableOpacity 
+          activeOpacity={1} 
+          onPress={() => setShowJudgeWarning(false)} 
+          className="flex-1 bg-black/60 items-center justify-center px-6"
+        >
+          <TouchableOpacity 
+            activeOpacity={1} 
+            className="bg-surface w-full max-w-[340px] rounded-3xl p-6 items-center shadow-xl relative"
+          >
+            <View className="w-16 h-16 rounded-full bg-blue-100 items-center justify-center mb-4 mt-2">
+              <Sparkles size={28} color="#3B82F6" />
+            </View>
+            <Text className="text-xl font-black text-text-primary mb-2 text-center">Judge Mode</Text>
+            <Text className="text-text-secondary text-center mb-6 leading-relaxed">
+              In this simulated experience, camera captures and audio notes will use mock data. 
+              {'\n\n'}
+              If you want the real Fitty experience, please log in with a Google account.
+            </Text>
+            
+            <TouchableOpacity 
+              onPress={() => setShowJudgeWarning(false)}
+              className="w-full bg-[#3B82F6] rounded-2xl py-4 items-center mb-2"
+            >
+              <Text className="text-white font-bold text-base">I Understand</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }

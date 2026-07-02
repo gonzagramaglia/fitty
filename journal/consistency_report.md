@@ -22,7 +22,7 @@ I have thoroughly reviewed all documentation, technical constraints, and the upl
 
 ## 4. Technical Architecture vs. MVP Goals
 **Status: 🟢 100% Consistent**
-- The stack (Expo, Supabase, Temporal, AWS Bedrock/Transcribe, Aikido) is fully documented in `library-docs.md` and `code-standards.md`.
+- The stack (Expo, Supabase, Temporal, Anthropic, Aikido) is fully documented in `library-docs.md` and `code-standards.md`.
 - The strict separation of concerns (UI vs. Workflow) guarantees that Fitty will not crash during long AI analysis steps, hitting the hackathon's "durable execution" requirement.
 
 ---

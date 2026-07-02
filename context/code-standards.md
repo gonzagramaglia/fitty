@@ -159,6 +159,6 @@ import { supabase } from "@/lib/supabase";
 - Only pure functions in `lib/` get unit tests — never test React components or Expo APIs directly
 - Every `lib/` file must have a corresponding `__tests__/*.test.ts` file
 - Use `describe` blocks to group related tests. Use `it()` with plain english descriptions: `it('returns invalid for a BCS score above 9')`
-- Mock all external dependencies (Supabase, AWS, Temporal) — never make real network calls in tests
+- Mock all external dependencies (Supabase, Anthropic, Temporal) — never make real network calls in tests
 - Run tests with `yarn test`. All tests must pass before opening a PR
 - Update `docs/testing.md` at the end of each phase with the manual test table

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { X, Send, Bot, AlertCircle, Pencil, Trash2 } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 
@@ -44,6 +44,15 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
   const [mockStep, setMockStep] = useState(0);
   const [isAutoTyping, setIsAutoTyping] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    destructiveLabel: string;
+    onConfirm: () => void;
+  }>({ visible: false, title: '', message: '', destructiveLabel: '', onConfirm: () => {} });
 
   const MOCK_SCRIPT = [
     { 
@@ -142,13 +151,16 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
 
     try {
       const apiUrl = process.env.EXPO_PUBLIC_CHAT_API_URL || 'http://localhost:3001/api/chat';
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || ''}`
+        },
         body: JSON.stringify({
           healthCheckId,
           message: userMessage,
-          chatHistory: historyToUse
         })
       });
 
@@ -196,7 +208,6 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
    * @param {number} index - The index of the message to delete.
    */
   const confirmDelete = (index: number) => {
-    // Determine how many messages to delete. If it's a user message, we might also want to delete the assistant's direct reply.
     let endIndex = index + 1;
     if (endIndex < messages.length && messages[endIndex].role === 'assistant') {
       endIndex++;
@@ -207,20 +218,16 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
       persistHistory(newHistory);
     };
 
-    if (Platform.OS === 'web') {
-      if (window.confirm("Delete this message?")) {
+    setConfirmModal({
+      visible: true,
+      title: 'Delete Message',
+      message: 'Are you sure you want to delete this message?',
+      destructiveLabel: 'Delete',
+      onConfirm: () => {
+        setConfirmModal(prev => ({ ...prev, visible: false }));
         executeDelete();
-      }
-    } else {
-      Alert.alert(
-        "Delete Message",
-        "Are you sure you want to delete this message?",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Delete", style: "destructive", onPress: executeDelete }
-        ]
-      );
-    }
+      },
+    });
   };
 
   /**
@@ -237,7 +244,7 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
       const messageToEdit = messages[index].content;
       const historyToKeep = messages.slice(0, index);
       setInputText(messageToEdit);
-      persistHistory(historyToKeep); // We truncate the history in the DB immediately
+      persistHistory(historyToKeep);
     };
 
     if (isLastUserMessage) {
@@ -245,22 +252,16 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
       return;
     }
 
-    const warningText = "Editing this message will permanently overwrite all subsequent messages in this chat. Do you wish to continue?";
-
-    if (Platform.OS === 'web') {
-      if (window.confirm(warningText)) {
+    setConfirmModal({
+      visible: true,
+      title: 'Edit Message',
+      message: 'Editing this message will permanently overwrite all subsequent messages in this chat. Do you wish to continue?',
+      destructiveLabel: 'Continue',
+      onConfirm: () => {
+        setConfirmModal(prev => ({ ...prev, visible: false }));
         executeEdit();
-      }
-    } else {
-      Alert.alert(
-        "Warning",
-        warningText,
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Continue", style: "destructive", onPress: executeEdit }
-        ]
-      );
-    }
+      },
+    });
   };
 
   if (!visible) return null;
@@ -409,8 +410,38 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
   }
 
   return (
+    <>
     <Modal visible={visible} animationType="slide" transparent={true}>
       {content}
     </Modal>
+
+    {/* Confirmation Modal */}
+    <Modal visible={confirmModal.visible} animationType="fade" transparent={true}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
+        className="flex-1 bg-black/60 items-center justify-center px-6"
+      >
+        <TouchableOpacity activeOpacity={1} className="bg-surface w-full max-w-[320px] rounded-2xl p-6 shadow-xl">
+          <Text className="text-text-primary text-lg font-bold mb-2">{confirmModal.title}</Text>
+          <Text className="text-text-secondary text-sm mb-6">{confirmModal.message}</Text>
+          <View className="flex-row justify-end gap-3">
+            <TouchableOpacity
+              onPress={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
+              className="px-4 py-2.5 rounded-xl border border-border"
+            >
+              <Text className="text-text-primary font-semibold text-sm">Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={confirmModal.onConfirm}
+              className="px-4 py-2.5 rounded-xl bg-error"
+            >
+              <Text className="text-white font-semibold text-sm">{confirmModal.destructiveLabel}</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+    </>
   );
 }

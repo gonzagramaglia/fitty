@@ -36,7 +36,7 @@ export function startChatServer() {
 
   app.post('/api/chat', limiter, async (req, res) => {
     try {
-      const { healthCheckId, message, chatHistory } = req.body;
+      const { healthCheckId, message } = req.body;
 
       if (!healthCheckId || !message) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -47,14 +47,25 @@ export function startChatServer() {
         return res.status(400).json({ error: 'Message must be a string under 500 characters' });
       }
 
-      if (!process.env.ANTHROPIC_API_KEY) {
-        return res.status(500).json({ error: 'Missing Anthropic API Key on backend' });
+      // Authenticate user via Authorization header
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !user) {
+        return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      // Fetch health check context
+      if (!process.env.ANTHROPIC_API_KEY) {
+        return res.status(500).json({ error: 'Server configuration error' });
+      }
+
+      // Fetch health check context — scoped to user
       const { data: healthCheck, error: fetchError } = await supabase
         .from('health_checks')
-        .select('bcs_score, classification, ai_reasoning, recommendations, text_note, chat_history')
+        .select('bcs_score, classification, ai_reasoning, recommendations, text_note, chat_history, user_id')
         .eq('id', healthCheckId)
         .single();
 
@@ -62,7 +73,12 @@ export function startChatServer() {
         return res.status(404).json({ error: 'Health check not found' });
       }
 
-      const existingHistory = chatHistory || healthCheck.chat_history || [];
+      // Verify ownership
+      if (healthCheck.user_id !== user.id) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      const existingHistory = healthCheck.chat_history || [];
       const updatedHistory = [...existingHistory, { role: 'user', content: message }];
 
       // Defensive System Prompt Shield
@@ -107,9 +123,9 @@ Keep your answers brief (under 3 short paragraphs) as this is a mobile chat inte
       }
 
       return res.json({ message: aiMessage, chatHistory: finalHistory });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Chat API error:', error);
-      return res.status(500).json({ error: error.message || 'Internal Server Error' });
+      return res.status(500).json({ error: 'An internal error occurred. Please try again.' });
     }
   });
 

@@ -5,6 +5,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useActiveCat } from '../../lib/ActiveCatContext';
+import { getBcsTextColor } from '../../lib/bcs';
 import { AlertCircle, ChevronRight, Activity, Plus, Camera } from 'lucide-react-native';
 
 /**
@@ -82,12 +83,7 @@ export default function DashboardScreen() {
     }, [activeCatId, isCatLoading])
   );
 
-  const getBcsColorClass = (score: number | null | undefined) => {
-    if (!score) return 'text-text-secondary';
-    if (score === 5) return 'text-primary-cool';
-    if (score <= 2 || score >= 8) return 'text-error';
-    return 'text-[#EAB308]';
-  };
+  const getBcsColorClass = (score: number | null | undefined) => getBcsTextColor(score);
 
   // Compute if profile is incomplete
   const isProfileIncomplete = cat && (!cat.base_weight_kg || !cat.age_years);

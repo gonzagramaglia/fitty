@@ -123,10 +123,10 @@ export default function ProfileScreen() {
         setCats(data);
         // Clear stale activeCatId from a previous session if it doesn't belong to any of the current user's cats
         if (data.length === 0) {
-          setActiveCatId(null);
+          await setActiveCatId(null);
           setIsCreatingNew(true);
         } else if (activeCatId && !data.find((c: any) => c.id === activeCatId)) {
-          setActiveCatId(data[0].id);
+          await setActiveCatId(data[0].id);
         }
       }
     } catch (e) {
@@ -324,7 +324,7 @@ export default function ProfileScreen() {
       const payload = {
         user_id: user.id,
         name: input.name,
-        breed: input.breed,
+        breed: input.breed ?? null,
         age_years: input.age_years,
         base_weight_kg: input.base_weight_kg,
         avatar_url: finalAvatarUrl,
@@ -576,7 +576,7 @@ export default function ProfileScreen() {
                   value={name}
                   onChangeText={setName}
                   onFocus={() => {
-                    if (isGuest && name === '') {
+                    if (isGuest && isCreatingNew && name === '') {
                       simulateTyping('name', 'Coding Kitty', setName);
                     }
                   }}
@@ -595,7 +595,7 @@ export default function ProfileScreen() {
                   value={age}
                   onChangeText={setAge}
                   onFocus={() => {
-                    if (isGuest && age === '') {
+                    if (isGuest && isCreatingNew && age === '') {
                       simulateTyping('age', '3', setAge);
                     }
                   }}
@@ -616,7 +616,7 @@ export default function ProfileScreen() {
                 value={breed}
                 onChangeText={setBreed}
                 onFocus={() => {
-                  if (isGuest && breed === '') {
+                  if (isGuest && isCreatingNew && breed === '') {
                     simulateTyping('breed', 'British Shorthair', setBreed);
                   }
                 }}
@@ -634,7 +634,7 @@ export default function ProfileScreen() {
                 value={weight}
                 onChangeText={setWeight}
                 onFocus={() => {
-                  if (isGuest && weight === '') {
+                  if (isGuest && isCreatingNew && weight === '') {
                     simulateTyping('weight', '4.5', setWeight);
                   }
                 }}

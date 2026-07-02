@@ -46,8 +46,10 @@ async function run() {
   console.log(`Worker connected to ${connectionOptions.address}`);
   console.log(`Listening on task queue: fitty-ai-tasks in namespace: ${process.env.TEMPORAL_NAMESPACE || 'default'}`);
   
-  // Start the chat Express server
-  startChatServer();
+  // Start the chat Express server (opt-in via env to avoid port conflicts in multi-replica setups)
+  if (process.env.ENABLE_CHAT_SERVER !== 'false') {
+    startChatServer();
+  }
   
   await worker.run();
   

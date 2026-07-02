@@ -1,6 +1,7 @@
 {
   "name": "fitty",
   "version": "1.0.0",
+  "description": "An AI-powered cat health tracker that estimates Body Condition Score (BCS) from just 2 photos. Features voice context analysis, historical trends, and personalized recommendations. Built for #HACKTHEKITTY 2026.",
   "main": "expo-router/entry",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.109.0",
@@ -60,7 +61,6 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "description": "An AI-powered cat health tracker that estimates Body Condition Score (BCS) from just 2 photos. Features voice context analysis, historical trends, and personalized recommendations. Built for #HACKTHEKITTY 2026 🐾 Tech Stack: React Native, Supabase, Temporal.io, Claude, Whisper & Aikido Security.",
     "test": "jest --watchAll=false",
     "test:watch": "jest --watchAll",
     "start:worker": "npx tsx temporal/worker.ts",

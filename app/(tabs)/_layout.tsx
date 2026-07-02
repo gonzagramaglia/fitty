@@ -16,27 +16,32 @@ export default function TabsLayout() {
   const { activeCatId, showGuestModal } = useActiveCat();
 
   const handleScanPress = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user?.is_anonymous) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      // Fail closed: could not verify identity
+      showGuestModal();
+      return;
+    }
+    if (!user.is_anonymous) {
       router.push('/camera');
       return;
     }
 
     if (activeCatId) {
-      const { count } = await supabase
+      const { count, error: countError } = await supabase
         .from('health_checks')
         .select('id', { count: 'exact', head: true })
         .eq('cat_id', activeCatId)
         .eq('user_id', user.id);
 
-      if (count && count > 0) {
+      if (countError || (count && count > 0)) {
         showGuestModal();
         return;
       }
     }
 
     router.push('/camera');
-  }, [activeCatId, showGuestModal]);
+  }, [activeCatId, showGuestModal, router]);
 
   return (
     <Tabs

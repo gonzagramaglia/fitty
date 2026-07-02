@@ -43,7 +43,7 @@ export function TrendChart({ data, catName }: Props) {
             data={{
               labels: ["", "", "", "", "", ""],
               datasets: [
-                { data: [5, 5, 5, 5, 5, 5], color: () => `rgba(26, 37, 48, 0.15)`, strokeWidth: 2, withDots: false },
+                { data: [5, 5, 5, 5, 5, 5], color: () => `rgba(26, 37, 48, 0.15)`, strokeWidth: 3, withDots: false },
                 { data: [1, 1, 1, 1, 1, 1], withDots: false, color: () => 'rgba(0,0,0,0)' },
                 { data: [9, 9, 9, 9, 9, 9], withDots: false, color: () => 'rgba(0,0,0,0)' },
               ],
@@ -71,15 +71,15 @@ export function TrendChart({ data, catName }: Props) {
               opacity: 0.5,
             }}
           />
-          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-            <View className="w-14 h-14 bg-surface-secondary rounded-full items-center justify-center mb-3">
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', marginTop: -12 }}>
+            <View className="mb-3">
               <Activity color="#94a3b8" size={28} />
             </View>
-            <Text className="text-text-primary font-semibold text-base mb-1">
-              No history yet
+            <Text className="text-text-primary font-bold text-base mb-1">
+              No health checks yet
             </Text>
             <Text className="text-text-muted text-center text-sm px-6">
-              Tap Scan to start tracking {catName ? `${catName}'s` : "your cat's"} health.
+              Tap Scan to start tracking{'\n'}{catName ? `${catName}'s` : "your cat's"} health.
             </Text>
           </View>
         </View>

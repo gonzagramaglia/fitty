@@ -4,6 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { BCSInfoCard } from '../../components/ui/BCSInfoCard';
 import { useActiveCat } from '../../lib/ActiveCatContext';
 import { getBcsTextColor } from '../../lib/bcs';
 import { AlertCircle, ChevronRight, Activity, Plus, Camera } from 'lucide-react-native';
@@ -175,7 +176,7 @@ export default function DashboardScreen() {
 
   return (
     <View className="flex-1 bg-surface">
-      <ScrollView ref={scrollViewRef} className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} bounces={false}>
+      <ScrollView ref={scrollViewRef} className="flex-1" contentContainerStyle={{ paddingBottom: 40 }} bounces={false}>
 
         {/* Dark Header Container */}
         <View
@@ -350,10 +351,15 @@ export default function DashboardScreen() {
           ) : (
             <View className="bg-background border border-border border-dashed rounded-2xl p-8 items-center justify-center">
               <Activity size={32} color="#cbd5e1" />
-              <Text className="text-text-secondary font-medium text-center mt-3">No health checks yet.</Text>
-              <Text className="text-slate-400 text-sm text-center mt-1">Tap Scan to start tracking {cat.name}'s health.</Text>
+              <Text className="text-text-secondary font-bold text-center text-base mt-3">No health checks yet</Text>
+              <Text className="text-slate-400 text-sm text-center mt-1">Tap Scan to start tracking{'\n'}{cat.name}'s health.</Text>
             </View>
           )}
+
+          {/* BCS Info Section */}
+          <View className="mt-6">
+            <BCSInfoCard />
+          </View>
 
         </View>
       </ScrollView>

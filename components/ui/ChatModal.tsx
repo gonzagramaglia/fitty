@@ -247,7 +247,7 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
     setConfirmModal({
       visible: true,
       title: 'Delete Message',
-      message: 'Are you sure you want to delete this message?',
+      message: 'Are you sure you want to\ndelete this message?',
       destructiveLabel: 'Delete',
       onConfirm: () => {
         setConfirmModal(prev => ({ ...prev, visible: false }));
@@ -425,6 +425,34 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Inline Confirmation Overlay */}
+      {confirmModal.visible && (
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', zIndex: 100, paddingHorizontal: 24 }}
+        >
+          <TouchableOpacity activeOpacity={1} className="bg-surface w-full max-w-[320px] rounded-2xl p-6 shadow-xl items-center">
+            <Text className="text-text-primary text-lg font-bold mb-2 text-center">{confirmModal.title}</Text>
+            <Text className="text-text-secondary text-sm mb-6 text-center">{confirmModal.message}</Text>
+            <View className="flex-row justify-center gap-3">
+              <TouchableOpacity
+                onPress={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
+                className="px-4 py-2.5 rounded-xl border border-border"
+              >
+                <Text className="text-text-primary font-semibold text-sm">Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={confirmModal.onConfirm}
+                className="px-4 py-2.5 rounded-xl bg-error"
+              >
+                <Text className="text-white font-semibold text-sm">{confirmModal.destructiveLabel}</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      )}
     </KeyboardAvoidingView>
   );
 
@@ -440,34 +468,6 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
     <>
     <Modal visible={visible} animationType="slide" transparent={true}>
       {content}
-    </Modal>
-
-    {/* Confirmation Modal */}
-    <Modal visible={confirmModal.visible} animationType="fade" transparent={true}>
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
-        className="flex-1 bg-black/60 items-center justify-center px-6"
-      >
-        <TouchableOpacity activeOpacity={1} className="bg-surface w-full max-w-[320px] rounded-2xl p-6 shadow-xl">
-          <Text className="text-text-primary text-lg font-bold mb-2">{confirmModal.title}</Text>
-          <Text className="text-text-secondary text-sm mb-6">{confirmModal.message}</Text>
-          <View className="flex-row justify-end gap-3">
-            <TouchableOpacity
-              onPress={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
-              className="px-4 py-2.5 rounded-xl border border-border"
-            >
-              <Text className="text-text-primary font-semibold text-sm">Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={confirmModal.onConfirm}
-              className="px-4 py-2.5 rounded-xl bg-error"
-            >
-              <Text className="text-white font-semibold text-sm">{confirmModal.destructiveLabel}</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
     </Modal>
     </>
   );

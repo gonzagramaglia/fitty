@@ -32,6 +32,9 @@ export default function CameraScreen() {
   const { activeCatId, setSelectedCheckId } = useActiveCat();
   const [userId, setUserId] = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [userLoaded, setUserLoaded] = useState(false);
+  const [guestCaptured, setGuestCaptured] = useState<{ top: boolean; side: boolean }>({ top: false, side: false });
+  const [showFlash, setShowFlash] = useState(false);
   const [showJudgeWarning, setShowJudgeWarning] = useState(false);
 
   const { cameraRef, topPhoto, sidePhoto, isCapturing, capturePhoto, setManualPhoto, clearPhoto } = useCameraCapture();
@@ -109,11 +112,9 @@ export default function CameraScreen() {
   const [catName, setCatName] = useState<string>('your cat');
 
   const currentPhoto = step === 'top' ? topPhoto : step === 'side' ? sidePhoto : null;
+  const isCaptured = !!(currentPhoto || (isGuest && step !== 'voice' && guestCaptured[step as 'top' | 'side']));
 
   useEffect(() => {
-    if (!permission?.granted) requestPermission();
-    if (!audioPermissionResponse?.granted) requestAudioPermission();
-
     // get user ID for storage paths
     supabase.auth.getSession().then(async ({ data }) => {
       if (data.session?.user) {
@@ -121,8 +122,15 @@ export default function CameraScreen() {
         const isUserGuest = data.session.user.is_anonymous === true;
         setIsGuest(isUserGuest);
 
+        // Only request camera/mic permissions for real users (not guests)
+        if (!isUserGuest) {
+          if (!permission?.granted) requestPermission();
+          if (!audioPermissionResponse?.granted) requestAudioPermission();
+        }
+
         // If guest already has health checks, guard is handled at tabs layout level
         if (isUserGuest) setShowJudgeWarning(true);
+        setUserLoaded(true);
       }
     });
 
@@ -145,11 +153,12 @@ export default function CameraScreen() {
     if (step !== 'top' && step !== 'side') return;
 
     if (isGuest) {
-      // Auto-load mock images for Hackathon Judges
-      const mockImg = step === 'top'
-        ? require('../../assets/images/cat-top-view.png')
-        : require('../../assets/images/cat-side-view.png');
-      setManualPhoto(step as 'top' | 'side', mockImg as any);
+      // Simulate capture with flash effect
+      setShowFlash(true);
+      setTimeout(() => {
+        setShowFlash(false);
+        setGuestCaptured(prev => ({ ...prev, [step]: true }));
+      }, 200);
       return;
     }
 
@@ -169,11 +178,12 @@ export default function CameraScreen() {
 
   const pickImage = async () => {
     if (isGuest) {
-      // Auto-load mock images for Hackathon Judges using local require
-      const mockImg = step === 'top'
-        ? require('../../assets/images/cat-top-view.png')
-        : require('../../assets/images/cat-side-view.png');
-      setManualPhoto(step as 'top' | 'side', mockImg as any);
+      // Simulate capture with flash effect
+      setShowFlash(true);
+      setTimeout(() => {
+        setShowFlash(false);
+        setGuestCaptured(prev => ({ ...prev, [step]: true }));
+      }, 200);
       return;
     }
 
@@ -392,6 +402,11 @@ export default function CameraScreen() {
     return <ProcessingScreen />;
   }
 
+  // Wait until we know if user is guest before rendering camera UI
+  if (!userLoaded) {
+    return <View className="flex-1 bg-black" />;
+  }
+
   return (
     <View className="flex-1 bg-[#1A2530]">
       {/* Header Area Wrapper */}
@@ -433,8 +448,19 @@ export default function CameraScreen() {
                   style={{ width: '100%', height: '100%', borderRadius: 40, overflow: 'hidden' }} 
                   resizeMode="cover" 
                 />
-                <SilhouetteOverlay type={step === 'top' ? 'top' : 'side'} />
               </>
+            ) : isGuest ? (
+              <View style={{ flex: 1, borderRadius: 40, overflow: 'hidden' }}>
+                <Image 
+                  source={step === 'top' ? require('../../assets/images/cat-top-view.png') : require('../../assets/images/cat-side-view.png')}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
+                {!guestCaptured[step] && <SilhouetteOverlay type={step === 'top' ? 'top' : 'side'} />}
+                {showFlash && (
+                  <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'white', opacity: 0.8 }} />
+                )}
+              </View>
             ) : (
               <View style={{ flex: 1, borderRadius: 40, overflow: 'hidden' }}>
                 <CameraView style={{ flex: 1 }} facing="back" ref={cameraRef}>
@@ -447,10 +473,10 @@ export default function CameraScreen() {
             <View className="absolute bottom-4 left-0 right-0 px-6 z-10 items-center pointer-events-none">
               <View className="bg-black/70 rounded-3xl px-6 py-4 backdrop-blur-xl border border-white/10 items-center">
                 <Text className="text-[#74B7B5] text-xs font-bold tracking-[0.2em] uppercase mb-1">
-                  {currentPhoto ? (step === 'top' ? 'Ready for Step 2' : 'Ready for Step 3') : (step === 'top' ? 'Step 1 of 3' : 'Step 2 of 3')}
+                  {isCaptured ? (step === 'top' ? 'Ready for Step 2' : 'Ready for Step 3') : (step === 'top' ? 'Step 1 of 3' : 'Step 2 of 3')}
                 </Text>
                 <Text className="text-white text-center text-base font-medium">
-                  {currentPhoto
+                  {isCaptured
                     ? "Tap ✕ to retake or ✓ to continue"
                     : (step === 'top'
                       ? `Capture a photo of ${catName || 'your cat'} from above. Align with the silhouette.`
@@ -583,7 +609,9 @@ export default function CameraScreen() {
           {/* Left Button (Back / Discard) */}
           <TouchableOpacity
             onPress={() => {
-              if (currentPhoto) clearPhoto(step as 'top' | 'side');
+              if (isGuest && step !== 'voice' && guestCaptured[step as 'top' | 'side']) {
+                setGuestCaptured(prev => ({ ...prev, [step]: false }));
+              } else if (currentPhoto) clearPhoto(step as 'top' | 'side');
               else if (step === 'voice' && (voiceNoteUri || fallbackText.trim().length > 0)) {
                 if (voiceNoteUri) clearVoiceNote();
                 if (fallbackText) {
@@ -599,7 +627,7 @@ export default function CameraScreen() {
             disabled={step === 'voice' && isRecording}
             style={{ position: 'absolute', left: 56, width: 48, height: 48, backgroundColor: 'transparent', borderRadius: 24, alignItems: 'center', justifyContent: 'center', zIndex: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', opacity: (step === 'voice' && isRecording) ? 0.3 : 1 }}
           >
-            {(currentPhoto || (step === 'voice' && (voiceNoteUri || fallbackText.trim().length > 0))) ? <X color="white" size={24} /> : <ArrowLeft color="white" size={24} />}
+            {(isCaptured || (step === 'voice' && (voiceNoteUri || fallbackText.trim().length > 0))) ? <X color="white" size={24} /> : <ArrowLeft color="white" size={24} />}
           </TouchableOpacity>
 
           {/* Center Button (Camera / Record) */}
@@ -608,12 +636,12 @@ export default function CameraScreen() {
             disabled={
               step === 'voice'
                 ? (fallbackText.trim().length > 0 || !!voiceNoteUri)
-                : (isCapturing || !!currentPhoto)
+                : (isCapturing || isCaptured)
             }
             style={
               step === 'voice'
                 ? { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: isRecording ? '#EAB308' : 'white', opacity: (fallbackText.trim().length > 0 || !!voiceNoteUri) ? 0.3 : 1 }
-                : { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: (isCapturing || !!currentPhoto) ? '#94a3b8' : '#cbd5e1', backgroundColor: (isCapturing || !!currentPhoto) ? 'rgba(255,255,255,0.5)' : 'white' }
+                : { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', borderWidth: (isCapturing || isCaptured) ? 0 : 4, borderColor: '#cbd5e1', backgroundColor: (isCapturing || isCaptured) ? 'rgba(255,255,255,0.5)' : 'white' }
             }
           >
             {step === 'voice' ? (
@@ -625,24 +653,24 @@ export default function CameraScreen() {
 
           {/* Right Button (Upload / Confirm / Submit Voice) */}
           <TouchableOpacity
-            onPress={step === 'voice' ? submitFallbackText : (currentPhoto ? confirmPhoto : pickImage)}
+            onPress={step === 'voice' ? submitFallbackText : (isCaptured ? confirmPhoto : pickImage)}
             disabled={step === 'voice' && isRecording}
             style={{
               position: 'absolute',
               right: 56,
               width: 48,
               height: 48,
-              backgroundColor: step === 'voice' ? ((fallbackText.trim().length > 0 || !!voiceNoteUri) ? '#EAB308' : (isRecording ? 'transparent' : '#74B7B5')) : (currentPhoto ? '#74B7B5' : 'transparent'),
+              backgroundColor: step === 'voice' ? ((fallbackText.trim().length > 0 || !!voiceNoteUri) ? '#EAB308' : (isRecording ? 'transparent' : '#74B7B5')) : (isCaptured ? '#74B7B5' : 'transparent'),
               borderRadius: 24,
               alignItems: 'center',
               justifyContent: 'center',
               zIndex: 20,
-              borderWidth: (currentPhoto || (step === 'voice' && !isRecording)) ? 0 : 1,
+              borderWidth: (isCaptured || (step === 'voice' && !isRecording)) ? 0 : 1,
               borderColor: 'rgba(255,255,255,0.3)',
               opacity: (step === 'voice' && isRecording) ? 0.3 : 1
             }}
           >
-            {(currentPhoto || step === 'voice') ? <Check color="white" size={24} /> : <Upload color="white" size={24} />}
+            {(isCaptured || step === 'voice') ? <Check color="white" size={24} /> : <Upload color="white" size={24} />}
           </TouchableOpacity>
         </View>
       </View>

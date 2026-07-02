@@ -4,6 +4,7 @@ import { useRouter, useFocusEffect } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { HistoryCard } from "../../components/ui/HistoryCard";
 import { TrendChart } from "../../components/ui/TrendChart";
+import { BCSInfoCard } from "../../components/ui/BCSInfoCard";
 import { useHistory } from "../../hooks/useHistory";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { Plus, ArrowUpDown } from "lucide-react-native";
@@ -316,7 +317,7 @@ export default function HistoryScreen() {
             </TouchableOpacity>
           </View>
 
-          <View className="pb-24">
+          <View className="pb-8">
             {(sortOrder === 'desc' ? history : [...history].reverse()).map((record) => (
               <HistoryCard
                 key={record.id}
@@ -330,6 +331,11 @@ export default function HistoryScreen() {
                 }}
               />
             ))}
+
+            {/* BCS Info Section */}
+            <View className="mt-7">
+              <BCSInfoCard />
+            </View>
           </View>
         </ScrollView>
         </>

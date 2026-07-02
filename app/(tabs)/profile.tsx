@@ -347,6 +347,7 @@ export default function ProfileScreen() {
           setIsCreatingNew(false);
           await setActiveCatId(data.id);
           DeviceEventEmitter.emit('showToast', 'Cat added successfully!');
+          router.replace('/(tabs)');
         }
       }
       fetchData();

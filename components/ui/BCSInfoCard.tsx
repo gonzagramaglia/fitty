@@ -1,5 +1,5 @@
-import { View, Text } from "react-native";
-import { Info } from "lucide-react-native";
+import { View, Text, TouchableOpacity, Linking } from "react-native";
+import { Info, ExternalLink } from "lucide-react-native";
 
 /**
  * BCSInfoCard explains what the Body Condition Score is and why it matters.
@@ -56,9 +56,19 @@ export function BCSInfoCard() {
           </View>
           <Text className="text-text-secondary text-sm">Severely overweight</Text>
         </View>
+
+        <View style={{ borderTopWidth: 1, borderTopColor: '#e2e8f0', marginTop: 14, paddingTop: 12 }}>
+          <TouchableOpacity 
+            onPress={() => Linking.openURL('https://wsava.org/wp-content/uploads/2020/08/Body-Condition-Score-cat-updated-August-2020.pdf')}
+            className="flex-row items-center justify-center"
+          >
+            <Text className="text-primary-cool-dark text-sm font-semibold mr-1.5">View WSAVA BCS Chart</Text>
+            <ExternalLink size={14} color="#589694" />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <Text className="text-text-muted text-xs mt-4 leading-relaxed text-center">
+      <Text className="text-text-muted text-xs mt-4 leading-relaxed text-center font-bold">
         Regular tracking helps detect weight changes early — preventing health issues before they become serious.
       </Text>
     </View>

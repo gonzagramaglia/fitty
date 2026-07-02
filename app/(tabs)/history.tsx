@@ -250,7 +250,7 @@ export default function HistoryScreen() {
           </View>
         </>
       ) : history.length === 0 ? (
-        <>
+        <ScrollView ref={scrollViewRef} className="flex-1" contentContainerStyle={{ paddingBottom: 80 }} bounces={false}>
           {/* Real Dark Header */}
           <View 
             className="bg-[#1A2530] rounded-b-[2.5rem] px-6 mb-6"
@@ -273,7 +273,11 @@ export default function HistoryScreen() {
           <View className="px-6 mt-2 mb-6">
             <TrendChart data={[]} catName={allCats.find(c => c.id === activeCatId)?.name} />
           </View>
-        </>
+
+          <View className="px-6 mt-2 mb-1">
+            <BCSInfoCard />
+          </View>
+        </ScrollView>
       ) : (
         <>
           {/* Real Dark Header */}
@@ -333,7 +337,7 @@ export default function HistoryScreen() {
             ))}
 
             {/* BCS Info Section */}
-            <View className="mt-7">
+            <View className="mt-8">
               <BCSInfoCard />
             </View>
           </View>

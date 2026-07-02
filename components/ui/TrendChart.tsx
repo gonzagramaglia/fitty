@@ -27,7 +27,7 @@ export function TrendChart({ data, catName }: Props) {
 
   if (!data || data.length === 0) {
     return (
-      <View className="bg-background border border-border rounded-2xl p-6 shadow-sm">
+      <View className="bg-background border border-border rounded-2xl pt-6 px-6 pb-0 shadow-sm">
         <View className="flex-row justify-between items-center mb-4">
           <Text className="text-text-primary text-base font-semibold">
             BCS Trend
@@ -79,7 +79,7 @@ export function TrendChart({ data, catName }: Props) {
               No health checks yet
             </Text>
             <Text className="text-text-muted text-center text-sm px-6">
-              Tap Scan to start tracking{'\n'}{catName ? `${catName}'s` : "your cat's"} health.
+              Tap <Text className="font-bold" style={{ color: '#854D0E' }}>Scan</Text> below to start tracking{'\n'}{catName ? `${catName}'s` : "your cat's"} health.
             </Text>
           </View>
         </View>

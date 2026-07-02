@@ -161,3 +161,16 @@ Build an interactive chat interface to ask follow-up questions about a specific 
 - Implement Anthropic Claude integration for Q&A with health check context
 - Connect UI to backend with strict rate limiting (5 req/min) and 500-char validation
 - Persist chat messages to Supabase and implement UI edit/delete functions
+
+## Phase 8 — Judge Mode UX & Demo Mocking
+
+### 15 Judge Mode UX & Demo Mocking
+Polish the anonymous guest (Judge Mode) experience so hackathon judges can fully explore the app without a real account or data.
+
+**UI & Logic:**
+- Guest Mode guard: block second scan and second cat creation with Judge Mode modal
+- Toast notifications (auto-dismiss with progress bar; persistent variant for guest banner)
+- 6 pre-seeded mock health check records on first Judge Mode scan (Jan–Jun timeline)
+- 5 real voice notes uploaded to Supabase and linked to mock records
+- Web audio playback via native HTML5 `Audio` API (bypasses `expo-av` on web)
+- Centralized guest modal via React Context (single source of truth, no duplicates)

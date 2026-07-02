@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, DeviceEventEmitter } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, DeviceEventEmitter, Modal } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Plus, CloudUpload, Save, Image as ImageIcon, Check, Edit2, LogOut, Pencil } from 'lucide-react-native';
+import { Plus, CloudUpload, Save, Image as ImageIcon, Check, Edit2, LogOut, Pencil, X } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from 'expo-router';
 import { useActiveCat } from '../../lib/ActiveCatContext';
@@ -20,7 +20,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { activeCatId, setActiveCatId } = useActiveCat();
+  const { activeCatId, setActiveCatId, showGuestModal } = useActiveCat();
 
   const [cats, setCats] = useState<any[]>([]);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -43,8 +43,31 @@ export default function ProfileScreen() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  const typingIntervals = useRef<{ [key: string]: NodeJS.Timeout | null }>({});
+
+  const simulateTyping = (key: string, textToType: string, setter: (text: string) => void) => {
+    if (typingIntervals.current[key]) {
+      clearInterval(typingIntervals.current[key]!);
+    }
+    let i = 0;
+    setter('');
+    typingIntervals.current[key] = setInterval(() => {
+      setter(textToType.substring(0, i + 1));
+      i++;
+      if (i === textToType.length) {
+        if (typingIntervals.current[key]) {
+          clearInterval(typingIntervals.current[key]!);
+          typingIntervals.current[key] = null;
+        }
+      }
+    }, 50);
+  };
   const [errors, setErrors] = useState<FieldError[]>([]);
+  const [isSignOutModalVisible, setIsSignOutModalVisible] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const pendingAddCat = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -83,6 +106,7 @@ export default function ProfileScreen() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setIsGuest(user.is_anonymous || false);
 
       setOriginalOwnerName(user.user_metadata?.full_name || '');
       setOwnerName(user.user_metadata?.full_name || '');
@@ -95,7 +119,16 @@ export default function ProfileScreen() {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      if (data) setCats(data);
+      if (data) {
+        setCats(data);
+        // Clear stale activeCatId from a previous session if it doesn't belong to any of the current user's cats
+        if (data.length === 0) {
+          setActiveCatId(null);
+          setIsCreatingNew(true);
+        } else if (activeCatId && !data.find((c: any) => c.id === activeCatId)) {
+          setActiveCatId(data[0].id);
+        }
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -108,6 +141,7 @@ export default function ProfileScreen() {
 
     // Listen for cross-screen events
     const sub = DeviceEventEmitter.addListener('openAddCat', () => {
+      pendingAddCat.current = true;
       setIsCreatingNew(true);
     });
     return () => sub.remove();
@@ -115,19 +149,41 @@ export default function ProfileScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      // Reset creation state when navigating to the tab normally.
-      // If navigating via the 'Add' button, the openAddCat event will fire shortly after this and override it.
-      setIsCreatingNew(false);
-    }, [])
+      // Only reset if no pending 'Add Cat' intent (from index or history tab).
+      // The openAddCat event sets pendingAddCat.current = true before navigation,
+      // so we skip the reset and clear the flag instead.
+      // Also keep isCreatingNew=true if user has no cats yet.
+      if (pendingAddCat.current) {
+        pendingAddCat.current = false;
+      } else if (cats.length > 0) {
+        setIsCreatingNew(false);
+      }
+    }, [cats.length])
   );
 
   useEffect(() => {
     if (isCreatingNew) {
-      setName('');
-      setBreed('');
-      setAge('');
-      setWeight('');
-      setAvatarUri(null);
+      if (isGuest && cats.length >= 1) {
+        setIsCreatingNew(false);
+        showGuestModal("You cannot create more cats in this simulated experience. For the real Fitty experience, please log in with a Google account.");
+        return;
+      }
+      
+      if (isGuest) {
+        // Leave them empty initially so the placeholders are visible
+        // When the user taps the input, it will animate typing these values
+        setName('');
+        setBreed('');
+        setAge('');
+        setWeight('');
+        setAvatarUri(null);
+      } else {
+        setName('');
+        setBreed('');
+        setAge('');
+        setWeight('');
+        setAvatarUri(null);
+      }
       return;
     }
 
@@ -255,18 +311,18 @@ export default function ProfileScreen() {
     const validation = validateCatProfile(input);
     if (!validation.valid) {
       setErrors(validation.errors);
-      Alert.alert('Validation Error', validation.errors[0].message);
+      DeviceEventEmitter.emit('showToast', validation.errors[0].message);
       return;
     }
 
     setIsSaving(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('Not authenticated');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
       const finalAvatarUrl = avatarUri ? await uploadAvatar(avatarUri, 'cat_avatars', 'cat') : null;
       const payload = {
-        user_id: session.user.id,
+        user_id: user.id,
         name: input.name,
         breed: input.breed,
         age_years: input.age_years,
@@ -274,22 +330,28 @@ export default function ProfileScreen() {
         avatar_url: finalAvatarUrl,
       };
 
-      if (!isCreatingNew && activeCatId) {
+      // Data-driven decision: only UPDATE if activeCatId actually exists in the user's cat list.
+      // This prevents stale activeCatId values (from previous anonymous sessions) from
+      // silently running an RLS-blocked UPDATE instead of the intended INSERT.
+      const existingCat = cats.find(c => c.id === activeCatId);
+      const shouldUpdate = !!existingCat && !isCreatingNew;
+
+      if (shouldUpdate) {
         const { error } = await supabase.from('cats').update(payload).eq('id', activeCatId);
         if (error) throw error;
-        Alert.alert('Success', 'Profile updated successfully!');
+        DeviceEventEmitter.emit('showToast', 'Profile updated successfully!');
       } else {
         const { data, error } = await supabase.from('cats').insert(payload).select('id').single();
         if (error) throw error;
         if (data?.id) {
-          await setActiveCatId(data.id);
           setIsCreatingNew(false);
-          Alert.alert('Success', 'Cat added successfully!');
+          await setActiveCatId(data.id);
+          DeviceEventEmitter.emit('showToast', 'Cat added successfully!');
         }
       }
       fetchData();
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to save profile');
+      DeviceEventEmitter.emit('showToast', err.message || 'Failed to save profile');
     } finally {
       setIsSaving(false);
     }
@@ -304,13 +366,17 @@ export default function ProfileScreen() {
     router.replace('/(auth)/login');
   };
 
+  const confirmSignOut = () => {
+    setIsSignOutModalVisible(true);
+  };
+
   const getFieldError = (field: string) => errors.find(e => e.field === field)?.message;
 
   if (isLoading) {
     return (
       <View className="flex-1 bg-surface">
         <View className="flex-1 bg-surface">
-          <ScrollView ref={scrollViewRef} className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} bounces={false}>
+          <ScrollView ref={scrollViewRef} className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} bounces={false} keyboardShouldPersistTaps="handled">
             {/* Skeleton Dark Header Container */}
             <View 
               className="bg-[#1A2530] rounded-b-[2.5rem] px-6 pb-6 mb-6" 
@@ -379,7 +445,7 @@ export default function ProfileScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View className="flex-1 bg-surface">
-        <ScrollView ref={scrollViewRef} className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} bounces={false}>
+        <ScrollView ref={scrollViewRef} className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} bounces={false} keyboardShouldPersistTaps="handled">
           
           {/* Dark Header Container */}
           <View 
@@ -490,10 +556,8 @@ export default function ProfileScreen() {
                 <TouchableOpacity onPress={pickImage} className="w-32 h-32 rounded-[2rem] bg-surface-tertiary items-center justify-center overflow-hidden border-2 border-border">
                   {avatarUri ? (
                     <Image source={{ uri: avatarUri }} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
-                  ) : !isCreatingNew ? (
-                    <Image source={require('../../assets/images/coding-kitty.jpg')} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
                   ) : (
-                    <ImageIcon size={32} color="#94a3b8" />
+                    <Image source={require('../../assets/images/coding-kitty.jpg')} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
                   )}
                 </TouchableOpacity>
                 <TouchableOpacity onPress={pickImage} className="absolute -bottom-2 -right-2 bg-[#74B7B5] w-10 h-10 rounded-full items-center justify-center border-4 border-surface shadow-sm">
@@ -511,7 +575,12 @@ export default function ProfileScreen() {
                 <TextInput
                   value={name}
                   onChangeText={setName}
-                  placeholder="Luna"
+                  onFocus={() => {
+                    if (isGuest && name === '') {
+                      simulateTyping('name', 'Coding Kitty', setName);
+                    }
+                  }}
+                  placeholder="Coding Kitty"
                   placeholderTextColor="#94a3b8"
                   className={`bg-background border rounded-2xl px-4 py-4 text-text-primary text-base ${getFieldError('name') ? 'border-error' : 'border-border'}`}
                   style={Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}}
@@ -525,6 +594,11 @@ export default function ProfileScreen() {
                 <TextInput
                   value={age}
                   onChangeText={setAge}
+                  onFocus={() => {
+                    if (isGuest && age === '') {
+                      simulateTyping('age', '3', setAge);
+                    }
+                  }}
                   placeholder="3"
                   keyboardType="numeric"
                   placeholderTextColor="#94a3b8"
@@ -541,6 +615,11 @@ export default function ProfileScreen() {
               <TextInput
                 value={breed}
                 onChangeText={setBreed}
+                onFocus={() => {
+                  if (isGuest && breed === '') {
+                    simulateTyping('breed', 'British Shorthair', setBreed);
+                  }
+                }}
                 placeholder="British Shorthair"
                 placeholderTextColor="#94a3b8"
                 className="bg-background border border-border rounded-2xl px-4 py-4 text-text-primary text-base"
@@ -554,6 +633,11 @@ export default function ProfileScreen() {
               <TextInput
                 value={weight}
                 onChangeText={setWeight}
+                onFocus={() => {
+                  if (isGuest && weight === '') {
+                    simulateTyping('weight', '4.5', setWeight);
+                  }
+                }}
                 placeholder="4.5"
                 keyboardType="numeric"
                 placeholderTextColor="#94a3b8"
@@ -567,7 +651,8 @@ export default function ProfileScreen() {
             <TouchableOpacity
               onPress={handleSave}
               disabled={!canSave}
-              className={`flex-row items-center justify-center py-4 rounded-2xl mb-8 ${canSave ? 'bg-[#74B7B5]' : 'bg-surface-tertiary'}`}
+              className={`flex-row items-center justify-center rounded-2xl mb-8 ${canSave ? 'bg-[#74B7B5]' : 'bg-surface-tertiary'}`}
+              style={{ height: 56 }}
             >
               {isSaving ? (
                 <ActivityIndicator color="white" />
@@ -582,7 +667,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={handleSignOut}
+              onPress={confirmSignOut}
               className="flex-row items-center justify-center py-4 border border-[#e2e8f0] rounded-2xl bg-transparent mb-8"
             >
               <View style={{ transform: [{ scaleX: -1 }] }}>
@@ -596,6 +681,50 @@ export default function ProfileScreen() {
         </ScrollView>
       </View>
     </KeyboardAvoidingView>
+
+    {/* Custom Sign Out Modal */}
+    <Modal
+      transparent
+      visible={isSignOutModalVisible}
+      animationType="fade"
+      onRequestClose={() => setIsSignOutModalVisible(false)}
+    >
+      <TouchableOpacity 
+        activeOpacity={1} 
+        onPress={() => setIsSignOutModalVisible(false)} 
+        className="flex-1 bg-black/60 items-center justify-center px-6"
+      >
+        <TouchableOpacity 
+          activeOpacity={1} 
+          className="bg-surface w-full max-w-[340px] rounded-3xl p-6 items-center shadow-xl"
+        >
+          <View className="w-16 h-16 rounded-full bg-error-light items-center justify-center mb-4" style={{ transform: [{ scaleX: -1 }] }}>
+            <LogOut size={28} color="#ef4444" />
+          </View>
+          <Text className="text-xl font-black text-text-primary mb-2 text-center">Sign Out</Text>
+          <Text className="text-text-secondary text-center mb-8">
+            Are you sure you want to leave? If you are using a Guest account, your data will be permanently lost.
+          </Text>
+          <View className="flex-row gap-3 w-full">
+            <TouchableOpacity
+              onPress={() => setIsSignOutModalVisible(false)}
+              className="flex-1 py-3.5 rounded-2xl bg-surface-tertiary items-center justify-center"
+            >
+              <Text className="font-bold text-text-secondary text-base">Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setIsSignOutModalVisible(false);
+                handleSignOut();
+              }}
+              className="flex-1 py-3.5 rounded-2xl bg-error items-center justify-center"
+            >
+              <Text className="font-bold text-white text-base">Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
     </View>
   );
 }

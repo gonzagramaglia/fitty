@@ -26,7 +26,16 @@ export default function ProcessingScreen() {
   const [isTakingLong, setIsTakingLong] = useState(false);
   const [hasFailed, setHasFailed] = useState(false);
   const [successData, setSuccessData] = useState<{ id: string; score: number } | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
   const progressAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.is_anonymous) {
+        setIsGuest(true);
+      }
+    });
+  }, []);
 
   const hasContext = hasVoiceNote || hasTextNote;
 
@@ -246,6 +255,15 @@ export default function ProcessingScreen() {
           {loadingTexts[loadingTextIndex]}
         </Text>
       </View>
+
+      {isGuest && (
+        <View className="bg-blue-50/80 px-4 py-3 rounded-xl border border-blue-200 w-full max-w-sm flex-row items-center mt-6">
+          <AlertCircle color="#3B82F6" size={20} style={{ marginRight: 12, marginTop: 2 }} className="self-start" />
+          <Text className="text-blue-800 text-sm flex-1 leading-relaxed">
+            <Text className="font-bold">Judge Mode Simulation:</Text> This analysis is simulated. For the real AI experience, please log in with a Google account.
+          </Text>
+        </View>
+      )}
     </View>
   );
 }

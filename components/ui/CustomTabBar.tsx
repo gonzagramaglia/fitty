@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, DeviceEventEmitter } from 'react-native';
+import { View, TouchableOpacity, Text } from 'react-native';
 import { House, Clock, User, Camera } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
@@ -8,10 +8,11 @@ import { useRouter } from 'expo-router';
  * It provides custom styling, interactive icons, and a prominent floating action button
  * for triggering the camera flow.
  *
- * @param props - The props provided by React Navigation.
+ * @param props - The props provided by React Navigation plus custom props.
+ * @param props.onScanPress - Callback invoked when the Scan FAB is pressed. Handles guest guard logic.
  * @returns The rendered React element for the custom tab bar.
  */
-export function CustomTabBar({ state, descriptors, navigation }: any) {
+export function CustomTabBar({ state, descriptors, navigation, onScanPress }: any) {
   const router = useRouter();
 
   return (
@@ -29,8 +30,6 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
 
           if (!isFocused && !event.defaultPrevented) {
             navigation.navigate(route.name);
-          } else if (isFocused) {
-            DeviceEventEmitter.emit('tabPress', route.name);
           }
         };
 
@@ -76,7 +75,7 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
               {tabButton}
               <TouchableOpacity
                 key="scan-button"
-                onPress={() => router.push('/camera')}
+                onPress={onScanPress}
                 className="items-center flex-1"
               >
                 <View className="-mt-8 items-center">

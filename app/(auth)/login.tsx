@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from "react";
-import { View, Text, TouchableOpacity, Image, FlatList, LayoutChangeEvent, useWindowDimensions } from "react-native";
+import { View, Text, TouchableOpacity, Image, FlatList, LayoutChangeEvent, useWindowDimensions, DeviceEventEmitter } from "react-native";
 import { supabase } from "../../lib/supabase";
 import { getFriendlySupabaseError } from "../../lib/supabaseHelpers";
 import { Ionicons } from "@expo/vector-icons";
@@ -40,11 +40,15 @@ export default function LoginScreen() {
   const handleGuestLogin = async () => {
     try {
       setIsGuestLoading(true);
-      const { error } = await supabase.auth.signInAnonymously();
+      const { data, error } = await supabase.auth.signInAnonymously();
       if (error) throw error;
+      
+      const message = "Temporary Guest Account. Data is saved locally and will be lost if you clear your browser data or sign out.";
+      DeviceEventEmitter.emit('showToast', { message, persistent: true });
+      
       // Router redirect is handled automatically by the _layout.tsx session listener
     } catch (err: any) {
-      alert(getFriendlySupabaseError(err.message));
+      DeviceEventEmitter.emit('showToast', getFriendlySupabaseError(err.message));
     } finally {
       setIsGuestLoading(false);
     }
@@ -59,7 +63,7 @@ export default function LoginScreen() {
       if (error) throw error;
       // Router redirect is handled automatically by the _layout.tsx session listener
     } catch (err: any) {
-      alert(getFriendlySupabaseError(err.message));
+      DeviceEventEmitter.emit('showToast', getFriendlySupabaseError(err.message));
     } finally {
       setIsGoogleLoading(false);
     }
@@ -180,15 +184,15 @@ export default function LoginScreen() {
       {/* Bottom Section - Actions */}
       <View className="w-full mb-8">
         <View className="mb-6">
-          {/* Secondary Action - OAuth */}
+          {/* Secondary Action - OAuth (temporarily disabled) */}
           <TouchableOpacity 
-            className={`bg-background border border-border py-4 rounded-xl flex-row justify-center items-center shadow-sm mb-4 ${isGoogleLoading ? 'opacity-50' : ''}`}
-            onPress={handleGoogleLogin}
-            disabled={isGoogleLoading || isGuestLoading}
+            className="bg-background border border-border py-4 rounded-xl flex-row justify-center items-center shadow-sm mb-4 opacity-40"
+            onPress={() => {}}
+            disabled={true}
           >
             <Ionicons name="logo-google" size={20} color="#1A1C1E" style={{ marginRight: 12 }} />
             <Text className="text-text-primary font-bold text-base font-sans">
-              {isGoogleLoading ? 'Redirecting...' : 'Continue with Google'}
+              Continue with Google (Coming Soon)
             </Text>
           </TouchableOpacity>
 

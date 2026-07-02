@@ -40,17 +40,91 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
+  const [mockStep, setMockStep] = useState(0);
+  const [isAutoTyping, setIsAutoTyping] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  const MOCK_SCRIPT = [
+    { 
+      q: "How can I reduce his calorie intake safely?", 
+      a: "To reduce calories safely, avoid sudden drops. Measure his dry food precisely, substitute some dry kibble with low-calorie wet food (which has more moisture and fills him up), and cut out extra treats." 
+    },
+    { 
+      q: "Can I give him human food as a treat instead?", 
+      a: "It's best to avoid most human food as it can disrupt his balanced diet and add hidden calories. If you must, a small piece of plain, unseasoned boiled chicken is a safe, low-calorie option." 
+    },
+    {
+      q: "How much play time does he need?",
+      a: "Aim for at least two 15-minute active play sessions per day. Use feather wands or laser pointers to get him running and jumping to burn off those extra calories!"
+    }
+  ];
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.is_anonymous) {
+        setIsGuest(true);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (visible) {
       setMessages(initialHistory);
       setError(null);
+      if (isGuest) {
+        const aiCount = initialHistory.filter(m => m.role === 'assistant').length;
+        setMockStep(aiCount);
+      }
     }
-  }, [visible, initialHistory]);
+  }, [visible, initialHistory, isGuest]);
+
+  const handleMockInputTap = () => {
+    if (mockStep >= MOCK_SCRIPT.length || isAutoTyping || isLoading) return;
+    
+    setIsAutoTyping(true);
+    const question = MOCK_SCRIPT[mockStep].q;
+    let currentText = "";
+    let i = 0;
+    setInputText("");
+    
+    const interval = setInterval(() => {
+      if (i < question.length) {
+        currentText += question[i];
+        setInputText(currentText);
+        i++;
+      } else {
+        clearInterval(interval);
+        setIsAutoTyping(false);
+      }
+    }, 30);
+  };
 
   const sendMessage = async (overrideHistory?: Message[]) => {
     if (!inputText.trim() || isLoading) return;
+
+    if (isGuest) {
+      const userMessage = inputText.trim();
+      setInputText('');
+      const historyToUse = overrideHistory || messages;
+      const newMessages: Message[] = [...historyToUse, { role: 'user', content: userMessage }];
+      
+      setMessages(newMessages);
+      setIsLoading(true);
+      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+
+      await new Promise(r => setTimeout(r, 2000)); // Simulate thinking
+
+      const answer = MOCK_SCRIPT[mockStep]?.a || "I'm just a simulation! You've reached the end of my script.";
+      const finalMessages: Message[] = [...newMessages, { role: 'assistant', content: answer }];
+      
+      setMessages(finalMessages);
+      onHistoryUpdate(finalMessages);
+      setMockStep(prev => prev + 1);
+      setIsLoading(false);
+      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+      return;
+    }
 
     const userMessage = inputText.trim();
     setInputText('');
@@ -221,9 +295,18 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
                 <Bot color="#74B7B5" size={32} />
               </View>
               <Text className="text-text-primary font-bold text-base mb-2">Have questions?</Text>
-              <Text className="text-text-muted text-center leading-relaxed">
+              <Text className="text-text-muted text-center leading-relaxed mb-6">
                 Ask me anything about this health check report! For example: "Why is the score 7?" or "How can I reduce calories?"
               </Text>
+
+              {isGuest && (
+                <View className="bg-blue-50/80 px-4 py-3 rounded-xl border border-blue-200 flex-row items-center w-full">
+                  <AlertCircle color="#3B82F6" size={20} style={{ marginRight: 12, marginTop: 2 }} className="self-start" />
+                  <Text className="text-blue-800 text-sm flex-1 leading-relaxed text-left">
+                    <Text className="font-bold">Judge Mode Simulation:</Text> This chat is simulated. For the real AI experience, please log in with a Google account.
+                  </Text>
+                </View>
+              )}
             </View>
           )}
 
@@ -282,20 +365,33 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
 
         {/* Input */}
         <View className="p-4 border-t border-border bg-white flex-row items-center">
-          <TextInput
-            className="flex-1 bg-surface-secondary border border-border rounded-full px-4 py-3 mr-2 text-text-primary"
-            placeholder="Type your question..."
-            placeholderTextColor="#94A3B8"
-            value={inputText}
-            onChangeText={setInputText}
-            onSubmitEditing={() => sendMessage()}
-            returnKeyType="send"
-            editable={!isLoading}
-          />
+          {isGuest ? (
+            <TouchableOpacity 
+              activeOpacity={0.7}
+              onPress={handleMockInputTap}
+              disabled={isAutoTyping || isLoading || mockStep >= MOCK_SCRIPT.length}
+              className="flex-1 bg-surface-secondary border border-border rounded-full px-4 py-3 mr-2"
+            >
+              <Text className={inputText ? "text-text-primary" : "text-[#94A3B8]"}>
+                {inputText || (mockStep >= MOCK_SCRIPT.length ? "Simulation complete." : "Judge, tap to simulate question...")}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TextInput
+              className="flex-1 bg-surface-secondary border border-border rounded-full px-4 py-3 mr-2 text-text-primary"
+              placeholder="Type your question..."
+              placeholderTextColor="#94A3B8"
+              value={inputText}
+              onChangeText={setInputText}
+              onSubmitEditing={() => sendMessage()}
+              returnKeyType="send"
+              editable={!isLoading}
+            />
+          )}
           <TouchableOpacity 
             onPress={() => sendMessage()}
-            disabled={!inputText.trim() || isLoading}
-            className={`w-12 h-12 rounded-full items-center justify-center ${!inputText.trim() || isLoading ? 'bg-border' : 'bg-primary-cool'}`}
+            disabled={!inputText.trim() || isLoading || isAutoTyping}
+            className={`w-12 h-12 rounded-full items-center justify-center ${!inputText.trim() || isLoading || isAutoTyping ? 'bg-border' : 'bg-primary-cool'}`}
           >
             <Send color="white" size={20} style={{ marginLeft: -2 }} />
           </TouchableOpacity>

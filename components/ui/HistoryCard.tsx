@@ -4,7 +4,7 @@ import { ChevronRight, FileText, Mic } from "lucide-react-native";
 type Props = {
   dateString: string;
   bcsScore: number;
-  thumbnailUrl?: string;
+  thumbnailUrl?: string | any;
   hasTextNote?: boolean;
   hasVoiceNote?: boolean;
   onPress: () => void;
@@ -47,7 +47,7 @@ export function HistoryCard({ dateString, bcsScore, thumbnailUrl, hasTextNote, h
     >
       {thumbnailUrl ? (
         <Image
-          source={{ uri: thumbnailUrl }}
+          source={typeof thumbnailUrl === 'string' ? { uri: thumbnailUrl } : thumbnailUrl}
           className="w-12 h-12 rounded-xl bg-surface-secondary mr-4"
           style={{ width: 48, height: 48 }}
         />

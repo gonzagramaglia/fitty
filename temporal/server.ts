@@ -10,7 +10,7 @@ import 'dotenv/config';
  * This server provides a secure endpoint for the Chat feature.
  * It enforces rate limits, handles CORS, and safely interacts with the Anthropic API.
  * 
- * @returns {void}
+ * @returns {import('http').Server} The HTTP server instance for lifecycle management.
  */
 export function startChatServer() {
   const app = express();
@@ -129,9 +129,11 @@ Keep your answers brief (under 3 short paragraphs) as this is a mobile chat inte
     }
   });
 
-  app.listen(port, () => {
+  const server = app.listen(port, () => {
     console.log(`Chat backend listening securely on port ${port}`);
   });
+
+  return server;
 }
 
 // Start server directly if this file is run

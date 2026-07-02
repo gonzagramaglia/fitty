@@ -288,96 +288,74 @@ export default function CameraScreen() {
       
       // If the user is a guest (Hackathon Judge), insert past records to show a trend progression
       if (isGuest) {
-        // -3. Insert record (Jan 1st - BCS 4)
-        await supabase.from('health_checks').insert({
-          cat_id: activeCatId,
-          user_id: userId,
-          created_at: new Date(new Date().getFullYear(), 0, 1).toISOString(), // Jan 1st
-          top_photo_url: typeof topPhoto === 'string' ? topPhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
-          side_photo_url: typeof sidePhoto === 'string' ? sidePhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
-          bcs_score: 4,
-          classification: "Underweight",
-          ai_reasoning: "Ribs are easily palpable with minimal fat covering. A slight abdominal tuck is visible from the side.",
-          text_note: "Started using Fitty! Coding Kitty seems a bit underweight.",
-          voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-fitty.mp3",
-          recommendations: [
-            { title: "Nutrition", description: "Increase daily caloric intake by 10% to promote healthy weight gain." }
-          ],
-          status: "completed"
-        });
+        const mockPhoto = typeof topPhoto === 'string' ? topPhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg';
+        const mockSidePhoto = typeof sidePhoto === 'string' ? sidePhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg';
 
-        // -2. Insert record (Feb 1st - BCS 4)
-        await supabase.from('health_checks').insert({
-          cat_id: activeCatId,
-          user_id: userId,
-          created_at: new Date(new Date().getFullYear(), 1, 1).toISOString(), // Feb 1st
-          top_photo_url: typeof topPhoto === 'string' ? topPhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
-          side_photo_url: typeof sidePhoto === 'string' ? sidePhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
-          bcs_score: 4,
-          classification: "Underweight",
-          ai_reasoning: "Ribs are easily palpable with minimal fat covering. A slight abdominal tuck is visible from the side.",
-          text_note: "Coding Kitty is eating better but hasn't gained much weight yet.",
-          voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-eating-better.mp3",
-          recommendations: [
-            { title: "Nutrition", description: "Continue high-calorie kitten/recovery food in small, frequent meals." }
-          ],
-          status: "completed"
-        });
+        const seedRecords = [
+          {
+            cat_id: activeCatId, user_id: userId,
+            created_at: new Date(new Date().getFullYear(), 0, 1).toISOString(),
+            top_photo_url: mockPhoto, side_photo_url: mockSidePhoto,
+            bcs_score: 4, classification: "Underweight",
+            ai_reasoning: "Ribs are easily palpable with minimal fat covering. A slight abdominal tuck is visible from the side.",
+            text_note: "Started using Fitty! Coding Kitty seems a bit underweight.",
+            voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-fitty.mp3",
+            recommendations: [{ title: "Nutrition", description: "Increase daily caloric intake by 10% to promote healthy weight gain." }],
+            status: "completed"
+          },
+          {
+            cat_id: activeCatId, user_id: userId,
+            created_at: new Date(new Date().getFullYear(), 1, 1).toISOString(),
+            top_photo_url: mockPhoto, side_photo_url: mockSidePhoto,
+            bcs_score: 4, classification: "Underweight",
+            ai_reasoning: "Ribs are easily palpable with minimal fat covering. A slight abdominal tuck is visible from the side.",
+            text_note: "Coding Kitty is eating better but hasn't gained much weight yet.",
+            voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-eating-better.mp3",
+            recommendations: [{ title: "Nutrition", description: "Continue high-calorie kitten/recovery food in small, frequent meals." }],
+            status: "completed"
+          },
+          {
+            cat_id: activeCatId, user_id: userId,
+            created_at: new Date(new Date().getFullYear(), 2, 1).toISOString(),
+            top_photo_url: mockPhoto, side_photo_url: mockSidePhoto,
+            bcs_score: 5, classification: "Ideal",
+            ai_reasoning: "Well-proportioned. Ribs are palpable without excess fat covering. A clear waist is observed behind the ribs.",
+            text_note: "We reached the ideal weight! Awesome progress.",
+            voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-ideal-weight.mp3",
+            recommendations: [{ title: "Nutrition", description: "Maintain current diet and portion sizes." }],
+            status: "completed"
+          },
+          {
+            cat_id: activeCatId, user_id: userId,
+            created_at: new Date(new Date().getFullYear(), 3, 1).toISOString(),
+            top_photo_url: mockPhoto, side_photo_url: mockSidePhoto,
+            bcs_score: 6, classification: "Overweight",
+            ai_reasoning: "Ribs palpable with slight excess fat covering. Waist is discernible from above but not prominent.",
+            text_note: "We might have overfed him a bit with treats lately.",
+            voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-overfed.mp3",
+            recommendations: [{ title: "Nutrition", description: "Cut back on treats and reduce portions slightly." }],
+            status: "completed"
+          },
+          {
+            cat_id: activeCatId, user_id: userId,
+            created_at: new Date(new Date().getFullYear(), 4, 1).toISOString(),
+            top_photo_url: mockPhoto, side_photo_url: mockSidePhoto,
+            bcs_score: 5, classification: "Ideal",
+            ai_reasoning: "Well-proportioned. Ribs are palpable without excess fat covering. A clear waist is observed behind the ribs.",
+            text_note: "Coding Kitty is looking much healthier now!",
+            voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-much-healthier.mp3",
+            recommendations: [{ title: "Nutrition", description: "Maintain current diet and portion sizes." }, { title: "Exercise", description: "Continue with daily active play sessions." }],
+            status: "completed"
+          },
+        ];
 
-        // -1. Insert record (Mar 1st - BCS 5)
-        await supabase.from('health_checks').insert({
-          cat_id: activeCatId,
-          user_id: userId,
-          created_at: new Date(new Date().getFullYear(), 2, 1).toISOString(), // Mar 1st
-          top_photo_url: typeof topPhoto === 'string' ? topPhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
-          side_photo_url: typeof sidePhoto === 'string' ? sidePhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
-          bcs_score: 5,
-          classification: "Ideal",
-          ai_reasoning: "Well-proportioned. Ribs are palpable without excess fat covering. A clear waist is observed behind the ribs.",
-          text_note: "We reached the ideal weight! Awesome progress.",
-          voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-ideal-weight.mp3",
-          recommendations: [
-            { title: "Nutrition", description: "Maintain current diet and portion sizes." }
-          ],
-          status: "completed"
-        });
-
-        // 0. Insert oldest record (April 1st - BCS 6)
-        await supabase.from('health_checks').insert({
-          cat_id: activeCatId,
-          user_id: userId,
-          created_at: new Date(new Date().getFullYear(), 3, 1).toISOString(), // April 1st
-          top_photo_url: typeof topPhoto === 'string' ? topPhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
-          side_photo_url: typeof sidePhoto === 'string' ? sidePhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
-          bcs_score: 6,
-          classification: "Overweight",
-          ai_reasoning: "Ribs palpable with slight excess fat covering. Waist is discernible from above but not prominent.",
-          text_note: "We might have overfed him a bit with treats lately.",
-          voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-overfed.mp3",
-          recommendations: [
-            { title: "Nutrition", description: "Cut back on treats and reduce portions slightly." }
-          ],
-          status: "completed"
-        });
-
-        // 1. Insert past record (May 1st - BCS 5) to show trend progression
-        await supabase.from('health_checks').insert({
-          cat_id: activeCatId,
-          user_id: userId,
-          created_at: new Date(new Date().getFullYear(), 4, 1).toISOString(), // May 1st
-          top_photo_url: typeof topPhoto === 'string' ? topPhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
-          side_photo_url: typeof sidePhoto === 'string' ? sidePhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
-          bcs_score: 5,
-          classification: "Ideal",
-          ai_reasoning: "Well-proportioned. Ribs are palpable without excess fat covering. A clear waist is observed behind the ribs.",
-          text_note: "Coding Kitty is looking much healthier now!",
-          voice_note_url: "https://tztaweypbvyhsdyqcvun.supabase.co/storage/v1/object/public/health-checks/mock/coding-kitty-much-healthier.mp3",
-          recommendations: [
-            { title: "Nutrition", description: "Maintain current diet and portion sizes." },
-            { title: "Exercise", description: "Continue with daily active play sessions." }
-          ],
-          status: "completed"
-        });
+        for (const record of seedRecords) {
+          const { error: seedError } = await supabase.from('health_checks').insert(record);
+          if (seedError) {
+            console.error('[camera] Guest seed insert failed:', seedError);
+            throw new Error('Failed to seed mock health check data');
+          }
+        }
       }
 
       // 2. Insert recent record (June 1st for Guests, or Current Date for real users)

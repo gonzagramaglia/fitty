@@ -221,6 +221,19 @@ Tests the backend worker logic that handles OpenAI, Anthropic, and Supabase inte
 | Chat — Edit Message | Tap Pencil icon on user msg | Prompts warning. Truncates subsequent history, sets input | ✅ |
 | Chat — Auto-Scroll | Send or receive message | ScrollView automatically scrolls to bottom of chat | ✅ |
 
+### Phase 8 — Judge Mode UX & Demo Mocking
+
+| Feature | Condition | Expected Outcome | Result |
+|---------|-----------|-----------------|--------|
+| Guest Banner Toast | Log in as guest | Persistent toast "Temporary Guest Account" appears, dismissible on tap | ✅ |
+| Guest Scan Guard | Complete first scan, tap Scan again | Judge Mode modal appears immediately (no camera flash) | ✅ |
+| Guest Add Cat Guard | Tap "Add Cat" as guest with 1 cat | Judge Mode modal appears, blocks creation | ✅ |
+| Mock Data Seeding | First guest scan completes | 6 health checks (Jan–Jun) appear in History | ✅ |
+| Voice Note Playback (Web) | Tap "Play voice note" on a mock record | Audio plays via HTML5 Audio API, button shows stop state | ✅ |
+| History Empty State | No health checks exist | Trend chart with axes + "No history yet" overlay shown | ✅ |
+| Profile Auto-Create Mode | Navigate to Profile with no cats | "Add Cat" pill is pre-selected, form in create mode | ✅ |
+| Google OAuth Disabled | View login screen | Google button shows "Coming Soon", is non-interactive | ✅ |
+
 ---
 
-*This document is updated at the end of each phase. Last updated: Phase 7.*
+*This document is updated at the end of each phase. Last updated: Phase 8.*

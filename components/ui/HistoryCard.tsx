@@ -1,11 +1,11 @@
-import { View, Text, Image, TouchableOpacity } from "react-native";
+import { View, Text, Image, TouchableOpacity, ImageSourcePropType } from "react-native";
 import { ChevronRight, FileText, Mic } from "lucide-react-native";
 import { getBcsTextColor, getBcsBgColor } from "../../lib/bcs";
 
 type Props = {
   dateString: string;
   bcsScore: number;
-  thumbnailUrl?: string | any;
+  thumbnailUrl?: string | ImageSourcePropType;
   hasTextNote?: boolean;
   hasVoiceNote?: boolean;
   onPress: () => void;

@@ -35,10 +35,8 @@ export default function HistoryDetailView() {
 
   // Initialize chat history once health check is loaded
   React.useEffect(() => {
-    if (healthCheck?.chat_history) {
-      setChatHistory(healthCheck.chat_history);
-    }
-  }, [healthCheck?.chat_history]);
+    setChatHistory(Array.isArray(healthCheck?.chat_history) ? healthCheck.chat_history : []);
+  }, [healthCheck?.id, healthCheck?.chat_history]);
   // Clean up audio on unmount
   React.useEffect(() => {
     return () => {

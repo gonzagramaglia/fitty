@@ -62,7 +62,7 @@ export function GuestLimitModal({ visible, onClose, message }: GuestLimitModalPr
           </View>
           <Text className="text-xl font-black text-text-primary mb-2 text-center">Judge Mode</Text>
           <Text className="text-text-secondary text-center mb-6">
-            {message || "You cannot create more cats in this simulated experience. For the real Fitty experience, please log in with a Google account."}
+            {message || "This action is not available in Judge Mode. For the full Fitty experience, please log in with a Google account."}
           </Text>
 
           <View className="w-full h-1.5 bg-surface-tertiary rounded-full overflow-hidden mt-2 items-end">

@@ -44,6 +44,7 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
   const [mockStep, setMockStep] = useState(0);
   const [isAutoTyping, setIsAutoTyping] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const mockTypingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Confirmation modal state
   const [confirmModal, setConfirmModal] = useState<{
@@ -85,25 +86,41 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
         const aiCount = initialHistory.filter(m => m.role === 'assistant').length;
         setMockStep(aiCount);
       }
+    } else {
+      // Clean up typing interval when modal closes
+      if (mockTypingRef.current) {
+        clearInterval(mockTypingRef.current);
+        mockTypingRef.current = null;
+      }
+      setIsAutoTyping(false);
     }
   }, [visible, initialHistory, isGuest]);
 
   const handleMockInputTap = () => {
     if (mockStep >= MOCK_SCRIPT.length || isAutoTyping || isLoading) return;
     
+    // Clear any existing typing interval
+    if (mockTypingRef.current) {
+      clearInterval(mockTypingRef.current);
+      mockTypingRef.current = null;
+    }
+
     setIsAutoTyping(true);
     const question = MOCK_SCRIPT[mockStep].q;
     let currentText = "";
     let i = 0;
     setInputText("");
     
-    const interval = setInterval(() => {
+    mockTypingRef.current = setInterval(() => {
       if (i < question.length) {
         currentText += question[i];
         setInputText(currentText);
         i++;
       } else {
-        clearInterval(interval);
+        if (mockTypingRef.current) {
+          clearInterval(mockTypingRef.current);
+          mockTypingRef.current = null;
+        }
         setIsAutoTyping(false);
       }
     }, 30);
@@ -111,6 +128,10 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
 
   const sendMessage = async (overrideHistory?: Message[]) => {
     if (!inputText.trim() || isLoading) return;
+    if (inputText.length > 500) {
+      setError('Message must be under 500 characters.');
+      return;
+    }
 
     if (isGuest) {
       const userMessage = inputText.trim();
@@ -189,15 +210,20 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
    * @param {Message[]} newHistory - The updated array of chat messages.
    */
   const persistHistory = async (newHistory: Message[]) => {
+    const previousHistory = messages;
     setMessages(newHistory);
     onHistoryUpdate(newHistory);
     try {
-      await supabase
+      const { error: updateError } = await supabase
         .from('health_checks')
         .update({ chat_history: newHistory })
         .eq('id', healthCheckId);
+      if (updateError) throw updateError;
     } catch (err) {
-      console.error('Failed to sync history deletion', err);
+      console.error('Failed to sync chat history', err);
+      setMessages(previousHistory);
+      onHistoryUpdate(previousHistory);
+      setError('Failed to sync chat history. Please try again.');
     }
   };
 
@@ -387,6 +413,7 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
               onSubmitEditing={() => sendMessage()}
               returnKeyType="send"
               editable={!isLoading}
+              maxLength={500}
             />
           )}
           <TouchableOpacity 

@@ -47,13 +47,15 @@ async function run() {
   console.log(`Listening on task queue: fitty-ai-tasks in namespace: ${process.env.TEMPORAL_NAMESPACE || 'default'}`);
   
   // Start the chat Express server (opt-in via env to avoid port conflicts in multi-replica setups)
+  let chatServer: import('http').Server | null = null;
   if (process.env.ENABLE_CHAT_SERVER !== 'false') {
-    startChatServer();
+    chatServer = startChatServer();
   }
   
   await worker.run();
   
-  // Close connection after worker has gracefully stopped
+  // Close connection and HTTP server after worker has gracefully stopped
+  if (chatServer) chatServer.close();
   await connection.close();
 }
 

@@ -29,6 +29,15 @@ export default function DashboardScreen() {
 
   const fetchDashboardData = async () => {
     if (isCatLoading) return;
+
+    // Always fetch user first (needed for guest detection even without a cat)
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) setUser(currentUser);
+    } catch (e) {
+      // Ignore auth fetch errors for UI state
+    }
+
     if (!activeCatId) {
       setIsLoading(false);
       return;
@@ -147,7 +156,7 @@ export default function DashboardScreen() {
             {user?.is_anonymous ? "Welcome, Judge! 👋" : "Welcome to Fitty!"}
           </Text>
           <Text className="text-text-secondary text-center mb-8 text-base px-4">
-            {user?.is_anonymous ? "Thank you for checking out Fitty. Please create a cat profile to get started." : "Please create a cat profile to get started."}
+            {user?.is_anonymous ? "Thank you for checking out Fitty. Please create a cat profile to track history." : "Please create a cat profile to get started."}
           </Text>
           <TouchableOpacity
             onPress={() => {
@@ -256,7 +265,7 @@ export default function DashboardScreen() {
                 <Text className="text-[11px] font-bold uppercase tracking-widest mb-0.5 text-[#1E293B]">BCS</Text>
                 <Text className={`font-black text-[22px] ${getBcsColorClass(latestCheck?.bcs_score)}`}>
                   {latestCheck?.bcs_score ? latestCheck.bcs_score : '?'}
-                  <Text className={`text-sm font-bold ${getBcsColorClass(latestCheck?.bcs_score)}`}>/9</Text>
+                  <Text className="text-sm font-bold text-text-secondary">/9</Text>
                 </Text>
               </View>
             </View>
@@ -306,7 +315,7 @@ export default function DashboardScreen() {
           <View className="mb-5 flex-row justify-between items-center">
             <Text className="text-text-primary font-black text-2xl tracking-tight">Recent Check</Text>
             <TouchableOpacity onPress={() => router.push('/history')} className="bg-surface-tertiary px-4 py-1.5 rounded-full">
-              <Text className="text-primary-cool-dark font-bold text-sm">See all</Text>
+              <Text className="text-text-secondary font-bold text-sm">See all</Text>
             </TouchableOpacity>
           </View>
 
@@ -342,7 +351,7 @@ export default function DashboardScreen() {
             <View className="bg-background border border-border border-dashed rounded-2xl p-8 items-center justify-center">
               <Activity size={32} color="#cbd5e1" />
               <Text className="text-text-secondary font-medium text-center mt-3">No health checks yet.</Text>
-              <Text className="text-slate-400 text-sm text-center mt-1">Start a new scan to track {cat.name}'s progress.</Text>
+              <Text className="text-slate-400 text-sm text-center mt-1">Tap Scan to start tracking {cat.name}'s health.</Text>
             </View>
           )}
 

@@ -72,3 +72,12 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Remove focus outline/ring on interactive elements (web) */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: none;
+}

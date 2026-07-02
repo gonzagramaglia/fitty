@@ -270,7 +270,7 @@ export default function HistoryScreen() {
           </View>
 
           <View className="px-6 mt-2 mb-6">
-            <TrendChart data={[]} />
+            <TrendChart data={[]} catName={allCats.find(c => c.id === activeCatId)?.name} />
           </View>
         </>
       ) : (
@@ -297,7 +297,7 @@ export default function HistoryScreen() {
           <ScrollView ref={scrollViewRef} className="flex-1 px-6" showsVerticalScrollIndicator={false}>
           {chartData.length > 0 && (
             <View className="mb-6">
-              <TrendChart data={chartData} />
+              <TrendChart data={chartData} catName={allCats.find(c => c.id === activeCatId)?.name} />
             </View>
           )}
 

@@ -192,7 +192,7 @@ export default function LoginScreen() {
           >
             <Ionicons name="logo-google" size={20} color="#1A1C1E" style={{ marginRight: 12 }} />
             <Text className="text-text-primary font-bold text-base font-sans">
-              Continue with Google (Coming Soon)
+              Continue with Google (Soon)
             </Text>
           </TouchableOpacity>
 

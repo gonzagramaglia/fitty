@@ -11,6 +11,7 @@ type DataPoint = {
 
 type Props = {
   data: DataPoint[];
+  catName?: string;
 };
 
 /**
@@ -19,7 +20,7 @@ type Props = {
  *
  * @param props - Component props containing the chart data.
  */
-export function TrendChart({ data }: Props) {
+export function TrendChart({ data, catName }: Props) {
   const { width: windowWidth } = useWindowDimensions();
   const containerWidth = Platform.OS === 'web' ? Math.min(windowWidth, 400) : windowWidth;
   const chartWidth = containerWidth - 96;
@@ -78,7 +79,7 @@ export function TrendChart({ data }: Props) {
               No history yet
             </Text>
             <Text className="text-text-muted text-center text-sm px-6">
-              Tap the Scan button below to start.
+              Tap Scan to start tracking {catName ? `${catName}'s` : "your cat's"} health.
             </Text>
           </View>
         </View>

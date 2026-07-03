@@ -12,7 +12,7 @@ export type HealthCheckDetail = {
   text_note: string | null;
   classification: string;
   ai_reasoning: string;
-  recommendations: any[];
+  recommendations: { title: string; description: string }[];
   status: string;
   cats?: { name: string };
 };
@@ -60,10 +60,11 @@ export function useHealthCheck(id: string) {
         if (!cancelled) {
           setHealthCheck(data as HealthCheckDetail);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!cancelled) {
+          const errorMessage = err instanceof Error ? err.message : "Failed to fetch health check details";
           console.error("[useHealthCheck] error fetching health check detail", err);
-          setError(err.message || "Failed to fetch health check details");
+          setError(errorMessage);
         }
       } finally {
         if (!cancelled) {

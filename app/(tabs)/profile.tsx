@@ -1,14 +1,18 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, KeyboardAvoidingView, Platform, ActivityIndicator, DeviceEventEmitter, Modal } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Plus, CloudUpload, Save, Image as ImageIcon, Check, Edit2, LogOut, Pencil, X } from 'lucide-react-native';
+import { CloudUpload, Save, Check, LogOut, Pencil } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from 'expo-router';
 import { useActiveCat } from '../../lib/ActiveCatContext';
 import { supabase } from '../../lib/supabase';
 import { validateCatProfile, FieldError } from '../../lib/catProfileValidator';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { CatSelectorPills } from '../../components/ui/CatSelectorPills';
+import { webInputStyle } from '../../lib/webStyles';
+import { useAvatarUpload } from '../../hooks/useAvatarUpload';
+import type { CatProfile } from '../../lib/types';
 
 /**
  * ProfileScreen provides the interface for managing owner and cat profiles.
@@ -22,14 +26,13 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { activeCatId, setActiveCatId, showGuestModal } = useActiveCat();
 
-  const [cats, setCats] = useState<any[]>([]);
+  const [cats, setCats] = useState<CatProfile[]>([]);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
 
   // Owner form state
   const ownerInputRef = useRef<TextInput>(null);
   const [originalOwnerName, setOriginalOwnerName] = useState('');
   const [ownerName, setOwnerName] = useState('');
-  const [ownerTextWidth, setOwnerTextWidth] = useState(60);
   const [ownerAvatarUri, setOwnerAvatarUri] = useState<string | null>(null);
   const [isSavingOwner, setIsSavingOwner] = useState(false);
   const [isEditingOwner, setIsEditingOwner] = useState(false);
@@ -127,7 +130,7 @@ export default function ProfileScreen() {
         if (data.length === 0) {
           await setActiveCatId(null);
           setIsCreatingNew(true);
-        } else if (activeCatId && !data.find((c: any) => c.id === activeCatId)) {
+        } else if (activeCatId && !data.find(c => c.id === activeCatId)) {
           await setActiveCatId(data[0].id);
         }
       }
@@ -214,39 +217,7 @@ export default function ProfileScreen() {
     }
   }, [activeCatId, cats, isCreatingNew]);
 
-  /**
-   * Uploads an avatar image to a specified Supabase storage bucket.
-   *
-   * @param uri - The local file URI of the image to upload.
-   * @param bucket - The Supabase storage bucket name.
-   * @param prefix - A prefix used for constructing the file name.
-   * @returns The public URL of the uploaded image.
-   * @throws Will throw an error if the upload fails or user is not authenticated.
-   */
-  const uploadAvatar = async (uri: string, bucket: string, prefix: string): Promise<string> => {
-    if (uri.startsWith('http')) return uri;
-
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) throw new Error('Not authenticated');
-
-    const ext = uri.substring(uri.lastIndexOf('.') + 1) || 'jpg';
-    const fileName = `${session.user.id}_${prefix}_${Date.now()}.${ext}`;
-
-    const response = await fetch(uri);
-    const blob = await response.blob();
-
-    const { error } = await supabase.storage
-      .from(bucket)
-      .upload(fileName, blob, { upsert: true });
-
-    if (error) throw error;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(fileName);
-
-    return publicUrl;
-  };
+  const { uploadAvatar } = useAvatarUpload();
 
   /**
    * Opens the device's native image library to allow the user to select
@@ -285,8 +256,9 @@ export default function ProfileScreen() {
       setOwnerAvatarUri(finalAvatarUrl);
       setIsEditingOwner(false);
       DeviceEventEmitter.emit('showToast', 'Owner profile updated!');
-    } catch (err: any) {
-      DeviceEventEmitter.emit('showToast', err.message || 'Failed to update owner profile');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update owner profile';
+      DeviceEventEmitter.emit('showToast', message);
     } finally {
       setIsSavingOwner(false);
     }
@@ -384,8 +356,9 @@ export default function ProfileScreen() {
         }
       }
       fetchData();
-    } catch (err: any) {
-      DeviceEventEmitter.emit('showToast', err.message || 'Failed to save profile');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save profile';
+      DeviceEventEmitter.emit('showToast', message);
     } finally {
       setIsSaving(false);
     }
@@ -510,7 +483,7 @@ export default function ProfileScreen() {
                       placeholderTextColor="#94a3b8"
                       className="absolute left-0 right-0 text-3xl font-black text-white tracking-tight p-0 m-0"
                       style={[
-                        Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {},
+                        webInputStyle,
                         { height: '100%', backgroundColor: 'transparent' }
                       ]}
                       autoFocus
@@ -552,41 +525,24 @@ export default function ProfileScreen() {
             </View>
 
             <View className="mb-2">
-              <Text className="text-white/60 text-xs font-bold uppercase tracking-widest mb-3">Manage Your Cats</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
-                {isLoading && cats.length === 0 && (
-                  <>
+              {isLoading && cats.length === 0 ? (
+                <View>
+                  <Text className="text-white/60 text-xs font-bold uppercase tracking-widest mb-3">Manage Your Cats</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
                     <Skeleton width={100} height={40} borderRadius={20} className="mr-3 bg-white/20" />
                     <Skeleton width={80} height={40} borderRadius={20} className="mr-3 bg-white/20" />
-                  </>
-                )}
-                {[...cats].sort((a, b) => a.id === activeCatId ? -1 : b.id === activeCatId ? 1 : 0).map(c => (
-                  <TouchableOpacity
-                    key={c.id}
-                    onPress={() => { setActiveCatId(c.id); setIsCreatingNew(false); }}
-                    className={`flex-row items-center px-4 py-2 rounded-full mr-3 ${c.id === activeCatId && !isCreatingNew ? 'bg-[#74B7B5]' : 'bg-[#2A3B4C]'}`}
-                  >
-                    {c.avatar_url ? (
-                      <Image source={{ uri: c.avatar_url }} style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} />
-                    ) : (
-                      <Image source={require('../../assets/images/coding-kitty.jpg')} style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} />
-                    )}
-                    <Text className={`font-semibold ${c.id === activeCatId && !isCreatingNew ? 'text-white' : 'text-white/80'}`}>
-                      {c.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-                
-                {!isLoading && (
-                  <TouchableOpacity
-                    onPress={() => setIsCreatingNew(true)}
-                    className={`flex-row items-center px-4 py-2 rounded-full ${isCreatingNew ? 'bg-[#74B7B5]' : 'border border-dashed border-[#74B7B5] bg-transparent'}`}
-                  >
-                    <Plus size={18} color={isCreatingNew ? 'white' : '#74B7B5'} />
-                    <Text className={`font-semibold ml-1 ${isCreatingNew ? 'text-white' : 'text-[#74B7B5]'}`}>Add Cat</Text>
-                  </TouchableOpacity>
-                )}
-              </ScrollView>
+                  </ScrollView>
+                </View>
+              ) : (
+                <CatSelectorPills
+                  cats={cats}
+                  activeCatId={activeCatId}
+                  onSelectCat={(id) => { setActiveCatId(id); setIsCreatingNew(false); }}
+                  onAddCat={() => setIsCreatingNew(true)}
+                  isCreatingNew={isCreatingNew}
+                  title="Manage Your Cats"
+                />
+              )}
             </View>
           </View>
 
@@ -634,7 +590,7 @@ export default function ProfileScreen() {
                     placeholder="Coding Kitty"
                     placeholderTextColor="#94a3b8"
                     className={`bg-background border rounded-2xl px-4 py-4 text-text-primary text-base ${getFieldError('name') ? 'border-error' : 'border-border'}`}
-                    style={Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}}
+                    style={webInputStyle}
                   />
                 </View>
 
@@ -653,7 +609,7 @@ export default function ProfileScreen() {
                     keyboardType="numeric"
                     placeholderTextColor="#94a3b8"
                     className={`bg-background border rounded-2xl px-4 py-4 text-text-primary text-base ${getFieldError('age_years') ? 'border-error' : 'border-border'}`}
-                    style={Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}}
+                    style={webInputStyle}
                   />
                 </View>
               </View>
@@ -677,7 +633,7 @@ export default function ProfileScreen() {
                 placeholder="British Shorthair"
                 placeholderTextColor="#94a3b8"
                 className="bg-background border border-border rounded-2xl px-4 py-4 text-text-primary text-base"
-                style={Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}}
+                style={webInputStyle}
               />
             </View>
 
@@ -714,7 +670,7 @@ export default function ProfileScreen() {
                 keyboardType="numeric"
                 placeholderTextColor="#94a3b8"
                 className={`bg-background border rounded-2xl px-4 py-4 text-text-primary text-base ${getFieldError('base_weight_kg') ? 'border-error' : 'border-border'}`}
-                style={Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}}
+                style={webInputStyle}
               />
               {getFieldError('base_weight_kg') && <Text className="text-error text-sm mt-1">{getFieldError('base_weight_kg')}</Text>}
             </View>

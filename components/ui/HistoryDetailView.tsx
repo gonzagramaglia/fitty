@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, ActivityIndicator, Image, TouchableOpacity, Platform, Modal, Linking } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { View, Text, ScrollView, Image, TouchableOpacity, Platform, Modal, Linking } from "react-native";
+import { useRouter } from "expo-router";
 import Head from "expo-router/head";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronLeft, FileText, Mic, X, Play, Square } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ChevronLeft, FileText, X, Play, Square, MessageCircle } from "lucide-react-native";
 import { Audio } from "expo-av";
 import { useHealthCheck } from "../../hooks/useHealthCheck";
 import { useActiveCat } from "../../lib/ActiveCatContext";
@@ -13,20 +13,19 @@ import { AIReasoningCard } from "../../components/ui/AIReasoningCard";
 import { RecommendationsList } from "../../components/ui/RecommendationsList";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { ChatModal } from "../../components/ui/ChatModal";
-import { Bot, MessageCircle } from "lucide-react-native";
 
 /**
  * HistoryDetailView is the comprehensive screen displaying a single health check record.
  * It renders the original images, the calculated BCS score on a visual gauge,
  * any provided owner notes, and the detailed AI reasoning and recommendations.
  */
-export default function HistoryDetailView() {
+export function HistoryDetailView() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { selectedCheckId, setSelectedCheckId } = useActiveCat();
-  const [expandedImage, setExpandedImage] = useState<any>(null);
+  const [expandedImage, setExpandedImage] = useState<{ uri: string } | ReturnType<typeof require> | null>(null);
   const [chatVisible, setChatVisible] = useState(false);
-  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [audioRemaining, setAudioRemaining] = useState<number | null>(null);
@@ -109,7 +108,6 @@ export default function HistoryDetailView() {
       try {
         // Use window.Audio explicitly to avoid conflict with expo-av Audio import
         const NativeAudio = (window as any).Audio;
-        console.log('[HistoryDetailView] Attempting to play:', uri);
         const audio: HTMLAudioElement = new NativeAudio(uri);
         webAudioRef.current = audio;
 

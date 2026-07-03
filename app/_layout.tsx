@@ -121,7 +121,7 @@ const GlobalToast = () => {
 
         {/* Draining progress bar — only for auto-dismiss toasts */}
         {!persistent && (
-          <View className="h-[3px] bg-white/10">
+          <View className="h-[3px] bg-white/10" style={{ alignItems: 'flex-end' }}>
             <Animated.View
               style={{
                 height: '100%',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { X, Send, Bot, AlertCircle, Pencil, Trash2 } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
@@ -246,8 +246,9 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
       onHistoryUpdate(data.chatHistory);
       setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
 
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Something went wrong';
+      setError(errorMessage);
       setMessages(baseHistory);
     } finally {
       setIsLoading(false);

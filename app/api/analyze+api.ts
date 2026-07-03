@@ -57,8 +57,9 @@ export async function POST(req: Request) {
     });
 
     return Response.json({ success: true, workflowId: handle.workflowId });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Failed to trigger workflow:', err);
-    return Response.json({ error: err.message }, { status: 500 });
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return Response.json({ error: message }, { status: 500 });
   }
 }

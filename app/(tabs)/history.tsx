@@ -10,16 +10,18 @@ import { Skeleton } from "../../components/ui/Skeleton";
 import { Plus, ArrowUpDown } from "lucide-react-native";
 import { useActiveCat } from "../../lib/ActiveCatContext";
 import { supabase } from "../../lib/supabase";
-import HistoryDetailView from "../../components/ui/HistoryDetailView";
+import { HistoryDetailView } from "../../components/ui/HistoryDetailView";
+import { CatSelectorPills } from "../../components/ui/CatSelectorPills";
+import type { CatProfile, User } from "../../lib/types";
 
 export default function HistoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { history, isLoading, error } = useHistory();
   const { activeCatId, setActiveCatId, selectedCheckId, setSelectedCheckId, showGuestModal } = useActiveCat();
-  const [allCats, setAllCats] = useState<any[]>([]);
+  const [allCats, setAllCats] = useState<CatProfile[]>([]);
   const [isCatsLoading, setIsCatsLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -63,48 +65,29 @@ export default function HistoryScreen() {
 
   const renderCatSelector = (isSkeleton = false) => (
     <View className="mb-2 w-full mt-4">
-      <Text className="text-white/60 text-xs font-bold uppercase tracking-widest mb-3">Your Cats</Text>
       {isSkeleton ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
-          <Skeleton width={100} height={40} borderRadius={20} className="mr-3 bg-white/20" />
-          <Skeleton width={80} height={40} borderRadius={20} className="mr-3 bg-white/10" />
-          <Skeleton width={80} height={40} borderRadius={20} className="bg-white/10" />
-        </ScrollView>
+        <View>
+          <Text className="text-white/60 text-xs font-bold uppercase tracking-widest mb-3">Your Cats</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+            <Skeleton width={100} height={40} borderRadius={20} className="mr-3 bg-white/20" />
+            <Skeleton width={80} height={40} borderRadius={20} className="mr-3 bg-white/10" />
+            <Skeleton width={80} height={40} borderRadius={20} className="bg-white/10" />
+          </ScrollView>
+        </View>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
-          {[...allCats].sort((a, b) => a.id === activeCatId ? -1 : b.id === activeCatId ? 1 : 0).map(c => (
-            <TouchableOpacity
-              key={c.id}
-              onPress={() => {
-                if (c.id !== activeCatId) setActiveCatId(c.id);
-              }}
-              className={`flex-row items-center px-4 py-2 rounded-full mr-3 ${activeCatId === c.id ? 'bg-[#74B7B5]' : 'bg-[#2A3B4C]'}`}
-            >
-              {c.avatar_url ? (
-                <Image source={{ uri: c.avatar_url }} style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} className="bg-surface-tertiary" />
-              ) : (
-                <Image source={require('../../assets/images/coding-kitty.jpg')} style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} className="bg-surface-tertiary" />
-              )}
-              <Text className={`font-semibold ${activeCatId === c.id ? 'text-white' : 'text-white/80'}`}>
-                {c.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            onPress={() => {
-              if (user?.is_anonymous) {
-                showGuestModal();
-                return;
-              }
-              router.push('/profile');
-              setTimeout(() => DeviceEventEmitter.emit('openAddCat'), 100);
-            }}
-            className="flex-row items-center px-4 py-2 rounded-full border border-dashed border-[#74B7B5] bg-transparent"
-          >
-            <Plus size={18} color="#74B7B5" />
-            <Text className="font-semibold ml-1 text-[#74B7B5]">Add</Text>
-          </TouchableOpacity>
-        </ScrollView>
+        <CatSelectorPills
+          cats={allCats}
+          activeCatId={activeCatId}
+          onSelectCat={(id) => { if (id !== activeCatId) setActiveCatId(id); }}
+          onAddCat={() => {
+            if (user?.is_anonymous) {
+              showGuestModal();
+              return;
+            }
+            router.push('/profile');
+            setTimeout(() => DeviceEventEmitter.emit('openAddCat'), 100);
+          }}
+        />
       )}
     </View>
   );

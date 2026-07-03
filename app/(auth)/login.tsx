@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { View, Text, TouchableOpacity, Image, FlatList, LayoutChangeEvent, useWindowDimensions, DeviceEventEmitter, Platform, Animated, ScrollView, Linking } from "react-native";
 import { supabase } from "../../lib/supabase";
 import { getFriendlySupabaseError } from "../../lib/supabaseHelpers";
@@ -56,15 +56,15 @@ export default function LoginScreen() {
   const handleGuestLogin = async () => {
     try {
       setIsGuestLoading(true);
-      const { data, error } = await supabase.auth.signInAnonymously();
+      const { error } = await supabase.auth.signInAnonymously();
       if (error) throw error;
       
       const message = "Temporary Guest Account. Data is saved locally and will be lost if you clear your browser data or sign out.";
       DeviceEventEmitter.emit('showToast', { message, persistent: true });
       
       // Router redirect is handled automatically by the _layout.tsx session listener
-    } catch (err: any) {
-      DeviceEventEmitter.emit('showToast', getFriendlySupabaseError(err.message));
+    } catch (err: unknown) {
+      DeviceEventEmitter.emit('showToast', getFriendlySupabaseError(err instanceof Error ? err.message : "Unknown error"));
     } finally {
       setIsGuestLoading(false);
     }
@@ -81,8 +81,8 @@ export default function LoginScreen() {
       });
       if (error) throw error;
       // Router redirect is handled automatically by the _layout.tsx session listener
-    } catch (err: any) {
-      DeviceEventEmitter.emit('showToast', getFriendlySupabaseError(err.message));
+    } catch (err: unknown) {
+      DeviceEventEmitter.emit('showToast', getFriendlySupabaseError(err instanceof Error ? err.message : "Unknown error"));
     } finally {
       setIsGoogleLoading(false);
     }

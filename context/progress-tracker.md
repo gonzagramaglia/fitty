@@ -132,10 +132,10 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] Chat: persist guest history to Supabase, edit-in-place UX, one edit per session, clear on close
   - [x] History Detail: spacing improvements, remove debug logs
   - [x] Realtime: fix duplicate channel subscription in `useHealthCheck`
-- [ ] **18 Refactor & Modularization**
-  - [ ] Extract large route files into smaller sub-components
-  - [ ] Move inline logic to `lib/` or `hooks/`, extract shared UI patterns
-  - [ ] Consolidate duplicate avatar upload logic, remove dead code, narrow `any` types
+- [x] **18 Refactor & Modularization**
+  - [x] Extract large route files into smaller sub-components
+  - [x] Move inline logic to `lib/` or `hooks/`, extract shared UI patterns
+  - [x] Consolidate duplicate avatar upload logic, remove dead code, narrow `any` types
 
 ## Phase 9 — End-to-End Verification
 - [ ] **19 End-to-End AI Workflow Verification**

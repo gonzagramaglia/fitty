@@ -8,6 +8,8 @@ import { BCSInfoCard } from '../../components/ui/BCSInfoCard';
 import { useActiveCat } from '../../lib/ActiveCatContext';
 import { getBcsTextColor } from '../../lib/bcs';
 import { AlertCircle, ChevronRight, Activity, Plus, Camera } from 'lucide-react-native';
+import type { User, CatProfile, HealthCheck } from '../../lib/types';
+import { CatSelectorPills } from '../../components/ui/CatSelectorPills';
 
 /**
  * DashboardScreen represents the main landing page of the application.
@@ -21,10 +23,10 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { activeCatId, setActiveCatId, setSelectedCheckId, isLoading: isCatLoading, showGuestModal } = useActiveCat();
 
-  const [user, setUser] = useState<any>(null);
-  const [allCats, setAllCats] = useState<any[]>([]);
-  const [cat, setCat] = useState<any>(null);
-  const [latestCheck, setLatestCheck] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [allCats, setAllCats] = useState<CatProfile[]>([]);
+  const [cat, setCat] = useState<CatProfile | null>(null);
+  const [latestCheck, setLatestCheck] = useState<HealthCheck | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -75,7 +77,7 @@ export default function DashboardScreen() {
       setAllCats(allCatsData || []);
 
       // Set active cat
-      const activeCat = allCatsData?.find((c: any) => c.id === activeCatId) || allCatsData?.[0];
+      const activeCat = allCatsData?.find(c => c.id === activeCatId) || allCatsData?.[0];
       setCat(activeCat);
 
       // Fetch Latest Health Check
@@ -218,44 +220,19 @@ export default function DashboardScreen() {
           </View>
 
           {/* Cat Selector Tags */}
-          <View className="mb-2">
-            <Text className="text-white/60 text-xs font-bold uppercase tracking-widest mb-3">Your Cats</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
-              {[...allCats].sort((a, b) => a.id === activeCatId ? -1 : b.id === activeCatId ? 1 : 0).map(c => (
-                <TouchableOpacity
-                  key={c.id}
-                  onPress={() => {
-                    if (c.id !== activeCatId) setActiveCatId(c.id);
-                  }}
-                  className={`flex-row items-center px-4 py-2 rounded-full mr-3 ${activeCatId === c.id ? 'bg-[#74B7B5]' : 'bg-[#2A3B4C]'}`}
-                >
-                  {c.avatar_url ? (
-                    <Image source={{ uri: c.avatar_url }} style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} className="bg-surface-tertiary" />
-                  ) : (
-                    <Image source={require('../../assets/images/coding-kitty.jpg')} style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} className="bg-surface-tertiary" />
-                  )}
-                  <Text className={`font-semibold ${activeCatId === c.id ? 'text-white' : 'text-white/80'}`}>
-                    {c.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-
-              <TouchableOpacity
-                onPress={() => {
-                  if (user?.is_anonymous) {
-                    showGuestModal();
-                    return;
-                  }
-                  router.push('/profile');
-                  setTimeout(() => DeviceEventEmitter.emit('openAddCat'), 100);
-                }}
-                className="flex-row items-center px-4 py-2 rounded-full border border-dashed border-[#74B7B5] bg-transparent"
-              >
-                <Plus size={18} color="#74B7B5" />
-                <Text className="font-semibold ml-1 text-[#74B7B5]">Add</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
+          <CatSelectorPills
+            cats={allCats}
+            activeCatId={activeCatId}
+            onSelectCat={(id) => { if (id !== activeCatId) setActiveCatId(id); }}
+            onAddCat={() => {
+              if (user?.is_anonymous) {
+                showGuestModal();
+                return;
+              }
+              router.push('/profile');
+              setTimeout(() => DeviceEventEmitter.emit('openAddCat'), 100);
+            }}
+          />
         </View>
 
         {/* Main Content */}

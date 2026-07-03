@@ -29,7 +29,7 @@ export default function CameraScreen() {
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const [audioPermissionResponse, requestAudioPermission] = Audio.usePermissions();
-  const { activeCatId, setSelectedCheckId } = useActiveCat();
+  const { activeCatId, setSelectedCheckId, showGuestModal, showProcessingModal } = useActiveCat();
   const [userId, setUserId] = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
   const [userLoaded, setUserLoaded] = useState(false);
@@ -115,12 +115,39 @@ export default function CameraScreen() {
   const isCaptured = !!(currentPhoto || (isGuest && step !== 'voice' && guestCaptured[step as 'top' | 'side']));
 
   useEffect(() => {
+    // Redirect to home if no cat exists
+    if (!activeCatId) {
+      router.replace('/(tabs)');
+      return;
+    }
+
     // get user ID for storage paths
     supabase.auth.getSession().then(async ({ data }) => {
       if (data.session?.user) {
         setUserId(data.session.user.id);
         const isUserGuest = data.session.user.is_anonymous === true;
         setIsGuest(isUserGuest);
+
+        // Check if there's already a scan in progress (real users only)
+        if (!isUserGuest && activeCatId) {
+          const { data: processingCheck } = await supabase
+            .from('health_checks')
+            .select('id')
+            .eq('cat_id', activeCatId)
+            .eq('user_id', data.session.user.id)
+            .eq('status', 'processing')
+            .limit(1)
+            .maybeSingle();
+
+          if (processingCheck?.id) {
+            setSelectedCheckId(processingCheck.id);
+            router.replace('/(tabs)/history');
+            setTimeout(() => {
+              showProcessingModal();
+            }, 300);
+            return;
+          }
+        }
 
         // Only request camera/mic permissions for real users (not guests)
         if (!isUserGuest) {
@@ -296,7 +323,7 @@ export default function CameraScreen() {
       // Simulate backend processing time
       await new Promise((resolve) => setTimeout(resolve, 3000));
       
-      // If the user is a guest (Hackathon Judge), insert past records to show a trend progression
+      // If the user is a guest (Hackathon Judge), use the mock flow
       if (isGuest) {
         const mockPhoto = typeof topPhoto === 'string' ? topPhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg';
         const mockSidePhoto = typeof sidePhoto === 'string' ? sidePhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg';
@@ -366,31 +393,92 @@ export default function CameraScreen() {
             throw new Error('Failed to seed mock health check data');
           }
         }
-      }
+        
+        // Insert recent record for Guests
+        const { error } = await supabase.from('health_checks').insert({
+          cat_id: activeCatId,
+          user_id: userId,
+          created_at: new Date().toISOString(),
+          top_photo_url: typeof topPhoto === 'string' ? topPhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
+          side_photo_url: typeof sidePhoto === 'string' ? sidePhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
+          bcs_score: 5,
+          classification: "Ideal",
+          ai_reasoning: "Well-proportioned. Ribs are palpable without excess fat covering. A clear waist is observed behind the ribs.",
+          text_note: text.trim() || "I've noticed Coding Kitty is full of energy and maintaining the new diet perfectly.",
+          voice_note_url: audioUri || null,
+          recommendations: [
+            { title: "Nutrition", description: "Maintain current diet and portion sizes." },
+            { title: "Exercise", description: "Continue with daily active play sessions." },
+            { title: "Hydration", description: "Ensure fresh water is always available." }
+          ],
+          status: "completed"
+        });
+        
+        if (error) throw error;
+        // Realtime subscription in ProcessingScreen will catch this insert and show the success screen.
+      } else {
+        // REAL USER FLOW: Upload media and trigger Temporal workflow
+        console.log("Uploading media for real user...");
+        
+        const timestamp = Date.now();
+        const topPhotoPath = `${userId}/${activeCatId}/${timestamp}_top.jpg`;
+        const sidePhotoPath = `${userId}/${activeCatId}/${timestamp}_side.jpg`;
+        
+        const [topPhotoPublicUrl, sidePhotoPublicUrl] = await Promise.all([
+          uploadMedia(topPhoto as string, 'cat_photos', topPhotoPath, 'image/jpeg'),
+          uploadMedia(sidePhoto as string, 'cat_photos', sidePhotoPath, 'image/jpeg')
+        ]);
+        
+        let voiceNotePublicUrl = null;
+        if (audioUri) {
+          const audioExt = Platform.OS === 'web' ? 'webm' : 'm4a';
+          const audioMime = Platform.OS === 'web' ? 'audio/webm' : 'audio/mp4';
+          const voicePath = `${userId}/${activeCatId}/${timestamp}_voice.${audioExt}`;
+          voiceNotePublicUrl = await uploadMedia(audioUri, 'voice_notes', voicePath, audioMime);
+        }
 
-      // 2. Insert recent record (June 1st for Guests, or Current Date for real users)
-      const { data, error } = await supabase.from('health_checks').insert({
-        cat_id: activeCatId,
-        user_id: userId,
-        created_at: new Date().toISOString(),
-        top_photo_url: typeof topPhoto === 'string' ? topPhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
-        side_photo_url: typeof sidePhoto === 'string' ? sidePhoto : 'https://raw.githubusercontent.com/gonzagramaglia/fitty/main/assets/images/coding-kitty.jpg',
-        bcs_score: 5,
-        classification: "Ideal",
-        ai_reasoning: "Well-proportioned. Ribs are palpable without excess fat covering. A clear waist is observed behind the ribs.",
-        text_note: text.trim() || "I've noticed Coding Kitty is full of energy and maintaining the new diet perfectly.",
-        voice_note_url: audioUri || null,
-        recommendations: [
-          { title: "Nutrition", description: "Maintain current diet and portion sizes." },
-          { title: "Exercise", description: "Continue with daily active play sessions." },
-          { title: "Hydration", description: "Ensure fresh water is always available." }
-        ],
-        status: "completed"
-      }).select('id').single();
-      
-      if (error) throw error;
-      
-      // Realtime subscription in ProcessingScreen will catch this insert and show the success screen.
+        // Create a 'processing' record immediately so the user knows the analysis is in progress
+        const { data: pendingRecord, error: insertError } = await supabase.from('health_checks').insert({
+          cat_id: activeCatId,
+          user_id: userId,
+          top_photo_url: topPhotoPublicUrl,
+          side_photo_url: sidePhotoPublicUrl,
+          voice_note_url: voiceNotePublicUrl,
+          text_note: text.trim() || null,
+          status: "processing"
+        }).select('id').single();
+
+        if (insertError) throw insertError;
+
+        console.log("Triggering Temporal workflow...");
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Trigger the AI analysis Temporal workflow
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`
+          },
+          body: JSON.stringify({
+            catId: activeCatId,
+            userId: userId,
+            healthCheckId: pendingRecord?.id,
+            topPhotoUrl: topPhotoPublicUrl,
+            sidePhotoUrl: sidePhotoPublicUrl,
+            voiceNoteUrl: voiceNotePublicUrl,
+            textNote: text.trim(),
+            requestId: timestamp.toString()
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || `Workflow trigger failed with status ${response.status}`);
+        }
+        
+        // The ProcessingScreen's Realtime subscription will catch the final insert by Temporal
+      }
     } catch (error) {
       console.error("Failed to finalize capture:", error);
       setProcessingState({ hasVoiceNote: false, hasTextNote: false });

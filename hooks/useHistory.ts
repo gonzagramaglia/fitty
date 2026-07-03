@@ -2,14 +2,15 @@ import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { useActiveCat } from "../lib/ActiveCatContext";
 
+/** A health check record (completed or processing) returned by the useHistory hook. */
 export type HealthCheckRecord = {
   id: string;
   cat_id: string;
   created_at: string;
-  bcs_score: number;
-  top_photo_url: string;
-  side_photo_url: string;
-  classification: string;
+  bcs_score: number | null;
+  top_photo_url: string | null;
+  side_photo_url: string | null;
+  classification: string | null;
   status: string;
   text_note?: string;
   voice_note_url?: string;
@@ -52,7 +53,7 @@ export function useHistory() {
           .select("id, cat_id, created_at, bcs_score, top_photo_url, side_photo_url, classification, status, text_note, voice_note_url")
           .eq("user_id", user.id)
           .eq("cat_id", activeCatId)
-          .eq("status", "completed")
+          .in("status", ["completed", "processing"])
           .order("created_at", { ascending: false });
 
         if (fetchError) throw fetchError;
@@ -60,10 +61,11 @@ export function useHistory() {
         if (!cancelled) {
           setHistory((data ?? []) as HealthCheckRecord[]);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!cancelled) {
+          const errorMessage = err instanceof Error ? err.message : "Failed to fetch history";
           console.error("[useHistory] error fetching history", err);
-          setError(err.message || "Failed to fetch history");
+          setError(errorMessage);
         }
       } finally {
         if (!cancelled) {

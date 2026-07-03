@@ -9,13 +9,9 @@ type SilhouetteOverlayProps = {
 const { width, height } = Dimensions.get('window');
 
 /**
- * Renders a semi-transparent outline to help users align their cat
- * for the photo. Uses react-native-svg for precise cat shapes.
- * Includes a neon scanner animation going up and down.
- */
-/**
  * SilhouetteOverlay renders a semi-transparent dashed outline to guide the user
- * when taking photos of their cat. It switches between 'top' and 'side' views.
+ * when taking photos of their cat. It switches between 'top' and 'side' views
+ * and includes a neon scanner animation.
  *
  * @param props - Component props containing the type of silhouette to render ('top' | 'side').
  */

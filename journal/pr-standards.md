@@ -95,7 +95,9 @@ When GitHub asks for the Extended Description during the merge, use this bullet 
 | #5 | `feat/04-profile-dashboard` | 04 Profile & Dashboard | ✅ Merged |
 | #6 | `feat/05-camera-and-ai-analysis` | 05 Camera & AI Analysis | ✅ Merged |
 | #7 | `feat/06-results-and-history` | 06 Results & History | ✅ Merged |
-| #8 | `feat/07-ai-contextual-chat` | 07 AI Contextual Chat | ✅ Merged |
-| #9 | `feat/08-judge-mode-ux` | 08 Judge Mode UX & Demo Mocking | ✅ Merged |
+| #8 | `feat/07-ai-contextual-chat` | 07 AI Contextual Chat & Judge Mode UX | ✅ Merged |
+| #9 | `feat/08-production-readiness` | 08 Production Readiness: Google Auth, UX Polish & Refactoring (Tasks 16–18) | 🔄 In Progress |
+| #10 | `feat/09-ai-workflow-verification` | 09 End-to-End AI Workflow Verification (Task 19) | ⏳ Pending |
+| #11 | `docs/10-final-submission` | 10 Documentation & Project Report (Task 20) | ⏳ Pending |
 
 *(Update this table every time a PR is opened or merged.)*

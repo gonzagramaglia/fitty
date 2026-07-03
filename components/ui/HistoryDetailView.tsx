@@ -1,33 +1,37 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, ActivityIndicator, Image, TouchableOpacity, Platform, Modal } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { View, Text, ScrollView, Image, TouchableOpacity, Platform, Modal, Linking } from "react-native";
+import { useRouter } from "expo-router";
 import Head from "expo-router/head";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronLeft, FileText, Mic, X, Play, Square } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ChevronLeft, FileText, X, Play, Square, MessageCircle } from "lucide-react-native";
 import { Audio } from "expo-av";
 import { useHealthCheck } from "../../hooks/useHealthCheck";
 import { useActiveCat } from "../../lib/ActiveCatContext";
+import { supabase } from "../../lib/supabase";
 import { BCSGauge } from "../../components/ui/BCSGauge";
 import { AIReasoningCard } from "../../components/ui/AIReasoningCard";
 import { RecommendationsList } from "../../components/ui/RecommendationsList";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { ChatModal } from "../../components/ui/ChatModal";
-import { Bot, MessageCircle } from "lucide-react-native";
 
 /**
  * HistoryDetailView is the comprehensive screen displaying a single health check record.
  * It renders the original images, the calculated BCS score on a visual gauge,
  * any provided owner notes, and the detailed AI reasoning and recommendations.
  */
-export default function HistoryDetailView() {
+export function HistoryDetailView() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { selectedCheckId, setSelectedCheckId } = useActiveCat();
-  const [expandedImage, setExpandedImage] = useState<any>(null);
+  const [expandedImage, setExpandedImage] = useState<{ uri: string } | ReturnType<typeof require> | null>(null);
   const [chatVisible, setChatVisible] = useState(false);
-  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioDuration, setAudioDuration] = useState<number | null>(null);
+  const [audioRemaining, setAudioRemaining] = useState<number | null>(null);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [ownerFirstName, setOwnerFirstName] = useState<string>('Owner');
+  const [processingDots, setProcessingDots] = useState('');
   const webAudioRef = React.useRef<HTMLAudioElement | null>(null);
   
   // Need to handle missing ID gracefully since we rely on Context now
@@ -37,11 +41,42 @@ export default function HistoryDetailView() {
   React.useEffect(() => {
     setChatHistory(Array.isArray(healthCheck?.chat_history) ? healthCheck.chat_history : []);
   }, [healthCheck?.id, healthCheck?.chat_history]);
+
+  // Fetch owner first name
+  React.useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        const name = user.user_metadata?.full_name?.split(' ')[0] || (user.is_anonymous ? 'Judge' : 'Owner');
+        setOwnerFirstName(name);
+      }
+    });
+  }, []);
+
+  // Animated dots for processing title
+  React.useEffect(() => {
+    if (healthCheck?.status !== 'processing') return;
+    const interval = setInterval(() => {
+      setProcessingDots(prev => prev.length >= 3 ? '' : prev + '.');
+    }, 500);
+    return () => clearInterval(interval);
+  }, [healthCheck?.status]);
+
+  // Preload audio duration on web
+  React.useEffect(() => {
+    if (Platform.OS !== 'web' || !healthCheck?.voice_note_url) return;
+    const NativeAudio = (window as any).Audio;
+    const preload = new NativeAudio(healthCheck.voice_note_url);
+    preload.addEventListener('loadedmetadata', () => {
+      if (preload.duration && isFinite(preload.duration)) {
+        setAudioDuration(Math.round(preload.duration));
+      }
+    });
+  }, [healthCheck?.voice_note_url]);
+
   // Clean up audio on unmount
   React.useEffect(() => {
     return () => {
       if (Platform.OS === 'web') {
-        console.log('[HistoryDetailView] Cleanup: unmounting, pausing audio');
         if (webAudioRef.current) {
           webAudioRef.current.pause();
           webAudioRef.current = null;
@@ -66,19 +101,33 @@ export default function HistoryDetailView() {
         webAudioRef.current.currentTime = 0;
         webAudioRef.current = null;
         setIsPlaying(false);
+        setAudioRemaining(null);
         return;
       }
 
       try {
         // Use window.Audio explicitly to avoid conflict with expo-av Audio import
         const NativeAudio = (window as any).Audio;
-        console.log('[HistoryDetailView] Attempting to play:', uri);
         const audio: HTMLAudioElement = new NativeAudio(uri);
         webAudioRef.current = audio;
 
         audio.addEventListener('ended', () => {
           setIsPlaying(false);
+          setAudioRemaining(null);
           webAudioRef.current = null;
+        });
+
+        audio.addEventListener('loadedmetadata', () => {
+          if (audio.duration && isFinite(audio.duration)) {
+            setAudioDuration(Math.round(audio.duration));
+            setAudioRemaining(Math.round(audio.duration));
+          }
+        });
+
+        audio.addEventListener('timeupdate', () => {
+          if (audio.duration && isFinite(audio.duration)) {
+            setAudioRemaining(Math.max(0, Math.round(audio.duration - audio.currentTime)));
+          }
         });
 
         audio.addEventListener('error', () => {
@@ -205,7 +254,7 @@ export default function HistoryDetailView() {
   return (
     <>
       <Head>
-        <title>Fitty | {healthCheck.cats?.name ? `${healthCheck.cats.name}'s Results` : 'Results'}</title>
+        <title>Fitty | {healthCheck.status === 'processing' ? 'Scan processing' : (healthCheck.cats?.name ? `${healthCheck.cats.name}'s Results` : 'Results')}</title>
       </Head>
       <View className="flex-1 bg-surface">
       {/* Header */}
@@ -221,7 +270,7 @@ export default function HistoryDetailView() {
         </TouchableOpacity>
         <View className="flex-1 items-center mr-8">
           <Text className="text-text-primary text-lg font-bold">
-            {healthCheck.cats?.name ? `${healthCheck.cats.name}'s Results` : 'Results'}
+            {healthCheck.status === 'processing' ? `Scan processing${processingDots}` : (healthCheck.cats?.name ? `${healthCheck.cats.name}'s Results` : 'Results')}
           </Text>
           <Text className="text-text-muted text-xs">{dateFormatted}</Text>
         </View>
@@ -270,16 +319,16 @@ export default function HistoryDetailView() {
         {(healthCheck.text_note || healthCheck.voice_note_url) && (
           <View className="bg-background border border-border rounded-2xl overflow-hidden shadow-sm mb-6">
             {/* Header */}
-            <View className="flex-row items-center px-5 pt-5 pb-3">
+            <View className="flex-row items-center px-5 pt-4 pb-2">
               <View className="w-7 h-7 rounded-full bg-[#74B7B5]/15 items-center justify-center mr-2.5">
                 <FileText color="#74B7B5" size={14} />
               </View>
               <Text className="text-text-primary text-sm font-bold tracking-wide">
-                Owner's Notes
+                {ownerFirstName}'s Notes
               </Text>
             </View>
 
-            <View className="px-5 py-4">
+            <View className="px-5 pt-0 pb-4">
               {/* Text note — styled as a quote */}
               {healthCheck.text_note && (
                 <View className="flex-row">
@@ -305,6 +354,14 @@ export default function HistoryDetailView() {
                   <Text className={`text-sm font-semibold ml-2.5 ${isPlaying ? 'text-[#EAB308]' : 'text-text-primary'}`}>
                     {isPlaying ? 'Stop audio' : 'Play voice note'}
                   </Text>
+                  {(audioDuration || audioRemaining !== null) && (
+                    <Text className="text-text-muted text-xs ml-auto font-medium">
+                      {(() => {
+                        const secs = isPlaying && audioRemaining !== null ? audioRemaining : audioDuration || 0;
+                        return `${Math.floor(secs / 60)}:${(secs % 60).toString().padStart(2, '0')}`;
+                      })()}
+                    </Text>
+                  )}
                 </TouchableOpacity>
               )}
             </View>
@@ -312,23 +369,34 @@ export default function HistoryDetailView() {
         )}
 
         {/* BCS Gauge Card */}
-        <View className="bg-background border border-border rounded-2xl p-6 shadow-sm mb-6">
-          <Text className="text-text-primary text-base font-semibold mb-4">
-            Body Condition Score
-          </Text>
-          <BCSGauge score={healthCheck.bcs_score} />
-        </View>
+        {healthCheck.status === 'processing' ? (
+          <View className="bg-background border border-border rounded-2xl p-6 shadow-sm mb-6 mt-2 items-center">
+            <Text className="text-3xl mb-3">⏳</Text>
+            <Text className="text-text-primary text-base font-bold mb-2 text-center">AI Analysis In Progress</Text>
+            <Text className="text-text-secondary text-sm text-center leading-relaxed">
+              Powered by <Text className="font-bold text-primary-cool-dark" onPress={() => Linking.openURL('https://temporal.io')}>Temporal.io</Text>. Results will appear automatically.
+            </Text>
+          </View>
+        ) : (
+          <>
+            <View className="bg-background border border-border rounded-2xl p-6 shadow-sm mb-6">
+              <Text className="text-text-primary text-base font-semibold mb-4">
+                Body Condition Score
+              </Text>
+              <BCSGauge score={healthCheck.bcs_score} />
+            </View>
 
+            {/* AI Reasoning */}
+            <View className="mb-6">
+              <AIReasoningCard reasoning={healthCheck.ai_reasoning} />
+            </View>
 
-        {/* AI Reasoning */}
-        <View className="mb-6">
-          <AIReasoningCard reasoning={healthCheck.ai_reasoning} />
-        </View>
-
-        {/* Recommendations */}
-        <View className="mb-12">
-          <RecommendationsList recommendations={healthCheck.recommendations} />
-        </View>
+            {/* Recommendations */}
+            <View className="mb-12">
+              <RecommendationsList recommendations={healthCheck.recommendations} />
+            </View>
+          </>
+        )}
       </ScrollView>
 
       {/* Fullscreen Image */}
@@ -387,7 +455,10 @@ export default function HistoryDetailView() {
           onClose={() => setChatVisible(false)} 
           healthCheckId={healthCheck.id} 
           initialHistory={chatHistory} 
-          onHistoryUpdate={setChatHistory} 
+          onHistoryUpdate={setChatHistory}
+          ownerName={ownerFirstName}
+          catName={healthCheck.cats?.name}
+          isProcessing={healthCheck.status === 'processing'}
         />
       )}
     </View>

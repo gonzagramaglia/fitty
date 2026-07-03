@@ -1,19 +1,13 @@
 import { useState, useRef } from 'react';
 import { CameraView } from 'expo-camera';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system';
 
 /**
  * Custom hook to manage camera capturing logic.
  * Handles taking photos, compressing them, and storing their URIs in local state.
- * 
- * @returns Object containing the camera ref, captured photo URIs, state, and capture functions.
- */
-/**
- * useCameraCapture is a custom hook that manages the camera lifecycle, permissions,
- * and state for taking photos.
  *
- * @returns An object containing camera refs, state, and control functions.
+ * @returns Object containing the camera ref, captured photo URIs, state, and capture functions.
  */
 export function useCameraCapture() {
   const cameraRef = useRef<CameraView>(null);

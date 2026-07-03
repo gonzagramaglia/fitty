@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { X, Send, Bot, AlertCircle, Pencil, Trash2 } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
@@ -27,6 +27,12 @@ type Props = {
   initialHistory: Message[];
   /** Callback fired when the history is updated (new message, edit, delete). */
   onHistoryUpdate: (history: Message[]) => void;
+  /** The owner's first name for personalization. */
+  ownerName?: string;
+  /** The cat's name for personalization. */
+  catName?: string;
+  /** Whether the health check is currently being processed. */
+  isProcessing?: boolean;
 };
 
 /**
@@ -35,7 +41,7 @@ type Props = {
  * 
  * @param {Props} props - The component props.
  */
-export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onHistoryUpdate }: Props) {
+export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onHistoryUpdate, ownerName, isProcessing, catName }: Props) {
   const [messages, setMessages] = useState<Message[]>(initialHistory);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -43,6 +49,9 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
   const [isGuest, setIsGuest] = useState(false);
   const [mockStep, setMockStep] = useState(0);
   const [isAutoTyping, setIsAutoTyping] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingOriginalText, setEditingOriginalText] = useState<string>('');
+  const [hasEdited, setHasEdited] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const mockTypingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -78,14 +87,23 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
     });
   }, []);
 
+  // Track if initialHistory reference changed due to external load (not our own updates)
+  const isInternalUpdate = useRef(false);
+
   useEffect(() => {
     if (visible) {
-      setMessages(initialHistory);
-      setError(null);
-      if (isGuest) {
-        const aiCount = initialHistory.filter(m => m.role === 'assistant').length;
-        setMockStep(aiCount);
+      // Only reset editing state on external history loads, not our own updates
+      if (!isInternalUpdate.current) {
+        setMessages(initialHistory);
+        setError(null);
+        setEditingIndex(null);
+        setHasEdited(false);
+        if (isGuest) {
+          const aiCount = initialHistory.filter(m => m.role === 'assistant').length;
+          setMockStep(aiCount);
+        }
       }
+      isInternalUpdate.current = false;
     } else {
       // Clean up typing interval when modal closes
       if (mockTypingRef.current) {
@@ -93,6 +111,9 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
         mockTypingRef.current = null;
       }
       setIsAutoTyping(false);
+      setInputText('');
+      setEditingIndex(null);
+      setEditingOriginalText('');
     }
   }, [visible, initialHistory, isGuest]);
 
@@ -133,11 +154,20 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
       return;
     }
 
+    // If we're editing, slice history to before the edited message
+    let baseHistory = overrideHistory || messages;
+    let isEditAction = false;
+    if (editingIndex !== null) {
+      baseHistory = messages.slice(0, editingIndex);
+      isEditAction = true;
+      setEditingIndex(null);
+      setHasEdited(true);
+    }
+
     if (isGuest) {
       const userMessage = inputText.trim();
       setInputText('');
-      const historyToUse = overrideHistory || messages;
-      const newMessages: Message[] = [...historyToUse, { role: 'user', content: userMessage }];
+      const newMessages: Message[] = [...baseHistory, { role: 'user', content: userMessage }];
       
       setMessages(newMessages);
       setIsLoading(true);
@@ -145,12 +175,34 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
 
       await new Promise(r => setTimeout(r, 2000)); // Simulate thinking
 
-      const answer = MOCK_SCRIPT[mockStep]?.a || "I'm just a simulation! You've reached the end of my script.";
+      // If this was an edit, use a generic response and advance past the edited script item
+      let answer: string;
+      if (isEditAction) {
+        answer = "Great question! Based on the health check results, I'd recommend discussing this specific concern with your vet for personalized advice tailored to your cat's needs.";
+        // Advance mockStep past the one that was edited so next tap gives a new question
+        setMockStep(prev => Math.min(prev + 1, MOCK_SCRIPT.length));
+      } else {
+        answer = MOCK_SCRIPT[mockStep]?.a || "I'm just a simulation! You've reached the end of my script.";
+        setMockStep(prev => prev + 1);
+      }
+
       const finalMessages: Message[] = [...newMessages, { role: 'assistant', content: answer }];
       
       setMessages(finalMessages);
+      isInternalUpdate.current = true;
       onHistoryUpdate(finalMessages);
-      setMockStep(prev => prev + 1);
+
+      // Persist to Supabase so chat history survives page refresh
+      try {
+        const { error: persistError } = await supabase
+          .from('health_checks')
+          .update({ chat_history: finalMessages })
+          .eq('id', healthCheckId);
+        if (persistError) console.error('Failed to persist guest chat history', persistError);
+      } catch (err) {
+        console.error('Failed to persist guest chat history', err);
+      }
+
       setIsLoading(false);
       setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
       return;
@@ -160,8 +212,7 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
     setInputText('');
     setError(null);
 
-    const historyToUse = overrideHistory || messages;
-    const newMessages: Message[] = [...historyToUse, { role: 'user', content: userMessage }];
+    const newMessages: Message[] = [...baseHistory, { role: 'user', content: userMessage }];
     
     // Optimistic update
     setMessages(newMessages);
@@ -192,12 +243,14 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
       }
 
       setMessages(data.chatHistory);
+      isInternalUpdate.current = true;
       onHistoryUpdate(data.chatHistory);
       setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
 
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong');
-      setMessages(historyToUse);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Something went wrong';
+      setError(errorMessage);
+      setMessages(baseHistory);
     } finally {
       setIsLoading(false);
     }
@@ -212,6 +265,7 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
   const persistHistory = async (newHistory: Message[]) => {
     const previousHistory = messages;
     setMessages(newHistory);
+    isInternalUpdate.current = true;
     onHistoryUpdate(newHistory);
     try {
       const { error: updateError } = await supabase
@@ -222,6 +276,7 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
     } catch (err) {
       console.error('Failed to sync chat history', err);
       setMessages(previousHistory);
+      isInternalUpdate.current = true;
       onHistoryUpdate(previousHistory);
       setError('Failed to sync chat history. Please try again.');
     }
@@ -259,18 +314,20 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
   /**
    * Prompts the user to confirm editing a chat message.
    * Warns the user that all subsequent messages will be lost.
-   * If confirmed, slices the chat history and populates the input field.
+   * If confirmed, populates the input field but keeps the chat visible with an "editing" indicator.
    * 
    * @param {number} index - The index of the user message to edit.
    */
   const confirmEdit = (index: number) => {
+    if (hasEdited) return; // Only one edit allowed per chat session
+
     const isLastUserMessage = index === messages.length - 2 || index === messages.length - 1;
     
     const executeEdit = () => {
       const messageToEdit = messages[index].content;
-      const historyToKeep = messages.slice(0, index);
       setInputText(messageToEdit);
-      persistHistory(historyToKeep);
+      setEditingIndex(index);
+      setEditingOriginalText(messageToEdit);
     };
 
     if (isLastUserMessage) {
@@ -317,13 +374,17 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
           {messages.length === 0 && (
-            <View className="items-center justify-center py-4 px-4">
-              <View className="w-16 h-16 rounded-full bg-primary-cool/10 items-center justify-center mb-2">
+            <View className="items-center justify-center py-0 px-4">
+              <View className="w-16 h-16 rounded-full bg-primary-cool/10 items-center justify-center">
                 <Bot color="#74B7B5" size={32} />
               </View>
-              <Text className="text-text-primary font-bold text-base mb-2">Have questions?</Text>
+              <Text className="text-text-primary font-bold text-base mb-2">
+                {isProcessing ? `Hi ${ownerName || 'there'}! How is ${catName || 'your cat'}? 😸` : `Have questions, ${ownerName || 'there'}?`}
+              </Text>
               <Text className="text-text-muted text-center leading-relaxed mb-6">
-                Ask me anything about this health check report! For example: "Why is the score 7?" or "How can I reduce calories?"
+                {isProcessing 
+                  ? "This health check is still being processed, but feel free to ask general questions about cat health, nutrition, or BCS scores!"
+                  : 'Ask me anything about this health check report! For example: "Why is the score 7?" or "How can I reduce calories?"'}
               </Text>
 
               {isGuest && (
@@ -346,11 +407,13 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
               )}
               
               {/* User Actions */}
-              {msg.role === 'user' && !isLoading && (
+              {msg.role === 'user' && !isLoading && editingIndex === null && (
                 <View className="flex-row items-center mr-2 opacity-50">
-                   <TouchableOpacity onPress={() => confirmEdit(idx)} className="p-2">
-                     <Pencil size={14} color="#64748B" />
-                   </TouchableOpacity>
+                   {!hasEdited && (
+                     <TouchableOpacity onPress={() => confirmEdit(idx)} className="p-2">
+                       <Pencil size={14} color="#64748B" />
+                     </TouchableOpacity>
+                   )}
                    <TouchableOpacity onPress={() => confirmDelete(idx)} className="p-2">
                      <Trash2 size={14} color="#EF4444" />
                    </TouchableOpacity>
@@ -362,11 +425,14 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
                   msg.role === 'user' 
                     ? 'bg-primary-cool rounded-tr-sm' 
                     : 'bg-white border border-border rounded-tl-sm shadow-sm'
-                }`}
+                } ${editingIndex === idx ? 'opacity-60' : ''}`}
               >
                 <Text className={msg.role === 'user' ? 'text-white' : 'text-text-primary'}>
                   {msg.content}
                 </Text>
+                {editingIndex === idx && (
+                  <Text className="text-white/70 text-xs mt-1.5 italic">✏️ Editing...</Text>
+                )}
               </View>
             </View>
           ))}
@@ -418,8 +484,8 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
           )}
           <TouchableOpacity 
             onPress={() => sendMessage()}
-            disabled={!inputText.trim() || isLoading || isAutoTyping}
-            className={`w-12 h-12 rounded-full items-center justify-center ${!inputText.trim() || isLoading || isAutoTyping ? 'bg-border' : 'bg-primary-cool'}`}
+            disabled={!inputText.trim() || isLoading || isAutoTyping || (editingIndex !== null && inputText.trim() === editingOriginalText.trim())}
+            className={`w-12 h-12 rounded-full items-center justify-center ${!inputText.trim() || isLoading || isAutoTyping || (editingIndex !== null && inputText.trim() === editingOriginalText.trim()) ? 'bg-border' : 'bg-primary-cool'}`}
           >
             <Send color="white" size={20} style={{ marginLeft: -2 }} />
           </TouchableOpacity>

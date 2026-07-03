@@ -20,7 +20,7 @@ export async function uploadMedia(
   const timeoutId = setTimeout(() => controller.abort(), 15000);
 
   try {
-    const response = await fetch(uri, { signal: controller.signal as any });
+    const response = await fetch(uri, { signal: controller.signal });
     const blob = await response.blob();
 
     const { data, error } = await supabase.storage
@@ -38,8 +38,8 @@ export async function uploadMedia(
     }
     
     return publicUrlData.publicUrl;
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`Upload timed out for ${bucket}/${path}`);
     }
     console.error(`[lib/storage] Upload failed for ${bucket}/${path}:`, error);

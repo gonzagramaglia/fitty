@@ -57,8 +57,8 @@ export async function POST(req: Request) {
     });
 
     return Response.json({ success: true, workflowId: handle.workflowId });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Failed to trigger workflow:', err);
-    return Response.json({ error: err.message }, { status: 500 });
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

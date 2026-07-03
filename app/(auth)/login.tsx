@@ -1,5 +1,5 @@
-import React, { useState, useRef, useCallback } from "react";
-import { View, Text, TouchableOpacity, Image, FlatList, LayoutChangeEvent, useWindowDimensions, DeviceEventEmitter } from "react-native";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { View, Text, TouchableOpacity, Image, FlatList, LayoutChangeEvent, useWindowDimensions, DeviceEventEmitter, Platform, Animated, ScrollView, Linking } from "react-native";
 import { supabase } from "../../lib/supabase";
 import { getFriendlySupabaseError } from "../../lib/supabaseHelpers";
 import { Ionicons } from "@expo/vector-icons";
@@ -27,28 +27,46 @@ const ONBOARDING_SLIDES = [
 ];
 
 export default function LoginScreen() {
-  const [showOnboarding, setShowOnboarding] = useState(true);
+  // If this is an OAuth redirect callback, skip onboarding
+  const isOAuthRedirect = Platform.OS === 'web' && typeof window !== 'undefined' && 
+    (window.location.hash.includes('access_token') || window.location.search.includes('code='));
+  const [showOnboarding, setShowOnboarding] = useState(!isOAuthRedirect);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isGuestLoading, setIsGuestLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [termsVisible, setTermsVisible] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'guest' | 'google' | null>(null);
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
   
   const [containerWidth, setContainerWidth] = useState(0);
 
+  // Breathing animation for the logo
+  const logoScale = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(logoScale, { toValue: 1.07, duration: 2000, useNativeDriver: true }),
+        Animated.timing(logoScale, { toValue: 1, duration: 2000, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
   const handleGuestLogin = async () => {
     try {
       setIsGuestLoading(true);
-      const { data, error } = await supabase.auth.signInAnonymously();
+      const { error } = await supabase.auth.signInAnonymously();
       if (error) throw error;
       
       const message = "Temporary Guest Account. Data is saved locally and will be lost if you clear your browser data or sign out.";
       DeviceEventEmitter.emit('showToast', { message, persistent: true });
       
       // Router redirect is handled automatically by the _layout.tsx session listener
-    } catch (err: any) {
-      DeviceEventEmitter.emit('showToast', getFriendlySupabaseError(err.message));
+    } catch (err: unknown) {
+      DeviceEventEmitter.emit('showToast', getFriendlySupabaseError(err instanceof Error ? err.message : "Unknown error"));
     } finally {
       setIsGuestLoading(false);
     }
@@ -59,11 +77,14 @@ export default function LoginScreen() {
       setIsGoogleLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
+        options: {
+          redirectTo: Platform.OS === 'web' ? window.location.origin : undefined,
+        }
       });
       if (error) throw error;
       // Router redirect is handled automatically by the _layout.tsx session listener
-    } catch (err: any) {
-      DeviceEventEmitter.emit('showToast', getFriendlySupabaseError(err.message));
+    } catch (err: unknown) {
+      DeviceEventEmitter.emit('showToast', getFriendlySupabaseError(err instanceof Error ? err.message : "Unknown error"));
     } finally {
       setIsGoogleLoading(false);
     }
@@ -134,7 +155,7 @@ export default function LoginScreen() {
         {/* Footer Area */}
         <View className="px-6 pb-24">
           {/* Pagination Dots */}
-          <View className="flex-row justify-center space-x-2 mb-12 gap-2">
+          <View className="flex-row justify-center space-x-2 mb-9 gap-2">
             {ONBOARDING_SLIDES.map((_, index) => (
               <View 
                 key={index}
@@ -146,14 +167,7 @@ export default function LoginScreen() {
           </View>
 
           {/* Buttons */}
-          <View className="flex-row items-center justify-between">
-            <TouchableOpacity 
-              onPress={() => setShowOnboarding(false)}
-              className="py-3 px-4"
-            >
-              <Text className="text-text-muted font-medium text-base">Skip</Text>
-            </TouchableOpacity>
-
+          <View className="flex-row items-center justify-center">
             <TouchableOpacity 
               onPress={handleNext}
               className="bg-primary-warm py-3 px-8 rounded-xl"
@@ -172,34 +186,36 @@ export default function LoginScreen() {
     <View className="flex-1 bg-background px-6" style={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 12 }}>
       {/* Top Section - Logo & Branding */}
       <View className="flex-1 items-center justify-center">
-        <Image 
-          source={require("../../assets/images/fitty-logo.png")} 
-          style={{ width: 140, height: 140, marginBottom: 4, borderRadius: 24 }}
-          resizeMode="contain"
-        />
+        <Animated.View style={{ transform: [{ scale: logoScale }] }}>
+          <Image 
+            source={require("../../assets/images/fitty-logo.png")} 
+            style={{ width: 140, height: 140, marginBottom: 4, borderRadius: 24 }}
+            resizeMode="contain"
+          />
+        </Animated.View>
         <Text className="text-4xl font-sans text-text-primary font-black tracking-tight mb-2">Fitty</Text>
-        <Text className="text-base text-text-secondary text-center">Your cat's personal health companion.</Text>
+        <Text className="text-base text-text-secondary text-center">Keep your cat healthy with{'\n'}AI-powered body scoring & vet insights.</Text>
       </View>
 
       {/* Bottom Section - Actions */}
       <View className="w-full mb-8">
         <View className="mb-6">
-          {/* Secondary Action - OAuth (temporarily disabled) */}
+          {/* Secondary Action - OAuth */}
           <TouchableOpacity 
-            className="bg-background border border-border py-4 rounded-xl flex-row justify-center items-center shadow-sm mb-4 opacity-40"
-            onPress={() => {}}
-            disabled={true}
+            className="bg-background border border-border py-4 rounded-xl flex-row justify-center items-center shadow-sm mb-4"
+            onPress={() => handleGoogleLogin()}
+            disabled={isGuestLoading || isGoogleLoading}
           >
             <Ionicons name="logo-google" size={20} color="#1A1C1E" style={{ marginRight: 12 }} />
             <Text className="text-text-primary font-bold text-base font-sans">
-              Continue with Google (Soon)
+              Continue with Google
             </Text>
           </TouchableOpacity>
 
           {/* Primary Action - Guest Mode */}
           <TouchableOpacity 
             className={`bg-primary-warm py-4 rounded-xl flex-row justify-center items-center ${isGuestLoading ? 'opacity-50' : ''}`}
-            onPress={handleGuestLogin}
+            onPress={() => { setPendingAction('guest'); setTermsVisible(true); }}
             disabled={isGuestLoading || isGoogleLoading}
           >
             <Ionicons name="flash-outline" size={20} color="#FFFFFF" style={{ marginRight: 12 }} />
@@ -208,10 +224,103 @@ export default function LoginScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-        <Text className="text-xs text-text-muted text-center px-4">
-          By continuing, you agree to our Terms of Service & Privacy Policy
-        </Text>
+        <TouchableOpacity onPress={() => { setPendingAction(null); setTermsVisible(true); }}>
+          <Text className="text-xs text-text-muted text-center px-4">
+            Read our <Text className="underline text-primary-cool-dark font-bold">Terms & Privacy Policy</Text>
+          </Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Terms Modal — rendered as absolute overlay to stay within WebFrame */}
+      {termsVisible && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100, backgroundColor: '#ffffff' }}>
+          <View className="items-center px-6 py-4 border-b border-border" style={{ paddingTop: 56 }}>
+            <Text className="text-lg font-bold text-text-primary">Terms & Privacy</Text>
+          </View>
+          <ScrollView className="flex-1 px-6 py-4" showsVerticalScrollIndicator={false}>
+            <Text className="text-2xl font-black text-text-primary mb-4">🐾 Fitty Terms of Service</Text>
+            <Text className="text-sm text-text-secondary leading-relaxed mb-4">
+              Last updated: July 2026. By using Fitty, you agree to the following (very serious) terms:
+            </Text>
+
+            <Text className="text-base font-bold text-text-primary mb-2">1. Acceptance of Cat Supremacy</Text>
+            <Text className="text-sm text-text-secondary leading-relaxed mb-4">
+              By using this app, you acknowledge that cats are superior beings. Fitty is exclusively for cats — no dogs, no hamsters, no exceptions.
+            </Text>
+
+            <Text className="text-base font-bold text-text-primary mb-2">2. Photo Usage</Text>
+            <Text className="text-sm text-text-secondary leading-relaxed mb-4">
+              Your cat photos are stored securely and used exclusively for health analysis. We do not share them with third parties, though our AI may silently admire how cute your cat is.
+            </Text>
+
+            <Text className="text-base font-bold text-text-primary mb-2">3. Not a Vet</Text>
+            <Text className="text-sm text-text-secondary leading-relaxed mb-4">
+              Fitty provides BCS estimates — not medical diagnoses. If your cat gives you "the look," please consult an actual veterinarian. We cannot prescribe treats.
+            </Text>
+
+            <Text className="text-base font-bold text-text-primary mb-2">4. AI Limitations</Text>
+            <Text className="text-sm text-text-secondary leading-relaxed mb-4">
+              Our AI is smart but not infallible. It cannot determine if your cat is plotting world domination (they probably are).
+            </Text>
+
+            <Text className="text-2xl font-black text-text-primary mb-4 mt-4">🔒 Privacy Policy</Text>
+
+            <Text className="text-base font-bold text-text-primary mb-2">What we collect</Text>
+            <Text className="text-sm text-text-secondary leading-relaxed mb-4">
+              • Photos of your cat (top and side views){'\n'}
+              • Optional voice notes and text observations{'\n'}
+              • Basic account info (email or anonymous session){'\n'}
+              • Cat profile data (name, breed, age, weight)
+            </Text>
+
+            <Text className="text-base font-bold text-text-primary mb-2">What we don't do</Text>
+            <Text className="text-sm text-text-secondary leading-relaxed mb-4">
+              • Sell your data{'\n'}
+              • Share photos with third parties{'\n'}
+              • Train models on your cat's majestic physique without consent{'\n'}
+              • Judge you for the amount of cat photos on your phone
+            </Text>
+
+            <Text className="text-base font-bold text-text-primary mb-2">Security</Text>
+            <Text className="text-sm text-text-secondary leading-relaxed mb-8">
+              All data is encrypted in transit and at rest via Supabase. Row Level Security ensures you can only access your own cat's data. AI workflows are orchestrated by <Text className="font-bold text-primary-cool-dark" onPress={() => Linking.openURL('https://temporal.io')}>Temporal.io</Text> for durable, reliable execution. Our infrastructure is continuously monitored by <Text className="font-bold text-primary-cool-dark" onPress={() => Linking.openURL('https://www.aikido.dev')}>Aikido Security</Text>. Your cat's secrets are safe with us.
+            </Text>
+          </ScrollView>
+          <View className="px-6 pb-[84px] pt-4 border-t border-border">
+            {pendingAction ? (
+              <View className="flex-row gap-3">
+                <TouchableOpacity 
+                  onPress={() => { setTermsVisible(false); setPendingAction(null); }}
+                  className="py-3.5 rounded-2xl bg-surface-tertiary items-center" style={{ flex: 1 }}
+                >
+                  <Text className="font-bold text-text-secondary text-base">Decline</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={() => {
+                    const action = pendingAction;
+                    setPendingAction(null);
+                    // Don't close terms until login redirect happens (avoids flash)
+                    if (action === 'guest') {
+                      setTermsVisible(false);
+                      handleGuestLogin();
+                    } else {
+                      handleGoogleLogin();
+                      // Google OAuth redirects away, so the overlay stays until navigation
+                    }
+                  }}
+                  className="py-3.5 rounded-2xl bg-primary-cool items-center" style={{ flex: 2 }}
+                >
+                  <Text className="text-white font-bold text-base">Purrfect, I Accept 😸</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity onPress={() => setTermsVisible(false)} className="bg-primary-cool py-3.5 rounded-2xl items-center">
+                <Text className="text-white font-bold text-base">Purrfect, take me back 😸</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
     </View>
   );
 }

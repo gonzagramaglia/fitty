@@ -6,6 +6,13 @@ inclusion: always
 
 This is a React Native (Expo) + Supabase + Temporal.io + Anthropic/OpenAI app built for the **Coding Kitty Hackathon 2026**. It is an AI-powered cat health tracker that estimates Body Condition Score (BCS) from photos.
 
+## Current Project Status
+
+**Phase 8 complete. Phase 9 (E2E Verification) pending.** All core features are built, polished, and refactored. The app is fully functional in Judge Mode (guest) and real user mode (Google OAuth). Temporal AI workflow is deployed and connected.
+
+**Completed Phases:** 1–8 (Foundation → Testing → Auth → Profile/Dashboard → Camera & AI → Results & History → AI Chat → Production Readiness)
+**In Progress:** Phase 9 (End-to-End AI Workflow Verification) + Phase 10 (Documentation & Submission)
+
 ## Context Files — Read These Before Implementing Anything
 
 Always read in this order before any implementation:
@@ -30,6 +37,8 @@ Always read in this order before any implementation:
 - **AI Vision**: Anthropic API (Claude 5 Sonnet)
 - **Audio transcription**: OpenAI API (Whisper)
 - **Security scanning**: Aikido Security
+- **AI Code Review**: CodeRabbit
+- **Development Environment**: Kiro (Tasks 17, 18, 19, 20)
 
 ## Non-Negotiable Rules
 

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { LogBox, DeviceEventEmitter, Animated, Text, View, TouchableOpacity } from "react-native";
+import { LogBox, DeviceEventEmitter, Animated, Text, View, TouchableOpacity, Modal } from "react-native";
 import { AlertCircle, X } from "lucide-react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import Head from "expo-router/head";
@@ -14,25 +14,16 @@ import "../global.css";
 if (typeof window !== 'undefined') {
   const originalConsoleError = console.error;
   console.error = (...args: any[]) => {
-    if (typeof args[0] === 'string') {
-      const msg = args[0];
-      if (
-        msg.includes('Unknown event handler property `onDataPointClick`') ||
-        msg.includes('Invalid DOM property `transform-origin`') ||
-        msg.includes('Unknown event handler property `onStartShouldSetResponder`') ||
-        msg.includes('Unknown event handler property `onResponderTerminationRequest`') ||
-        msg.includes('Unknown event handler property `onResponderGrant`') ||
-        msg.includes('Unknown event handler property `onResponderMove`') ||
-        msg.includes('Unknown event handler property `onResponderRelease`') ||
-        msg.includes('Unknown event handler property `onResponderTerminate`') ||
-        msg.includes('Unknown event handler property `onPressIn`') ||
-        msg.includes('Unknown event handler property `onPressOut`') ||
-        msg.includes('TouchableMixin is deprecated') ||
-        msg.includes('Invalid DOM property `transform-origin`') ||
-        msg.includes('Did you mean `transformOrigin`')
-      ) {
-        return;
-      }
+    const msg = args.map(a => typeof a === 'string' ? a : String(a)).join(' ');
+    if (
+      msg.includes('Unknown event handler property') ||
+      msg.includes('Invalid DOM property') ||
+      msg.includes('Did you mean `transformOrigin`') ||
+      msg.includes('TouchableMixin is deprecated') ||
+      msg.includes('props.pointerEvents is deprecated') ||
+      msg.includes('shadow*') 
+    ) {
+      return;
     }
     originalConsoleError(...args);
   };
@@ -110,8 +101,8 @@ const GlobalToast = () => {
     >
       <TouchableOpacity
         className="bg-[#1A2530] rounded-2xl shadow-lg border border-warning/30 w-[92%] max-w-[340px] overflow-hidden"
-        onPress={persistent ? dismiss : undefined}
-        activeOpacity={persistent ? 0.8 : 1}
+        onPress={dismiss}
+        activeOpacity={0.8}
       >
         {/* Content row */}
         <View className="flex-row items-center px-3 py-5">
@@ -130,7 +121,7 @@ const GlobalToast = () => {
 
         {/* Draining progress bar — only for auto-dismiss toasts */}
         {!persistent && (
-          <View className="h-[3px] bg-white/10">
+          <View className="h-[3px] bg-white/10" style={{ alignItems: 'flex-end' }}>
             <Animated.View
               style={{
                 height: '100%',
@@ -159,6 +150,54 @@ const GlobalGuestModal = () => {
       onClose={hideGuestModal}
       message={guestModalMessage}
     />
+  );
+};
+
+/**
+ * GlobalProcessingModal renders a modal informing the user a health check is already being processed.
+ */
+const GlobalProcessingModal = () => {
+  const { processingModalVisible, hideProcessingModal } = useActiveCat();
+  const progress = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (processingModalVisible) {
+      progress.setValue(1);
+      Animated.timing(progress, {
+        toValue: 0,
+        duration: 5000,
+        useNativeDriver: false,
+      }).start(({ finished }) => {
+        if (finished) hideProcessingModal();
+      });
+    }
+  }, [processingModalVisible]);
+
+  if (!processingModalVisible) return null;
+  return (
+    <Modal visible={true} transparent animationType="fade">
+      <TouchableOpacity activeOpacity={1} onPress={hideProcessingModal} className="flex-1 bg-black/60 items-center justify-center px-6">
+        <TouchableOpacity activeOpacity={0.95} onPress={hideProcessingModal} className="bg-surface w-full max-w-[340px] rounded-3xl p-6 items-center shadow-xl">
+          <Text className="text-4xl mb-4">⏳</Text>
+          <Text className="text-xl font-black text-text-primary mb-2 text-center">Analysis In Progress</Text>
+          <Text className="text-text-secondary text-center mb-4">
+            A health check is being processed. Powered by <Text className="font-bold text-primary-cool-dark" onPress={() => Linking.openURL('https://temporal.io')}>Temporal.io</Text> for reliable execution.
+          </Text>
+          <Text className="text-text-muted text-center text-xs mb-4">
+            Results will appear automatically.
+          </Text>
+          <View className="w-full h-1.5 bg-surface-tertiary rounded-full overflow-hidden" style={{ alignItems: 'flex-end' }}>
+            <Animated.View
+              style={{
+                height: '100%',
+                backgroundColor: '#74B7B5',
+                width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+              }}
+            />
+          </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
   );
 };
 
@@ -224,6 +263,7 @@ export default function RootLayout() {
           </View>
           <GlobalToast />
           <GlobalGuestModal />
+          <GlobalProcessingModal />
         </ActiveCatProvider>
       </WebFrame>
     </>

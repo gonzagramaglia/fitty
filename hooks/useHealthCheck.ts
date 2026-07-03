@@ -5,14 +5,14 @@ export type HealthCheckDetail = {
   id: string;
   cat_id: string;
   created_at: string;
-  bcs_score: number;
-  top_photo_url: string;
-  side_photo_url: string;
+  bcs_score: number | null;
+  top_photo_url: string | null;
+  side_photo_url: string | null;
   voice_note_url: string | null;
   text_note: string | null;
-  classification: string;
-  ai_reasoning: string;
-  recommendations: any[];
+  classification: string | null;
+  ai_reasoning: string | null;
+  recommendations: { title: string; description: string }[] | null;
   status: string;
   cats?: { name: string };
 };
@@ -60,10 +60,11 @@ export function useHealthCheck(id: string) {
         if (!cancelled) {
           setHealthCheck(data as HealthCheckDetail);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!cancelled) {
+          const errorMessage = err instanceof Error ? err.message : "Failed to fetch health check details";
           console.error("[useHealthCheck] error fetching health check detail", err);
-          setError(err.message || "Failed to fetch health check details");
+          setError(errorMessage);
         }
       } finally {
         if (!cancelled) {
@@ -74,8 +75,39 @@ export function useHealthCheck(id: string) {
 
     fetchHealthCheck();
 
+    // Skip realtime subscription for empty IDs
+    if (!id) return () => { cancelled = true; };
+
+    // Remove any existing channel with the same name before subscribing
+    const channelName = `health-check-${id}`;
+    const existingChannel = supabase.getChannels().find(ch => ch.topic === `realtime:${channelName}`);
+    if (existingChannel) {
+      supabase.removeChannel(existingChannel);
+    }
+
+    // Subscribe to Realtime updates for this health check (e.g., when processing completes)
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'health_checks',
+          filter: `id=eq.${id}`,
+        },
+        (payload) => {
+          if (!cancelled && payload.new) {
+            // Re-fetch to get the joined cat name
+            fetchHealthCheck();
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       cancelled = true;
+      supabase.removeChannel(channel);
     };
   }, [id]);
 

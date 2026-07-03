@@ -43,9 +43,9 @@ export function WebFrame({ children }: { children: React.ReactNode }) {
         <Text
           className="text-text-inverse underline font-semibold"
           style={{ cursor: 'pointer' } as any}
-          onPress={() => window.open("https://temporal.io", "_blank")}
+          onPress={() => window.open("https://kiro.dev", "_blank")}
         >
-          Temporal
+          Kiro
         </Text>
         ,{' '}
         <Text
@@ -59,9 +59,9 @@ export function WebFrame({ children }: { children: React.ReactNode }) {
         <Text
           className="text-text-inverse underline font-semibold"
           style={{ cursor: 'pointer' } as any}
-          onPress={() => window.open("https://kiro.dev", "_blank")}
+          onPress={() => window.open("https://temporal.io", "_blank")}
         >
-          Kiro
+          Temporal
         </Text>
         .
       </Text>

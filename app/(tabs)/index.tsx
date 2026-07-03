@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, DeviceEventEmitter, Platform } from 'react-native';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, Animated, DeviceEventEmitter, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../lib/supabase';
@@ -27,6 +27,18 @@ export default function DashboardScreen() {
   const [latestCheck, setLatestCheck] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // Waving hand animation — continuous smooth swing
+  const waveAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const animate = () => {
+      Animated.sequence([
+        Animated.timing(waveAnim, { toValue: 1, duration: 1500, useNativeDriver: false }),
+        Animated.timing(waveAnim, { toValue: -0.4, duration: 1500, useNativeDriver: false }),
+      ]).start(() => animate());
+    };
+    animate();
+  }, []);
 
   const fetchDashboardData = async () => {
     if (isCatLoading) return;
@@ -154,7 +166,7 @@ export default function DashboardScreen() {
             resizeMode="contain"
           />
           <Text className="text-2xl font-bold text-text-primary mb-1 text-center">
-            {user?.is_anonymous ? "Welcome, Judge! 👋" : "Welcome to Fitty!"}
+            {`Welcome, ${user?.user_metadata?.full_name?.split(' ')[0] || 'Judge'}! 👋`}
           </Text>
           <Text className="text-text-secondary text-center mb-8 text-base px-4">
             {user?.is_anonymous ? "Thank you for checking out Fitty. Please create a cat profile to track history." : "Please create a cat profile to get started."}
@@ -187,9 +199,14 @@ export default function DashboardScreen() {
           <View className="flex-row items-center justify-between mb-8">
             <View>
               <Text className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Good Morning,</Text>
-              <Text className="text-3xl font-black text-white tracking-tight">
-                {user?.user_metadata?.full_name?.split(' ')[0] || 'Judge'} 👋
-              </Text>
+              <View className="flex-row items-center">
+                <Text className="text-3xl font-black text-white tracking-tight">
+                  {user?.user_metadata?.full_name?.split(' ')[0] || 'Judge'}{' '}
+                </Text>
+                <Animated.View style={{ transform: [{ rotate: waveAnim.interpolate({ inputRange: [-0.4, 0, 1], outputRange: ['-8deg', '0deg', '25deg'] }) }] }}>
+                  <Text className="text-3xl">👋</Text>
+                </Animated.View>
+              </View>
             </View>
             <TouchableOpacity onPress={() => router.push('/profile')} className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#2A3B4C] bg-surface-tertiary">
               {user?.user_metadata?.avatar_url ? (
@@ -265,7 +282,7 @@ export default function DashboardScreen() {
               <View className="ml-2 items-center justify-center px-3.5 py-2 rounded-2xl bg-[#E8EEF2]">
                 <Text className="text-[11px] font-bold uppercase tracking-widest mb-0.5 text-[#1E293B]">BCS</Text>
                 <Text className={`font-black text-[22px] ${getBcsColorClass(latestCheck?.bcs_score)}`}>
-                  {latestCheck?.bcs_score ? latestCheck.bcs_score : '?'}
+                  {latestCheck?.bcs_score ? latestCheck.bcs_score : '⏳'}
                   <Text className="text-sm font-bold text-text-secondary">/9</Text>
                 </Text>
               </View>
@@ -342,7 +359,7 @@ export default function DashboardScreen() {
                 <Text className="text-text-primary font-bold text-lg">BCS Score</Text>
                 <View className="flex-row items-center">
                   <Text className={`font-black text-3xl mr-3 ${getBcsColorClass(latestCheck.bcs_score)}`}>
-                    {latestCheck.bcs_score || '-'}<Text className="text-lg text-text-secondary font-bold">/9</Text>
+                    {latestCheck.bcs_score || '⏳'}<Text className="text-lg text-text-secondary font-bold">/9</Text>
                   </Text>
                   <ChevronRight size={24} color="#94a3b8" />
                 </View>
@@ -357,7 +374,7 @@ export default function DashboardScreen() {
           )}
 
           {/* BCS Info Section */}
-          <View className="mt-9">
+          <View className="mt-5">
             <BCSInfoCard />
           </View>
 

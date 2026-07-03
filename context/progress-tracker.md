@@ -109,11 +109,36 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] Connect UI to backend with strict rate limiting (5 req/min) and 500-char validation
   - [x] Persist chat messages to Supabase and implement UI edit/delete functions
 
-## Phase 8 — Judge Mode UX & Demo Mocking
+## Phase 8 — Production Readiness: Judge Mode & Real User End-to-End
 - [x] **15 Judge Mode UX & Demo Mocking**
-  - [x] Guest Mode guard (block second scan and second cat with Judge Mode modal)
-  - [x] Toast notifications (auto-dismiss + persistent variant for guest banner)
-  - [x] 6 pre-seeded mock health check records on first scan (Jan–Jun timeline)
-  - [x] 5 real voice notes uploaded to Supabase and linked to mock records
-  - [x] Web audio playback via native HTML5 Audio API
-  - [x] Centralized guest modal via React Context (no duplicates)
+  - [x] Toast redesign (auto-dismiss with progress bar), guest mode guards
+  - [x] Profile form: typing animation, fixed-height save button, data-driven INSERT vs UPDATE
+  - [x] 6 pre-seeded mock health checks (Jan–Jun) with 5 real voice notes
+  - [x] Redesigned Owner's Notes card, web audio playback via HTML5 API
+  - [x] Guest camera: flash simulation, no permissions required
+  - [x] Terms of Service & Privacy Policy modal (cat-themed)
+- [x] **16 End-to-End Real User Flow**
+  - [x] Enable Google login button (remove `disabled` + "Soon" label)
+  - [x] Pass `redirectTo` in `signInWithOAuth` for deployed domain
+  - [x] Configure redirect URL in Supabase Dashboard → Auth → Redirect URLs
+  - [x] Verify `onAuthStateChange` handles OAuth redirect correctly on web
+  - [x] Profile page reads `user_metadata` for Google name and avatar
+  - [x] Real user camera: permissions requested, top/side photos upload to `cat_photos` bucket
+  - [x] Voice note uploads to `voice_notes` bucket (if recorded)
+  - [x] App triggers POST to `/api/analyze` with correct payload (not mock insert)
+- [x] **17 UX Polish & Bug Fixes**
+  - [x] Login: remove Skip, center Next, bypass Terms for Google, reposition accept/decline buttons
+  - [x] Profile: reset form on tab blur, toast notifications, Enter-to-save, avatar auto-upload with loader
+  - [x] Chat: persist guest history to Supabase, edit-in-place UX, one edit per session, clear on close
+  - [x] History Detail: spacing improvements, remove debug logs
+  - [x] Realtime: fix duplicate channel subscription in `useHealthCheck`
+- [ ] **18 Refactor & Modularization**
+  - [ ] Extract large route files into smaller sub-components
+  - [ ] Move inline logic to `lib/` or `hooks/`, extract shared UI patterns
+  - [ ] Consolidate duplicate avatar upload logic, remove dead code, narrow `any` types
+
+## Phase 9 — End-to-End Verification
+- [ ] **19 End-to-End AI Workflow Verification**
+  - [ ] Verify Temporal → Whisper → Claude → Supabase pipeline works for real users
+  - [ ] Results screen shows real BCS score, AI reasoning, and recommendations
+  - [ ] AI Chat works on real health check record

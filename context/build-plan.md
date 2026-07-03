@@ -162,15 +162,50 @@ Build an interactive chat interface to ask follow-up questions about a specific 
 - Connect UI to backend with strict rate limiting (5 req/min) and 500-char validation
 - Persist chat messages to Supabase and implement UI edit/delete functions
 
-## Phase 8 — Judge Mode UX & Demo Mocking
+## Phase 8 — Production Readiness: Judge Mode & Real User End-to-End
 
 ### 15 Judge Mode UX & Demo Mocking
 Polish the anonymous guest (Judge Mode) experience so hackathon judges can fully explore the app without a real account or data.
 
 **UI & Logic:**
 - Guest Mode guard: block second scan and second cat creation with Judge Mode modal
-- Toast notifications (auto-dismiss with progress bar; persistent variant for guest banner)
+- Toast notifications (auto-dismiss with 2s draining progress bar, no X button)
+- Placeholder typing animation on cat profile form fields
+- Save button fixed height to prevent layout shift during loading
+- `pendingAddCat` ref fixes `useFocusEffect` race condition on Add Cat flow
+- `handleSave` data-driven INSERT vs UPDATE — immune to stale `activeCatId` from previous anonymous sessions
+- `fetchData` clears stale `activeCatId` when user has no cats
 - 6 pre-seeded mock health check records on first Judge Mode scan (Jan–Jun timeline)
-- 5 real voice notes uploaded to Supabase and linked to mock records
-- Web audio playback via native HTML5 `Audio` API (bypasses `expo-av` on web)
-- Centralized guest modal via React Context (single source of truth, no duplicates)
+- 5 real voice notes uploaded to Supabase (`health-checks/mock/`) and linked to DB records
+- Redesigned "Owner's Notes" card: quote style, conditional audio player, no border divider
+- Web audio playback via native HTML5 `Audio` API (bypasses `expo-av` which doesn't work on web)
+- Guest camera flow: flash simulation effect, `guestCaptured` state, `isCaptured` computed flag
+- Camera permissions requested only for real users, not guests
+
+### 16 End-to-End Real User Flow
+Enable Google login and verify the complete production flow works for real users: from login to scan to upload.
+
+**Auth & Identity:**
+- Google OAuth via Supabase with `redirectTo` for deployed domain
+- Profile pre-fills first name and avatar from Google `user_metadata`
+
+**Camera & Upload:**
+- Camera and microphone permissions requested for real users
+- Photos and voice notes upload to Supabase Storage
+- App triggers POST to `/api/analyze` with valid payload
+
+### 17 UX Polish
+Final UX pass across Login, Profile, Chat, and navigation for a polished demo.
+
+**Login:** Remove Skip, center Next, bypass Terms for Google, reposition buttons.
+**Profile:** Reset on tab blur, tap/enter-to-save owner, avatar auto-upload with loader, input validation & max lengths.
+**Chat:** Persist guest history, edit-in-place UX, one edit per session, clear on close.
+**Navigation:** Scan disabled without cat, `/camera` guard, dynamic owner name, Realtime fix.
+
+### 18 Refactor & Modularization
+Extract sub-components from large route files, consolidate shared patterns (header, cat selector, avatar upload), remove dead code, narrow `any` types.
+
+## Phase 9 — End-to-End Verification
+
+### 19 End-to-End AI Workflow Verification
+Verify the full Temporal → Whisper → Claude → Supabase → Realtime pipeline works for real users in production, end to end.

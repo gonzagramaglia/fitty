@@ -32,6 +32,12 @@ type ActiveCatContextType = {
   guestModalMessage: string;
   /** Hides the guest limit modal. */
   hideGuestModal: () => void;
+  /** Shows the processing-in-progress modal. */
+  showProcessingModal: () => void;
+  /** Whether the processing modal is currently visible. */
+  processingModalVisible: boolean;
+  /** Hides the processing modal. */
+  hideProcessingModal: () => void;
 };
 
 /**
@@ -47,6 +53,9 @@ const ActiveCatContext = createContext<ActiveCatContextType>({
   guestModalVisible: false,
   guestModalMessage: '',
   hideGuestModal: () => {},
+  showProcessingModal: () => {},
+  processingModalVisible: false,
+  hideProcessingModal: () => {},
 });
 
 /**
@@ -70,6 +79,16 @@ export const ActiveCatProvider = ({ children }: { children: React.ReactNode }) =
 
   const hideGuestModal = useCallback(() => {
     setGuestModalVisible(false);
+  }, []);
+
+  const [processingModalVisible, setProcessingModalVisible] = useState(false);
+
+  const showProcessingModal = useCallback(() => {
+    setProcessingModalVisible(true);
+  }, []);
+
+  const hideProcessingModal = useCallback(() => {
+    setProcessingModalVisible(false);
   }, []);
 
   useEffect(() => {
@@ -115,8 +134,8 @@ export const ActiveCatProvider = ({ children }: { children: React.ReactNode }) =
   }, []);
 
   const value = useMemo(
-    () => ({ activeCatId, setActiveCatId, selectedCheckId, setSelectedCheckId, isLoading, showGuestModal, guestModalVisible, guestModalMessage, hideGuestModal }),
-    [activeCatId, setActiveCatId, selectedCheckId, isLoading, showGuestModal, guestModalVisible, guestModalMessage, hideGuestModal]
+    () => ({ activeCatId, setActiveCatId, selectedCheckId, setSelectedCheckId, isLoading, showGuestModal, guestModalVisible, guestModalMessage, hideGuestModal, showProcessingModal, processingModalVisible, hideProcessingModal }),
+    [activeCatId, setActiveCatId, selectedCheckId, isLoading, showGuestModal, guestModalVisible, guestModalMessage, hideGuestModal, showProcessingModal, processingModalVisible, hideProcessingModal]
   );
 
   return (

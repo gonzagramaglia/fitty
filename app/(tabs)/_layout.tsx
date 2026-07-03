@@ -13,15 +13,35 @@ import { useActiveCat } from "../../lib/ActiveCatContext";
  */
 export default function TabsLayout() {
   const router = useRouter();
-  const { activeCatId, showGuestModal } = useActiveCat();
+  const { activeCatId, showGuestModal, showProcessingModal, setSelectedCheckId } = useActiveCat();
 
   const handleScanPress = useCallback(async () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
-      // Fail closed: could not verify identity
       showGuestModal();
       return;
     }
+
+    // Check if there's already a scan in progress
+    if (activeCatId) {
+      const { data: processingCheck } = await supabase
+        .from('health_checks')
+        .select('id')
+        .eq('cat_id', activeCatId)
+        .eq('user_id', user.id)
+        .eq('status', 'processing')
+        .limit(1)
+        .maybeSingle();
+
+      if (processingCheck?.id) {
+        // Navigate to history tab and select the processing check
+        setSelectedCheckId(processingCheck.id);
+        router.push('/history');
+        showProcessingModal();
+        return;
+      }
+    }
+
     if (!user.is_anonymous) {
       router.push('/camera');
       return;
@@ -41,11 +61,11 @@ export default function TabsLayout() {
     }
 
     router.push('/camera');
-  }, [activeCatId, showGuestModal, router]);
+  }, [activeCatId, showGuestModal, showProcessingModal, router]);
 
   return (
     <Tabs
-      tabBar={props => <CustomTabBar {...props} onScanPress={handleScanPress} />}
+      tabBar={props => <CustomTabBar {...props} onScanPress={handleScanPress} scanDisabled={!activeCatId} />}
       screenOptions={{
         headerShown: false,
       }}

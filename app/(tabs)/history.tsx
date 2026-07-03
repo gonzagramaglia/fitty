@@ -119,7 +119,7 @@ export default function HistoryScreen() {
             resizeMode="contain"
           />
           <Text className="text-2xl font-bold text-text-primary mb-1 text-center">
-            {user?.is_anonymous ? "Welcome, Judge! 👋" : "Welcome to History"}
+            {`Welcome, ${user?.user_metadata?.full_name?.split(' ')[0] || 'Judge'}! 👋`}
           </Text>
           <Text className="text-text-secondary text-center mb-8 text-base px-4">
             {user?.is_anonymous ? "Thank you for checking out Fitty. Please create a cat profile to track history." : "Please create a cat profile to see their health history."}
@@ -180,10 +180,12 @@ export default function HistoryScreen() {
     );
   }
 
-  const chartData = history.map((record) => ({
-    date: record.created_at,
-    score: record.bcs_score,
-  })).reverse();
+  const chartData = history
+    .filter((record) => record.status === 'completed' && record.bcs_score)
+    .map((record) => ({
+      date: record.created_at,
+      score: record.bcs_score,
+    })).reverse();
 
   const getThumbnailSource = (url: string | null) => {
     if (!url) return null;
@@ -210,7 +212,7 @@ export default function HistoryScreen() {
                 Health Journey
               </Text>
               <Text className="text-white text-3xl font-black tracking-tight mb-4">
-                History & Trend
+                History & Trend 📊
               </Text>
               {renderCatSelector(true)}
             </View>
@@ -239,7 +241,7 @@ export default function HistoryScreen() {
                 Health Journey
               </Text>
               <Text className="text-white text-3xl font-black tracking-tight mb-4">
-                History & Trend
+                History & Trend 📊
               </Text>
               {renderCatSelector()}
             </View>
@@ -264,7 +266,7 @@ export default function HistoryScreen() {
                 Health Journey
               </Text>
               <Text className="text-white text-3xl font-black tracking-tight mb-4">
-                History & Trend
+                History & Trend 📊
               </Text>
               {renderCatSelector()}
             </View>
@@ -293,16 +295,20 @@ export default function HistoryScreen() {
                 Health Journey
               </Text>
               <Text className="text-white text-3xl font-black tracking-tight mb-4">
-                History & Trend
+                History & Trend 📊
               </Text>
               {renderCatSelector()}
             </View>
           </View>
           
           <ScrollView ref={scrollViewRef} className="flex-1 px-6" showsVerticalScrollIndicator={false}>
-          {chartData.length > 0 && (
+          {(chartData.length > 0 || history.some(r => r.status === 'processing')) && (
             <View className="mb-6">
-              <TrendChart data={chartData} catName={allCats.find(c => c.id === activeCatId)?.name} />
+              <TrendChart 
+                data={chartData} 
+                catName={allCats.find(c => c.id === activeCatId)?.name}
+                hasProcessing={history.some(r => r.status === 'processing')}
+              />
             </View>
           )}
 
@@ -327,6 +333,7 @@ export default function HistoryScreen() {
                 key={record.id}
                 dateString={record.created_at}
                 bcsScore={record.bcs_score}
+                status={record.status}
                 thumbnailUrl={getThumbnailSource(record.top_photo_url)}
                 hasTextNote={!!record.text_note}
                 hasVoiceNote={!!record.voice_note_url}
@@ -337,7 +344,7 @@ export default function HistoryScreen() {
             ))}
 
             {/* BCS Info Section */}
-            <View className="mt-8">
+            <View className="mt-6">
               <BCSInfoCard />
             </View>
           </View>

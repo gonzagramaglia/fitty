@@ -52,7 +52,7 @@ export function useHistory() {
           .select("id, cat_id, created_at, bcs_score, top_photo_url, side_photo_url, classification, status, text_note, voice_note_url")
           .eq("user_id", user.id)
           .eq("cat_id", activeCatId)
-          .eq("status", "completed")
+          .in("status", ["completed", "processing"])
           .order("created_at", { ascending: false });
 
         if (fetchError) throw fetchError;

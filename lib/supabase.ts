@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // A custom storage adapter that avoids accessing window on the server (SSR)
@@ -25,7 +26,7 @@ export const supabase = createClient(
       storage: customStorageAdapter,
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: false,
+      detectSessionInUrl: Platform.OS === 'web',
     },
   }
 );

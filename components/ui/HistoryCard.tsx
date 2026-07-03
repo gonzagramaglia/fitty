@@ -5,6 +5,7 @@ import { getBcsTextColor, getBcsBgColor } from "../../lib/bcs";
 type Props = {
   dateString: string;
   bcsScore: number;
+  status?: string;
   thumbnailUrl?: string | ImageSourcePropType;
   hasTextNote?: boolean;
   hasVoiceNote?: boolean;
@@ -18,7 +19,7 @@ type Props = {
  *
  * @param props - Component props containing the health check summary details.
  */
-export function HistoryCard({ dateString, bcsScore, thumbnailUrl, hasTextNote, hasVoiceNote, onPress }: Props) {
+export function HistoryCard({ dateString, bcsScore, status, thumbnailUrl, hasTextNote, hasVoiceNote, onPress }: Props) {
   const date = new Date(dateString);
   const formattedDate = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -62,11 +63,17 @@ export function HistoryCard({ dateString, bcsScore, thumbnailUrl, hasTextNote, h
       </View>
 
       <View className="items-end justify-center mr-3">
-        <View className={`${scoreBgClass} px-2 py-1 rounded-md mb-1`}>
-          <Text className={`${scoreColorClass} text-xs font-bold`}>
-            BCS {bcsScore}
-          </Text>
-        </View>
+        {status === 'processing' ? (
+          <View className="bg-surface-secondary px-2 py-1 rounded-md mb-1">
+            <Text className="text-text-muted text-xs font-bold">BCS ⏳</Text>
+          </View>
+        ) : (
+          <View className={`${scoreBgClass} px-2 py-1 rounded-md mb-1`}>
+            <Text className={`${scoreColorClass} text-xs font-bold`}>
+              BCS {bcsScore}
+            </Text>
+          </View>
+        )}
       </View>
 
       <ChevronRight color="#cbd5e1" size={20} />

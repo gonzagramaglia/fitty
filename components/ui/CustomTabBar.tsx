@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
  * @param props.onScanPress - Callback invoked when the Scan FAB is pressed. Handles guest guard logic.
  * @returns The rendered React element for the custom tab bar.
  */
-export function CustomTabBar({ state, descriptors, navigation, onScanPress }: any) {
+export function CustomTabBar({ state, descriptors, navigation, onScanPress, scanDisabled }: any) {
   const router = useRouter();
 
   return (
@@ -76,13 +76,18 @@ export function CustomTabBar({ state, descriptors, navigation, onScanPress }: an
               <TouchableOpacity
                 key="scan-button"
                 onPress={onScanPress}
+                disabled={scanDisabled}
                 className="items-center flex-1"
+                style={{ opacity: scanDisabled ? 0.5 : 1 }}
               >
                 <View className="-mt-8 items-center">
-                  <View className="bg-[#FDE047] w-16 h-16 rounded-full items-center justify-center border-[6px] border-background shadow-sm">
-                    <Camera size={28} color="#854D0E" strokeWidth={2.5} />
+                  <View 
+                    className="w-16 h-16 rounded-full items-center justify-center border-[6px] border-background shadow-sm"
+                    style={{ backgroundColor: scanDisabled ? '#D1D5DB' : '#FDE047' }}
+                  >
+                    <Camera size={28} color={scanDisabled ? '#9CA3AF' : '#854D0E'} strokeWidth={2.5} />
                   </View>
-                  <Text className={`text-xs mt-1 font-bold text-[#854D0E]`}>
+                  <Text className="text-xs mt-1 font-bold" style={{ color: scanDisabled ? '#9CA3AF' : '#854D0E' }}>
                     Scan
                   </Text>
                 </View>

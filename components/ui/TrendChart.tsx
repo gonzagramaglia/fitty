@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, useWindowDimensions, Platform } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { Defs, LinearGradient, Stop } from "react-native-svg";
@@ -12,6 +12,7 @@ type DataPoint = {
 type Props = {
   data: DataPoint[];
   catName?: string;
+  hasProcessing?: boolean;
 };
 
 /**
@@ -20,10 +21,20 @@ type Props = {
  *
  * @param props - Component props containing the chart data.
  */
-export function TrendChart({ data, catName }: Props) {
+export function TrendChart({ data, catName, hasProcessing }: Props) {
   const { width: windowWidth } = useWindowDimensions();
   const containerWidth = Platform.OS === 'web' ? Math.min(windowWidth, 400) : windowWidth;
   const chartWidth = containerWidth - 96;
+
+  // Animated dots for processing state
+  const [dots, setDots] = useState('');
+  useEffect(() => {
+    if (!hasProcessing) return;
+    const interval = setInterval(() => {
+      setDots(prev => prev.length >= 3 ? '' : prev + '.');
+    }, 500);
+    return () => clearInterval(interval);
+  }, [hasProcessing]);
 
   if (!data || data.length === 0) {
     return (
@@ -72,15 +83,27 @@ export function TrendChart({ data, catName }: Props) {
             }}
           />
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', marginTop: -12 }}>
-            <View className="mb-3">
-              <Activity color="#94a3b8" size={28} />
-            </View>
-            <Text className="text-text-primary font-bold text-base mb-1">
-              No health checks yet
-            </Text>
-            <Text className="text-text-muted text-center text-sm px-6">
-              Tap <Text className="font-bold" style={{ color: '#854D0E' }}>Scan</Text> below to start tracking{'\n'}{catName ? `${catName}'s` : "your cat's"} health.
-            </Text>
+            {hasProcessing ? (
+              <>
+                <Text className="text-3xl mb-2">⏳</Text>
+                <Text className="text-text-primary font-bold text-base mb-1">Scan processing{dots}</Text>
+                <Text className="text-text-muted text-center text-sm px-6">
+                  Results will appear on the chart once complete.
+                </Text>
+              </>
+            ) : (
+              <>
+                <View className="mb-3">
+                  <Activity color="#94a3b8" size={28} />
+                </View>
+                <Text className="text-text-primary font-bold text-base mb-1">
+                  No health checks yet
+                </Text>
+                <Text className="text-text-muted text-center text-sm px-6">
+                  Tap <Text className="font-bold" style={{ color: '#854D0E' }}>Scan</Text> below to start tracking{'\n'}{catName ? `${catName}'s` : "your cat's"} health.
+                </Text>
+              </>
+            )}
           </View>
         </View>
       </View>

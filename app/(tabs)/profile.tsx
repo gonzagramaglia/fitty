@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, DeviceEventEmitter, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, KeyboardAvoidingView, Platform, ActivityIndicator, DeviceEventEmitter, Modal } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Plus, CloudUpload, Save, Image as ImageIcon, Check, Edit2, LogOut, Pencil, X } from 'lucide-react-native';
@@ -43,6 +43,7 @@ export default function ProfileScreen() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingCatAvatar, setIsSavingCatAvatar] = useState(false);
 
   const typingIntervals = useRef<{ [key: string]: NodeJS.Timeout | null }>({});
 
@@ -108,8 +109,9 @@ export default function ProfileScreen() {
       if (!user) return;
       setIsGuest(user.is_anonymous || false);
 
-      setOriginalOwnerName(user.user_metadata?.full_name || '');
-      setOwnerName(user.user_metadata?.full_name || '');
+      const firstName = (user.user_metadata?.full_name || '').split(' ')[0];
+      setOriginalOwnerName(firstName);
+      setOwnerName(firstName);
       setOwnerAvatarUri(user.user_metadata?.avatar_url || null);
 
       const { data, error } = await supabase
@@ -157,8 +159,20 @@ export default function ProfileScreen() {
         pendingAddCat.current = false;
       } else if (cats.length > 0) {
         setIsCreatingNew(false);
+        // Reset form to the active cat's saved values (discard unsaved edits)
+        const cat = cats.find(c => c.id === activeCatId) || cats[0];
+        if (cat) {
+          setName(cat.name || '');
+          setBreed(cat.breed || '');
+          setAge(cat.age_years ? String(cat.age_years) : '');
+          setWeight(cat.base_weight_kg ? String(cat.base_weight_kg) : '');
+          setAvatarUri(cat.avatar_url || null);
+        }
       }
-    }, [cats.length])
+      setErrors([]);
+      setIsEditingOwner(false);
+      setOwnerName(originalOwnerName);
+    }, [cats.length, activeCatId, cats, originalOwnerName])
   );
 
   useEffect(() => {
@@ -270,9 +284,9 @@ export default function ProfileScreen() {
       setOriginalOwnerName(nameToSave.trim());
       setOwnerAvatarUri(finalAvatarUrl);
       setIsEditingOwner(false);
-      Alert.alert('Success', 'Owner profile updated!');
+      DeviceEventEmitter.emit('showToast', 'Owner profile updated!');
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      DeviceEventEmitter.emit('showToast', err.message || 'Failed to update owner profile');
     } finally {
       setIsSavingOwner(false);
     }
@@ -291,7 +305,26 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled) {
-      setAvatarUri(result.assets[0].uri);
+      const uri = result.assets[0].uri;
+      setAvatarUri(uri);
+
+      // Auto-upload for existing cats
+      const existingCat = cats.find(c => c.id === activeCatId);
+      if (existingCat && !isCreatingNew) {
+        setIsSavingCatAvatar(true);
+        try {
+          const finalUrl = await uploadAvatar(uri, 'cat_avatars', 'cat');
+          await supabase.from('cats').update({ avatar_url: finalUrl }).eq('id', activeCatId);
+          setAvatarUri(finalUrl);
+          DeviceEventEmitter.emit('showToast', 'Cat photo updated!');
+          fetchData();
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'Failed to upload photo';
+          DeviceEventEmitter.emit('showToast', message);
+        } finally {
+          setIsSavingCatAvatar(false);
+        }
+      }
     }
   };
 
@@ -339,7 +372,7 @@ export default function ProfileScreen() {
       if (shouldUpdate) {
         const { error } = await supabase.from('cats').update(payload).eq('id', activeCatId);
         if (error) throw error;
-        DeviceEventEmitter.emit('showToast', 'Profile updated successfully!');
+        DeviceEventEmitter.emit('showToast', 'Cat profile updated!');
       } else {
         const { data, error } = await supabase.from('cats').insert(payload).select('id').single();
         if (error) throw error;
@@ -458,9 +491,11 @@ export default function ProfileScreen() {
                 <Text className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Owner Profile</Text>
                 <View className="flex-row items-center relative">
                   {/* The visible text that dictates layout */}
-                  <Text className={`text-3xl font-black tracking-tight ${isEditingOwner ? 'opacity-0' : 'text-white'}`}>
-                    {ownerName || (isEditingOwner ? 'Your name' : 'Judge')}
-                  </Text>
+                  <TouchableOpacity onPress={() => setIsEditingOwner(true)} activeOpacity={0.7} disabled={isEditingOwner}>
+                    <Text className={`text-3xl font-black tracking-tight ${isEditingOwner ? 'opacity-0' : 'text-white'}`}>
+                      {ownerName || (isEditingOwner ? 'Your name' : 'Judge')}
+                    </Text>
+                  </TouchableOpacity>
 
                   {/* The input overlays the text perfectly, constrained to its exact bounding box */}
                   {isEditingOwner && (
@@ -468,6 +503,9 @@ export default function ProfileScreen() {
                       ref={ownerInputRef}
                       value={ownerName}
                       onChangeText={setOwnerName}
+                      maxLength={11}
+                      onSubmitEditing={() => saveOwner(ownerName, ownerAvatarUri)}
+                      returnKeyType="done"
                       placeholder="Your name"
                       placeholderTextColor="#94a3b8"
                       className="absolute left-0 right-0 text-3xl font-black text-white tracking-tight p-0 m-0"
@@ -500,6 +538,11 @@ export default function ProfileScreen() {
                     <Image source={{ uri: ownerAvatarUri }} style={{ width: '100%', height: '100%' }} />
                   ) : (
                     <Image source={require('../../assets/images/vito-corleone.webp')} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                  )}
+                  {isSavingOwner && !isEditingOwner && (
+                    <View className="absolute inset-0 bg-black/40 items-center justify-center rounded-full">
+                      <ActivityIndicator size="small" color="white" />
+                    </View>
                   )}
                 </View>
                 <View className="absolute -bottom-1.5 -right-1.5 bg-[#74B7B5] w-7 h-7 rounded-full items-center justify-center border-[3px] border-white">
@@ -549,7 +592,7 @@ export default function ProfileScreen() {
 
           <View className="px-6 pt-6">
             <Text className="text-text-primary text-xl font-black tracking-tight mb-4">
-              {isCreatingNew ? 'Add New Cat' : `Edit ${name || 'Cat'}`}
+              {isCreatingNew ? 'Add New Cat' : `Edit ${(cats.find(c => c.id === activeCatId)?.name) || 'Cat'} Profile`}
             </Text>
             
             <View className="items-center mb-5">
@@ -560,6 +603,11 @@ export default function ProfileScreen() {
                   ) : (
                     <Image source={require('../../assets/images/coding-kitty.jpg')} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
                   )}
+                  {isSavingCatAvatar && (
+                    <View className="absolute inset-0 bg-black/40 items-center justify-center rounded-[2rem]">
+                      <ActivityIndicator size="small" color="white" />
+                    </View>
+                  )}
                 </TouchableOpacity>
                 <TouchableOpacity onPress={pickImage} className="absolute -bottom-2 -right-2 bg-[#74B7B5] w-10 h-10 rounded-full items-center justify-center border-4 border-surface shadow-sm">
                   <CloudUpload size={18} color="white" />
@@ -569,45 +617,49 @@ export default function ProfileScreen() {
             </View>
 
             {/* Name and Age Row */}
-            <View className="flex-row gap-4 mb-5">
-              {/* Name */}
-              <View style={{ flex: 2 }}>
-                <Text className="text-text-primary font-bold mb-2">Cat's Name</Text>
-                <TextInput
-                  value={name}
-                  onChangeText={setName}
-                  onFocus={() => {
-                    if (isGuest && isCreatingNew && name === '') {
-                      simulateTyping('name', 'Coding Kitty', setName);
-                    }
-                  }}
-                  placeholder="Coding Kitty"
-                  placeholderTextColor="#94a3b8"
-                  className={`bg-background border rounded-2xl px-4 py-4 text-text-primary text-base ${getFieldError('name') ? 'border-error' : 'border-border'}`}
-                  style={Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}}
-                />
-                {getFieldError('name') && <Text className="text-error text-sm mt-1">{getFieldError('name')}</Text>}
-              </View>
+            <View className="mb-5">
+              <View className="flex-row gap-4">
+                {/* Name */}
+                <View style={{ flex: 2 }}>
+                  <Text className="text-text-primary font-bold mb-2">Cat's Name</Text>
+                  <TextInput
+                    value={name}
+                    onChangeText={(text) => setName(text.replace(/[0-9]/g, ''))}
+                    maxLength={30}
+                    onFocus={() => {
+                      if (isGuest && isCreatingNew && name === '') {
+                        simulateTyping('name', 'Coding Kitty', setName);
+                      }
+                    }}
+                    placeholder="Coding Kitty"
+                    placeholderTextColor="#94a3b8"
+                    className={`bg-background border rounded-2xl px-4 py-4 text-text-primary text-base ${getFieldError('name') ? 'border-error' : 'border-border'}`}
+                    style={Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}}
+                  />
+                </View>
 
-              {/* Age */}
-              <View style={{ flex: 1 }}>
-                <Text className="text-text-primary font-bold mb-2">Age (yrs)</Text>
-                <TextInput
-                  value={age}
-                  onChangeText={setAge}
-                  onFocus={() => {
-                    if (isGuest && isCreatingNew && age === '') {
-                      simulateTyping('age', '3', setAge);
-                    }
-                  }}
-                  placeholder="3"
-                  keyboardType="numeric"
-                  placeholderTextColor="#94a3b8"
-                  className={`bg-background border rounded-2xl px-4 py-4 text-text-primary text-base ${getFieldError('age_years') ? 'border-error' : 'border-border'}`}
-                  style={Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}}
-                />
-                {getFieldError('age_years') && <Text className="text-error text-sm mt-1">{getFieldError('age_years')}</Text>}
+                {/* Age */}
+                <View style={{ flex: 1 }}>
+                  <Text className="text-text-primary font-bold mb-2">Age (yrs)</Text>
+                  <TextInput
+                    value={age}
+                    onChangeText={(text) => { const nums = text.replace(/[^0-9]/g, ''); setAge(nums.slice(0, 2)); }}
+                    onFocus={() => {
+                      if (isGuest && isCreatingNew && age === '') {
+                        simulateTyping('age', '3', setAge);
+                      }
+                    }}
+                    placeholder="3"
+                    keyboardType="numeric"
+                    placeholderTextColor="#94a3b8"
+                    className={`bg-background border rounded-2xl px-4 py-4 text-text-primary text-base ${getFieldError('age_years') ? 'border-error' : 'border-border'}`}
+                    style={Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}}
+                  />
+                </View>
               </View>
+              {(getFieldError('name') || getFieldError('age_years')) && (
+                <Text className="text-error text-sm mt-2">{getFieldError('name') || getFieldError('age_years')}</Text>
+              )}
             </View>
 
             {/* Breed */}
@@ -615,7 +667,8 @@ export default function ProfileScreen() {
               <Text className="text-text-primary font-bold mb-2">Breed</Text>
               <TextInput
                 value={breed}
-                onChangeText={setBreed}
+                onChangeText={(text) => setBreed(text.replace(/[0-9]/g, ''))}
+                maxLength={30}
                 onFocus={() => {
                   if (isGuest && isCreatingNew && breed === '') {
                     simulateTyping('breed', 'British Shorthair', setBreed);
@@ -633,7 +686,25 @@ export default function ProfileScreen() {
               <Text className="text-text-primary font-bold mb-2">Base Weight (kg) <Text className="text-warning-dark">*</Text></Text>
               <TextInput
                 value={weight}
-                onChangeText={setWeight}
+                onChangeText={(text) => {
+                  let cleaned = text.replace(/[^0-9.]/g, '');
+                  const parts = cleaned.split('.');
+                  if (parts.length > 2) cleaned = parts[0] + '.' + parts.slice(1).join('');
+                  if (cleaned.startsWith('.')) cleaned = '0' + cleaned;
+                  // Max 2 digits before and after dot
+                  const [integer, decimal] = cleaned.split('.');
+                  const limitedInt = integer ? integer.slice(0, 2) : '';
+                  if (decimal !== undefined) {
+                    cleaned = limitedInt + '.' + decimal.slice(0, 2);
+                  } else {
+                    cleaned = limitedInt;
+                  }
+                  setWeight(cleaned);
+                }}
+                onBlur={() => {
+                  // Clean trailing dot on blur
+                  if (weight.endsWith('.')) setWeight(weight.slice(0, -1));
+                }}
                 onFocus={() => {
                   if (isGuest && isCreatingNew && weight === '') {
                     simulateTyping('weight', '4.5', setWeight);
@@ -661,7 +732,7 @@ export default function ProfileScreen() {
                 <>
                   <Save size={22} color={canSave ? "white" : "#94a3b8"} />
                   <Text className={`font-bold text-lg ml-2 ${canSave ? "text-white" : "text-slate-400"}`}>
-                    {isCreatingNew ? "Create Cat's Profile" : "Save Cat's Profile"}
+                    {isCreatingNew ? "Create Cat Profile" : "Save Cat Profile"}
                   </Text>
                 </>
               )}
@@ -702,9 +773,13 @@ export default function ProfileScreen() {
           <View className="w-16 h-16 rounded-full bg-error-light items-center justify-center mb-4" style={{ transform: [{ scaleX: -1 }] }}>
             <LogOut size={28} color="#ef4444" />
           </View>
-          <Text className="text-xl font-black text-text-primary mb-2 text-center">Sign Out</Text>
+          <Text className="text-xl font-black text-text-primary mb-2 text-center">
+            {isGuest ? "Leave session?" : "Sign out?"}
+          </Text>
           <Text className="text-text-secondary text-center mb-8">
-            Are you sure you want to leave? If you are using a Guest account, your data will be permanently lost.
+            {isGuest 
+              ? "Your guest data will be permanently lost."
+              : "Your data will be saved and available when you log back in."}
           </Text>
           <View className="flex-row gap-3 w-full">
             <TouchableOpacity

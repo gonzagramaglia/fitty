@@ -74,8 +74,36 @@ export function useHealthCheck(id: string) {
 
     fetchHealthCheck();
 
+    // Remove any existing channel with the same name before subscribing
+    const channelName = `health-check-${id}`;
+    const existingChannel = supabase.getChannels().find(ch => ch.topic === `realtime:${channelName}`);
+    if (existingChannel) {
+      supabase.removeChannel(existingChannel);
+    }
+
+    // Subscribe to Realtime updates for this health check (e.g., when processing completes)
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'health_checks',
+          filter: `id=eq.${id}`,
+        },
+        (payload) => {
+          if (!cancelled && payload.new) {
+            // Re-fetch to get the joined cat name
+            fetchHealthCheck();
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       cancelled = true;
+      supabase.removeChannel(channel);
     };
   }, [id]);
 

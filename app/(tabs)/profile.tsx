@@ -99,7 +99,7 @@ export default function ProfileScreen() {
            avatarUri !== originalAvatar;
   })();
 
-  const canSave = isComplete && hasChanges && !isSaving;
+  const canSave = isComplete && hasChanges && !isSaving && !isSavingCatAvatar;
 
   /**
    * Fetches the authenticated user's profile and their associated cats
@@ -269,6 +269,7 @@ export default function ProfileScreen() {
    * an avatar image for the currently active cat.
    */
   const pickImage = async () => {
+    if (isSavingCatAvatar) return;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -286,7 +287,8 @@ export default function ProfileScreen() {
         setIsSavingCatAvatar(true);
         try {
           const finalUrl = await uploadAvatar(uri, 'cat_avatars', 'cat');
-          await supabase.from('cats').update({ avatar_url: finalUrl }).eq('id', activeCatId);
+          const { error: updateError } = await supabase.from('cats').update({ avatar_url: finalUrl }).eq('id', activeCatId);
+          if (updateError) throw updateError;
           setAvatarUri(finalUrl);
           DeviceEventEmitter.emit('showToast', 'Cat photo updated!');
           fetchData();

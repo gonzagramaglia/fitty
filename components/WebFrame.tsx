@@ -35,7 +35,7 @@ export function WebFrame({ children }: { children: React.ReactNode }) {
         <Text 
           className="font-bold underline"
           style={{ color: '#ffdf21', cursor: 'pointer' } as any}
-          onPress={() => window.open("https://hackthekitty.com/", "_blank")}
+          onPress={() => window.open("https://hackthekitty.com/", "_blank", "noopener,noreferrer")}
         >
           #hackthekitty
         </Text>{' '}
@@ -43,7 +43,7 @@ export function WebFrame({ children }: { children: React.ReactNode }) {
         <Text
           className="text-text-inverse underline font-semibold"
           style={{ cursor: 'pointer' } as any}
-          onPress={() => window.open("https://kiro.dev", "_blank")}
+          onPress={() => window.open("https://kiro.dev", "_blank", "noopener,noreferrer")}
         >
           Kiro
         </Text>
@@ -51,7 +51,7 @@ export function WebFrame({ children }: { children: React.ReactNode }) {
         <Text
           className="text-text-inverse underline font-semibold"
           style={{ cursor: 'pointer' } as any}
-          onPress={() => window.open("https://www.aikido.dev", "_blank")}
+          onPress={() => window.open("https://www.aikido.dev", "_blank", "noopener,noreferrer")}
         >
           Aikido
         </Text>
@@ -59,7 +59,7 @@ export function WebFrame({ children }: { children: React.ReactNode }) {
         <Text
           className="text-text-inverse underline font-semibold"
           style={{ cursor: 'pointer' } as any}
-          onPress={() => window.open("https://temporal.io", "_blank")}
+          onPress={() => window.open("https://temporal.io", "_blank", "noopener,noreferrer")}
         >
           Temporal
         </Text>

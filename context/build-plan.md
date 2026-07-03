@@ -209,3 +209,13 @@ Extract sub-components from large route files, consolidate shared patterns (head
 
 ### 19 End-to-End AI Workflow Verification
 Verify the full Temporal → Whisper → Claude → Supabase → Realtime pipeline works for real users in production, end to end.
+
+## Phase 10 — Documentation & Submission
+
+### 20 Documentation & Project Report
+Prepare the final submission package for the hackathon: project report, README, video demo, and Kiro writeup.
+
+- Project report following hackathon template (executive summary, tech stack, architecture, testing matrix)
+- README with prerequisites, run instructions, and configuration
+- Kiro usage writeup for the Kiro Track submission
+- Final docs/ folder structure clean-up

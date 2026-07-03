@@ -33,13 +33,14 @@ export default function DashboardScreen() {
   // Waving hand animation — continuous smooth swing
   const waveAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    const animate = () => {
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(waveAnim, { toValue: 1, duration: 1500, useNativeDriver: false }),
         Animated.timing(waveAnim, { toValue: -0.4, duration: 1500, useNativeDriver: false }),
-      ]).start(() => animate());
-    };
-    animate();
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
   }, []);
 
   const fetchDashboardData = async () => {
@@ -168,7 +169,7 @@ export default function DashboardScreen() {
             resizeMode="contain"
           />
           <Text className="text-2xl font-bold text-text-primary mb-1 text-center">
-            {`Welcome, ${user?.user_metadata?.full_name?.split(' ')[0] || 'Judge'}! 👋`}
+            {`Welcome, ${user?.user_metadata?.full_name?.split(' ')[0] || (user?.is_anonymous ? 'Judge' : 'there')}! 👋`}
           </Text>
           <Text className="text-text-secondary text-center mb-8 text-base px-4">
             {user?.is_anonymous ? "Thank you for checking out Fitty. Please create a cat profile to track history." : "Please create a cat profile to get started."}

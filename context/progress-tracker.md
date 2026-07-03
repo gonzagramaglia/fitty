@@ -142,3 +142,10 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [ ] Verify Temporal → Whisper → Claude → Supabase pipeline works for real users
   - [ ] Results screen shows real BCS score, AI reasoning, and recommendations
   - [ ] AI Chat works on real health check record
+
+## Phase 10 — Documentation & Submission
+- [ ] **20 Documentation & Project Report**
+  - [ ] Project report following hackathon template
+  - [ ] README with prerequisites, run instructions, and configuration
+  - [ ] Kiro usage writeup for the Kiro Track submission
+  - [ ] Final docs/ folder structure clean-up

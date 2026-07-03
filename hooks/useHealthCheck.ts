@@ -5,14 +5,14 @@ export type HealthCheckDetail = {
   id: string;
   cat_id: string;
   created_at: string;
-  bcs_score: number;
-  top_photo_url: string;
-  side_photo_url: string;
+  bcs_score: number | null;
+  top_photo_url: string | null;
+  side_photo_url: string | null;
   voice_note_url: string | null;
   text_note: string | null;
-  classification: string;
-  ai_reasoning: string;
-  recommendations: { title: string; description: string }[];
+  classification: string | null;
+  ai_reasoning: string | null;
+  recommendations: { title: string; description: string }[] | null;
   status: string;
   cats?: { name: string };
 };
@@ -74,6 +74,9 @@ export function useHealthCheck(id: string) {
     }
 
     fetchHealthCheck();
+
+    // Skip realtime subscription for empty IDs
+    if (!id) return () => { cancelled = true; };
 
     // Remove any existing channel with the same name before subscribing
     const channelName = `health-check-${id}`;

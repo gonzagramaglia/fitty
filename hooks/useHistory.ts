@@ -2,15 +2,15 @@ import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { useActiveCat } from "../lib/ActiveCatContext";
 
-/** A completed health check record returned by the useHistory hook. */
+/** A health check record (completed or processing) returned by the useHistory hook. */
 export type HealthCheckRecord = {
   id: string;
   cat_id: string;
   created_at: string;
-  bcs_score: number;
-  top_photo_url: string;
-  side_photo_url: string;
-  classification: string;
+  bcs_score: number | null;
+  top_photo_url: string | null;
+  side_photo_url: string | null;
+  classification: string | null;
   status: string;
   text_note?: string;
   voice_note_url?: string;

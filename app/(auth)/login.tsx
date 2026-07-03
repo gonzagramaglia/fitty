@@ -45,12 +45,14 @@ export default function LoginScreen() {
   // Breathing animation for the logo
   const logoScale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
-    Animated.loop(
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(logoScale, { toValue: 1.07, duration: 2000, useNativeDriver: true }),
         Animated.timing(logoScale, { toValue: 1, duration: 2000, useNativeDriver: true }),
       ])
-    ).start();
+    );
+    loop.start();
+    return () => loop.stop();
   }, []);
 
   const handleGuestLogin = async () => {

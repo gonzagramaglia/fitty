@@ -194,10 +194,11 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
 
       // Persist to Supabase so chat history survives page refresh
       try {
-        await supabase
+        const { error: persistError } = await supabase
           .from('health_checks')
           .update({ chat_history: finalMessages })
           .eq('id', healthCheckId);
+        if (persistError) console.error('Failed to persist guest chat history', persistError);
       } catch (err) {
         console.error('Failed to persist guest chat history', err);
       }

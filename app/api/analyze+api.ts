@@ -59,7 +59,6 @@ export async function POST(req: Request) {
     return Response.json({ success: true, workflowId: handle.workflowId });
   } catch (err: unknown) {
     console.error('Failed to trigger workflow:', err);
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return Response.json({ error: message }, { status: 500 });
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

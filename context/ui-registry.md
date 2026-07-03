@@ -1,4 +1,4 @@
-lo# UI Registry
+# UI Registry
 
 Living document. Updated after every component is built (via the `/imprint` skill). Read this before building any new component — match existing patterns exactly before inventing new ones.
 

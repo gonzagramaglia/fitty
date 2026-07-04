@@ -13,6 +13,7 @@
     "@temporalio/client": "^1.18.1",
     "@temporalio/worker": "^1.18.1",
     "@temporalio/workflow": "^1.18.1",
+    "brace-expansion": "5.0.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "expo": "~56.0.12",

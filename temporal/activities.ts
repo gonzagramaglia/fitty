@@ -6,6 +6,29 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
+/**
+ * Validates a URL to prevent SSRF attacks.
+ * Only allows HTTPS requests to Supabase domains.
+ */
+function buildValidatedUrl(baseUrl: string): string {
+  try {
+    if (baseUrl.includes('/../') || /\/%2e%2e\//i.test(baseUrl)) {
+      throw new Error('Invalid path');
+    }
+    const url = new URL(baseUrl);
+    const allowedDomains = ['supabase.co', 'supabase.com'];
+    if (!allowedDomains.some(d => url.hostname === d || url.hostname.endsWith('.' + d))) {
+      throw new Error('Invalid host');
+    }
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      throw new Error('Invalid protocol');
+    }
+    return url.href;
+  } catch {
+    throw new Error('Invalid URL');
+  }
+}
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -34,7 +57,8 @@ export async function transcribeAudio(audioUrl: string): Promise<string> {
   }
 
   console.log('Downloading audio for transcription...');
-  const response = await fetch(audioUrl);
+  const validatedAudioUrl = buildValidatedUrl(audioUrl);
+  const response = await fetch(validatedAudioUrl);
   if (!response.ok) throw new Error(`Failed to download audio: ${response.statusText}`);
   
   const arrayBuffer = await response.arrayBuffer();
@@ -83,7 +107,8 @@ export async function transcribeAudio(audioUrl: string): Promise<string> {
  * Helper to download an image and return its base64 string and media type.
  */
 async function getImageBase64(url: string): Promise<{ data: string; media_type: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' }> {
-  const response = await fetch(url);
+  const validatedUrl = buildValidatedUrl(url);
+  const response = await fetch(validatedUrl);
   if (!response.ok) throw new Error(`Failed to download image: ${response.statusText}`);
   
   const arrayBuffer = await response.arrayBuffer();

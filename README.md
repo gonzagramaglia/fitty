@@ -131,6 +131,8 @@ See [`docs/testing.md`](docs/testing.md) for the full manual test matrix.
 | [`context/build-plan.md`](context/build-plan.md) | Phase-by-phase build plan |
 | [`context/progress-tracker.md`](context/progress-tracker.md) | Task completion tracker |
 | [`context/ui-tokens.md`](context/ui-tokens.md) | Design system tokens (colors, typography) |
+| [`context/ui-rules.md`](context/ui-rules.md) | UI component rules & patterns |
+| [`context/ui-registry.md`](context/ui-registry.md) | Component registry (all built components) |
 | [`context/code-standards.md`](context/code-standards.md) | Engineering conventions & rules |
 
 ---

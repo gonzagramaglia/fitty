@@ -24,7 +24,7 @@ export function WebFrame({ children }: { children: React.ReactNode }) {
           style={{ transform: [{ translateX: -60 }] }}
         />
         {/* Inner Screen */}
-        <View className="web-frame-content flex-1 bg-surface rounded-[44px] overflow-hidden">
+        <View className="web-frame-content flex-1 bg-surface rounded-[44px] overflow-hidden" nativeID="fitty-app-container">
           {children}
         </View>
       </View>

@@ -40,3 +40,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# TLS certificates (Temporal Cloud)
+*.pem
+*.key
+cert.*

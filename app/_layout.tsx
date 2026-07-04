@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { LogBox, DeviceEventEmitter, Animated, Text, View, TouchableOpacity, Modal } from "react-native";
+import { LogBox, DeviceEventEmitter, Animated, Text, View, TouchableOpacity, Linking } from "react-native";
 import { AlertCircle, X } from "lucide-react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import Head from "expo-router/head";
@@ -8,6 +8,7 @@ import { Session } from "@supabase/supabase-js";
 import { WebFrame } from "../components/WebFrame";
 import { ActiveCatProvider, useActiveCat } from "../lib/ActiveCatContext";
 import { GuestLimitModal } from "../components/ui/GuestLimitModal";
+import { InlineModal } from "../components/ui/InlineModal";
 // @ts-ignore
 import "../global.css";
 
@@ -29,7 +30,7 @@ if (typeof window !== 'undefined') {
   };
 }
 
-const TOAST_DURATION = 2500;
+const TOAST_DURATION = 3000;
 
 const GlobalToast = () => {
   const [message, setMessage] = useState('');
@@ -175,8 +176,7 @@ const GlobalProcessingModal = () => {
 
   if (!processingModalVisible) return null;
   return (
-    <Modal visible={true} transparent animationType="fade">
-      <TouchableOpacity activeOpacity={1} onPress={hideProcessingModal} className="flex-1 bg-black/60 items-center justify-center px-6">
+    <InlineModal visible={true} onClose={hideProcessingModal}>
         <TouchableOpacity activeOpacity={0.95} onPress={hideProcessingModal} className="bg-surface w-full max-w-[340px] rounded-3xl p-6 items-center shadow-xl">
           <Text className="text-4xl mb-4">⏳</Text>
           <Text className="text-xl font-black text-text-primary mb-2 text-center">Analysis In Progress</Text>
@@ -196,8 +196,7 @@ const GlobalProcessingModal = () => {
             />
           </View>
         </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
+    </InlineModal>
   );
 };
 

@@ -14,6 +14,7 @@ export type HealthCheckDetail = {
   ai_reasoning: string | null;
   recommendations: { title: string; description: string }[] | null;
   status: string;
+  processing_step?: string | null;
   cats?: { name: string };
 };
 

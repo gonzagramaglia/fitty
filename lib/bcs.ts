@@ -29,7 +29,7 @@ export function getBcsTextColor(score: number | null | undefined): string {
   const severity = getBcsSeverity(score);
   switch (severity) {
     case 'ideal': return 'text-success-dark';
-    case 'warning': return 'text-warning-dark';
+    case 'warning': return 'text-warning';
     case 'danger': return 'text-error-dark';
     default: return 'text-text-secondary';
   }

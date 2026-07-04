@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, KeyboardAvoidingView, Platform, ActivityIndicator, DeviceEventEmitter, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, KeyboardAvoidingView, Platform, ActivityIndicator, DeviceEventEmitter } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { CloudUpload, Save, Check, LogOut, Pencil } from 'lucide-react-native';
+import { CloudUpload, Save, Check, LogOut, Pencil, Trash2 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from 'expo-router';
 import { useActiveCat } from '../../lib/ActiveCatContext';
@@ -10,6 +10,7 @@ import { supabase } from '../../lib/supabase';
 import { validateCatProfile, FieldError } from '../../lib/catProfileValidator';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { CatSelectorPills } from '../../components/ui/CatSelectorPills';
+import { InlineModal } from '../../components/ui/InlineModal';
 import { webInputStyle } from '../../lib/webStyles';
 import { useAvatarUpload } from '../../hooks/useAvatarUpload';
 import type { CatProfile } from '../../lib/types';
@@ -69,6 +70,9 @@ export default function ProfileScreen() {
   };
   const [errors, setErrors] = useState<FieldError[]>([]);
   const [isSignOutModalVisible, setIsSignOutModalVisible] = useState(false);
+  const [isDeleteCatModalVisible, setIsDeleteCatModalVisible] = useState(false);
+  const [deleteCatConfirmText, setDeleteCatConfirmText] = useState('');
+  const [isDeletingCat, setIsDeletingCat] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const pendingAddCat = useRef(false);
@@ -353,7 +357,7 @@ export default function ProfileScreen() {
         if (data?.id) {
           setIsCreatingNew(false);
           await setActiveCatId(data.id);
-          DeviceEventEmitter.emit('showToast', 'Cat added successfully!');
+          DeviceEventEmitter.emit('showToast', `${name.trim()} added successfully!`);
           router.replace('/(tabs)');
         }
       }
@@ -377,6 +381,28 @@ export default function ProfileScreen() {
 
   const confirmSignOut = () => {
     setIsSignOutModalVisible(true);
+  };
+
+  const handleDeleteCat = async () => {
+    if (!activeCatId) return;
+    setIsDeletingCat(true);
+    try {
+      const { error } = await supabase.from('cats').delete().eq('id', activeCatId);
+      if (error) throw error;
+      // Also delete associated health checks
+      await supabase.from('health_checks').delete().eq('cat_id', activeCatId);
+      const deletedName = cats.find(c => c.id === activeCatId)?.name || 'Cat';
+      setIsDeleteCatModalVisible(false);
+      setDeleteCatConfirmText('');
+      DeviceEventEmitter.emit('showToast', `${deletedName}'s profile removed.`);
+      await setActiveCatId(null);
+      fetchData();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete cat';
+      DeviceEventEmitter.emit('showToast', message);
+    } finally {
+      setIsDeletingCat(false);
+    }
   };
 
   const getFieldError = (field: string) => errors.find(e => e.field === field)?.message;
@@ -681,7 +707,7 @@ export default function ProfileScreen() {
             <TouchableOpacity
               onPress={handleSave}
               disabled={!canSave}
-              className={`flex-row items-center justify-center rounded-2xl mb-8 ${canSave ? 'bg-[#74B7B5]' : 'bg-surface-tertiary'}`}
+              className={`flex-row items-center justify-center rounded-2xl mb-4 ${canSave ? 'bg-[#74B7B5]' : 'bg-surface-tertiary'}`}
               style={{ height: 56 }}
             >
               {isSaving ? (
@@ -696,14 +722,26 @@ export default function ProfileScreen() {
               )}
             </TouchableOpacity>
 
+            {!isCreatingNew && activeCatId && (
+              <TouchableOpacity
+                onPress={() => setIsDeleteCatModalVisible(true)}
+                className="flex-row items-center justify-center py-4 border border-error rounded-2xl bg-transparent mb-4"
+              >
+                <Trash2 size={20} color="#ef4444" />
+                <Text className="font-bold text-lg ml-2 text-[#ef4444]">Remove Cat Profile</Text>
+              </TouchableOpacity>
+            )}
+
+            <View className="h-12" />
+
             <TouchableOpacity
               onPress={confirmSignOut}
-              className="flex-row items-center justify-center py-4 border border-[#e2e8f0] rounded-2xl bg-transparent mb-8"
+              className="flex-row items-center justify-center py-4 rounded-2xl bg-error mb-8"
             >
               <View style={{ transform: [{ scaleX: -1 }] }}>
-                <LogOut size={20} color="#ef4444" />
+                <LogOut size={20} color="white" />
               </View>
-              <Text className="font-bold text-lg ml-2 text-[#ef4444]">
+              <Text className="font-bold text-lg ml-2 text-white">
                 Sign Out
               </Text>
             </TouchableOpacity>
@@ -713,17 +751,7 @@ export default function ProfileScreen() {
     </KeyboardAvoidingView>
 
     {/* Custom Sign Out Modal */}
-    <Modal
-      transparent
-      visible={isSignOutModalVisible}
-      animationType="fade"
-      onRequestClose={() => setIsSignOutModalVisible(false)}
-    >
-      <TouchableOpacity 
-        activeOpacity={1} 
-        onPress={() => setIsSignOutModalVisible(false)} 
-        className="flex-1 bg-black/60 items-center justify-center px-6"
-      >
+    <InlineModal visible={isSignOutModalVisible} onClose={() => setIsSignOutModalVisible(false)}>
         <TouchableOpacity 
           activeOpacity={1} 
           className="bg-surface w-full max-w-[340px] rounded-3xl p-6 items-center shadow-xl"
@@ -757,8 +785,51 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
+    </InlineModal>
+
+    {/* Remove Cat Confirmation Modal */}
+    <InlineModal visible={isDeleteCatModalVisible} onClose={() => { setIsDeleteCatModalVisible(false); setDeleteCatConfirmText(''); }}>
+        <TouchableOpacity activeOpacity={1} className="bg-surface w-full max-w-[340px] rounded-3xl p-6 items-center shadow-xl">
+          <Text className="text-3xl mb-3">🗑️</Text>
+          <Text className="text-xl font-black text-text-primary mb-2 text-center">Remove {cats.find(c => c.id === activeCatId)?.name || 'cat'}?</Text>
+          <Text className="text-text-secondary text-center mb-4">
+            This will permanently remove this profile and all its health history.
+          </Text>
+          <Text className="text-text-muted text-xs text-center mb-3">
+            Type <Text className="font-bold text-error">I understand</Text> to confirm
+          </Text>
+          <TextInput
+            value={deleteCatConfirmText}
+            onChangeText={(text) => setDeleteCatConfirmText(text.replace(/[0-9]/g, ''))}
+            onFocus={() => { if (isGuest && deleteCatConfirmText === '') setDeleteCatConfirmText('I understand'); }}
+            onSubmitEditing={() => { if (deleteCatConfirmText.toLowerCase() === 'i understand') handleDeleteCat(); }}
+            maxLength={12}
+            placeholder="I understand"
+            placeholderTextColor="#94a3b8"
+            className="bg-background border border-border rounded-xl px-4 py-3 w-full text-center text-text-primary mb-4"
+            autoCapitalize="none"
+          />
+          <View className="flex-row gap-3 w-full">
+            <TouchableOpacity
+              onPress={() => { setIsDeleteCatModalVisible(false); setDeleteCatConfirmText(''); }}
+              className="flex-1 py-3.5 rounded-2xl bg-surface-tertiary items-center justify-center"
+            >
+              <Text className="font-bold text-text-secondary text-base">Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleDeleteCat}
+              disabled={deleteCatConfirmText.toLowerCase() !== 'i understand' || isDeletingCat}
+              className={`flex-1 py-3.5 rounded-2xl items-center justify-center ${deleteCatConfirmText.toLowerCase() === 'i understand' ? 'bg-error' : 'bg-surface-tertiary'}`}
+            >
+              {isDeletingCat ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text className={`font-bold text-base ${deleteCatConfirmText.toLowerCase() === 'i understand' ? 'text-white' : 'text-slate-400'}`}>Remove</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+    </InlineModal>
     </View>
   );
 }

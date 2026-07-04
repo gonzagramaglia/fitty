@@ -77,8 +77,11 @@ export default function DashboardScreen() {
       if (allCatsError) throw allCatsError;
       setAllCats(allCatsData || []);
 
-      // Set active cat
+      // Set active cat — auto-select first if stored ID doesn't match
       const activeCat = allCatsData?.find(c => c.id === activeCatId) || allCatsData?.[0];
+      if (activeCat && activeCat.id !== activeCatId) {
+        setActiveCatId(activeCat.id);
+      }
       setCat(activeCat);
 
       // Fetch Latest Health Check
@@ -261,7 +264,7 @@ export default function DashboardScreen() {
                 <Text className="text-[11px] font-bold uppercase tracking-widest mb-0.5 text-[#1E293B]">BCS</Text>
                 <Text className={`font-black text-[22px] ${getBcsColorClass(latestCheck?.bcs_score)}`}>
                   {latestCheck?.bcs_score ? latestCheck.bcs_score : '⏳'}
-                  <Text className="text-sm font-bold text-text-secondary">/9</Text>
+                  <Text className="text-sm font-normal text-text-secondary"> / 9</Text>
                 </Text>
               </View>
             </View>
@@ -337,7 +340,7 @@ export default function DashboardScreen() {
                 <Text className="text-text-primary font-bold text-lg">BCS Score</Text>
                 <View className="flex-row items-center">
                   <Text className={`font-black text-3xl mr-3 ${getBcsColorClass(latestCheck.bcs_score)}`}>
-                    {latestCheck.bcs_score || '⏳'}<Text className="text-lg text-text-secondary font-bold">/9</Text>
+                    {latestCheck.bcs_score || '⏳'}<Text className="text-lg text-text-secondary font-normal"> / 9</Text>
                   </Text>
                   <ChevronRight size={24} color="#94a3b8" />
                 </View>

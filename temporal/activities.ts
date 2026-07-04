@@ -66,6 +66,7 @@ export async function transcribeAudio(audioUrl: string): Promise<string> {
     const transcription = await openai.audio.transcriptions.create({
       file: fileStream,
       model: 'whisper-1',
+      prompt: 'This is a voice note about a cat health observation. The speaker may use Spanish or English.',
     });
     
     console.log("Transcription complete:", transcription.text);
@@ -127,17 +128,16 @@ Analyze the cat's physical shape, paying attention to the waistline from above, 
 
 You must respond ONLY with a valid JSON object matching exactly this schema, without any markdown formatting or extra text:
 {
-  "bcs_score": number (1-9),
-  "classification": string (e.g., "Underweight", "Ideal", "Overweight", "Obese"),
-  "ai_reasoning": string (a detailed explanation of why this score was given based on visual cues in the photos),
-  "recommendations": { "title": string, "description": string }[] (an array of 3-4 actionable recommendations for the owner, with a short title and a descriptive sentence)
+  "bcs_score": number (1-9, where 1-2 = severely underweight, 3-4 = slightly underweight, 5 = ideal, 6-7 = slightly overweight, 8-9 = severely overweight),
+  "classification": string (must be one of: "Severely underweight", "Slightly underweight", "Ideal weight", "Slightly overweight", "Severely overweight"),
+  "ai_reasoning": string (concise explanation in 2-3 short paragraphs separated by newlines. Use **bold** for key observations like **waistline**, **abdominal tuck**, **rib visibility**. Keep it brief but informative — no more than 4-5 sentences total.),
+  "recommendations": { "title": string, "description": string }[] (an array of 3 concise, actionable recommendations with a short title and one-sentence description)
 }`;
 
   console.log("Sending prompt to Claude 5 Sonnet...");
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-5',
     max_tokens: 1024,
-    temperature: 0.1,
     messages: [
       {
         role: 'user',
@@ -175,14 +175,34 @@ You must respond ONLY with a valid JSON object matching exactly this schema, wit
     ]
   });
 
-  const rawContent = (response.content[0] as any).text || '';
+  // Extract text from response — handle multiple content blocks (thinking + text)
+  let rawContent = '';
+  for (const block of response.content) {
+    if ((block as any).type === 'text' && (block as any).text) {
+      rawContent = (block as any).text;
+      break;
+    }
+  }
+  if (!rawContent && response.content.length > 0) {
+    rawContent = (response.content[response.content.length - 1] as any).text || '';
+  }
   
   // Clean up potential markdown formatting around the JSON
-  let jsonString = rawContent;
+  let jsonString = rawContent.trim();
+  
+  // Try common markdown code block patterns
   if (jsonString.includes('```json')) {
     jsonString = jsonString.split('```json')[1].split('```')[0].trim();
   } else if (jsonString.includes('```')) {
     jsonString = jsonString.split('```')[1].split('```')[0].trim();
+  }
+  
+  // If still not valid JSON, try to extract the first { ... } block
+  if (!jsonString.startsWith('{')) {
+    const match = jsonString.match(/\{[\s\S]*\}/);
+    if (match) {
+      jsonString = match[0];
+    }
   }
 
   try {
@@ -190,13 +210,29 @@ You must respond ONLY with a valid JSON object matching exactly this schema, wit
     console.log("Successfully extracted JSON from AI response.");
     return result;
   } catch (error) {
-    console.error("Failed to parse AI JSON response. Raw output:", rawContent);
+    console.error("Failed to parse AI JSON response. Raw output:", rawContent.substring(0, 800));
     throw new Error("AI returned invalid JSON.");
   }
 }
 
 /**
- * Inserts the final health check result into Supabase.
+ * Updates the processing step on an existing health check record for real-time UI feedback.
+ */
+export async function updateProcessingStep(healthCheckId: string, step: string): Promise<void> {
+  if (!healthCheckId) return;
+  await supabase.from('health_checks').update({ processing_step: step }).eq('id', healthCheckId);
+}
+
+/**
+ * Updates the text_note on an existing health check record after transcription completes.
+ */
+export async function updateTextNote(healthCheckId: string, textNote: string): Promise<void> {
+  if (!healthCheckId) return;
+  await supabase.from('health_checks').update({ text_note: textNote }).eq('id', healthCheckId);
+}
+
+/**
+ * Updates the existing health check record with the AI analysis results.
  */
 export async function saveResultToDatabase(
   catId: string, 
@@ -205,34 +241,52 @@ export async function saveResultToDatabase(
   sidePhotoUrl: string, 
   voiceNoteUrl: string | undefined, 
   textNote: string, 
-  aiResult: any
+  aiResult: any,
+  healthCheckId?: string
 ): Promise<void> {
   console.log(`Saving results to DB for cat: ${catId}`);
   
-  const { error } = await supabase.from('health_checks').insert({
-    cat_id: catId,
-    user_id: userId,
-    top_photo_url: topPhotoUrl,
-    side_photo_url: sidePhotoUrl,
-    voice_note_url: voiceNoteUrl,
-    text_note: textNote,
-    status: 'completed',
-    bcs_score: aiResult.bcs_score,
-    classification: aiResult.classification,
-    ai_reasoning: aiResult.ai_reasoning,
-    recommendations: aiResult.recommendations
-  });
-
-  if (error) {
-    console.error("Failed to insert health check into database:", error);
-    throw error;
+  if (healthCheckId) {
+    // Update existing record (created by the camera flow)
+    const { error } = await supabase.from('health_checks').update({
+      status: 'completed',
+      bcs_score: aiResult.bcs_score,
+      classification: aiResult.classification,
+      ai_reasoning: aiResult.ai_reasoning,
+      recommendations: aiResult.recommendations,
+      text_note: textNote || undefined,
+      processing_step: null,
+    }).eq('id', healthCheckId);
+    if (error) {
+      console.error("Failed to update health check:", error);
+      throw error;
+    }
+  } else {
+    // Fallback: insert new record
+    const { error } = await supabase.from('health_checks').insert({
+      cat_id: catId,
+      user_id: userId,
+      top_photo_url: topPhotoUrl,
+      side_photo_url: sidePhotoUrl,
+      voice_note_url: voiceNoteUrl,
+      text_note: textNote,
+      status: 'completed',
+      bcs_score: aiResult.bcs_score,
+      classification: aiResult.classification,
+      ai_reasoning: aiResult.ai_reasoning,
+      recommendations: aiResult.recommendations
+    });
+    if (error) {
+      console.error("Failed to insert health check:", error);
+      throw error;
+    }
   }
 
   console.log("Successfully saved health check to Supabase.");
 }
 
 /**
- * Inserts a failed health check record into Supabase.
+ * Updates an existing health check record to failed status in Supabase.
  */
 export async function saveFailedResultToDatabase(
   catId: string, 
@@ -241,24 +295,36 @@ export async function saveFailedResultToDatabase(
   sidePhotoUrl: string, 
   voiceNoteUrl: string | undefined, 
   textNote: string, 
-  errorMessage: string
+  errorMessage: string,
+  healthCheckId?: string
 ): Promise<void> {
   console.log(`Saving failed result to DB for cat: ${catId}`);
   
-  const { error } = await supabase.from('health_checks').insert({
-    cat_id: catId,
-    user_id: userId,
-    top_photo_url: topPhotoUrl,
-    side_photo_url: sidePhotoUrl,
-    voice_note_url: voiceNoteUrl,
-    text_note: textNote,
-    status: 'failed',
-    ai_reasoning: `Analysis failed: ${errorMessage}`
-  });
-
-  if (error) {
-    console.error("Failed to insert failed health check into database:", error);
-    throw error;
+  if (healthCheckId) {
+    const { error } = await supabase.from('health_checks').update({
+      status: 'failed',
+      ai_reasoning: `Analysis failed: ${errorMessage}`,
+      processing_step: null,
+    }).eq('id', healthCheckId);
+    if (error) {
+      console.error("Failed to update health check to failed:", error);
+      throw error;
+    }
+  } else {
+    const { error } = await supabase.from('health_checks').insert({
+      cat_id: catId,
+      user_id: userId,
+      top_photo_url: topPhotoUrl,
+      side_photo_url: sidePhotoUrl,
+      voice_note_url: voiceNoteUrl,
+      text_note: textNote,
+      status: 'failed',
+      ai_reasoning: `Analysis failed: ${errorMessage}`
+    });
+    if (error) {
+      console.error("Failed to insert failed health check:", error);
+      throw error;
+    }
   }
 
   console.log("Successfully saved failed health check to Supabase.");

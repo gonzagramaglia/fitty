@@ -454,11 +454,14 @@ export default function CameraScreen() {
         const { data: { session } } = await supabase.auth.getSession();
         
         // Trigger the AI analysis Temporal workflow
-        const response = await fetch('/api/analyze', {
+        const analyzeUrl = process.env.EXPO_PUBLIC_CHAT_API_URL 
+          ? process.env.EXPO_PUBLIC_CHAT_API_URL.replace('/api/chat', '/api/analyze')
+          : '/api/analyze';
+        const response = await fetch(analyzeUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`
+            ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
           },
           body: JSON.stringify({
             catId: activeCatId,

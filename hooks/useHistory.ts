@@ -27,6 +27,9 @@ export function useHistory() {
   const [history, setHistory] = useState<HealthCheckRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refetch = () => setRefreshKey(k => k + 1);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,7 +82,7 @@ export function useHistory() {
     return () => {
       cancelled = true;
     };
-  }, [activeCatId]);
+  }, [activeCatId, refreshKey]);
 
-  return { history, isLoading, error };
+  return { history, isLoading, error, refetch };
 }

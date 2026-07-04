@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
 import { House, Clock, User, Camera } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { useActiveCat } from '../../lib/ActiveCatContext';
 
 /**
  * CustomTabBar is a custom bottom navigation bar for the application.
@@ -14,6 +15,7 @@ import { useRouter } from 'expo-router';
  */
 export function CustomTabBar({ state, descriptors, navigation, onScanPress, scanDisabled }: any) {
   const router = useRouter();
+  const { setSelectedCheckId } = useActiveCat();
 
   return (
     <View className="flex-row bg-background border-t border-border pb-6 pt-3 px-4 items-center justify-between">
@@ -27,6 +29,12 @@ export function CustomTabBar({ state, descriptors, navigation, onScanPress, scan
             target: route.key,
             canPreventDefault: true,
           });
+
+          // If tapping the already-active History tab, clear detail view
+          if (isFocused && route.name === 'history') {
+            setSelectedCheckId(null);
+            return;
+          }
 
           if (!isFocused && !event.defaultPrevented) {
             navigation.navigate(route.name);

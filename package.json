@@ -26,6 +26,7 @@
     "expo-status-bar": "~56.0.4",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
+    "helmet": "^8.2.0",
     "lucide-react-native": "^1.22.0",
     "nativewind": "^4.2.6",
     "openai": "^6.45.0",

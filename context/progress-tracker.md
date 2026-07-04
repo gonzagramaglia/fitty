@@ -144,8 +144,9 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] AI Chat works on real health check record
 
 ## Phase 10 — Documentation & Submission
-- [ ] **20 Documentation & Project Report**
-  - [ ] Project report following hackathon template
-  - [ ] README with prerequisites, run instructions, and configuration
-  - [ ] Kiro usage writeup for the Kiro Track submission
-  - [ ] Final docs/ folder structure clean-up
+- [x] **20 Documentation & Project Report**
+  - [x] Project report following hackathon template
+  - [x] README with prerequisites, run instructions, and configuration
+  - [x] Kiro usage writeup for the Kiro Track submission
+  - [x] Final docs/ folder structure clean-up
+  - [ ] Fix issues flagged by Aikido Security scan and include report in docs/

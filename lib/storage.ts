@@ -23,6 +23,10 @@ export async function uploadMedia(
     const response = await fetch(uri, { signal: controller.signal });
     const blob = await response.blob();
 
+    if (path.includes('..')) {
+      throw new Error('Invalid path');
+    }
+
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(path, blob, {

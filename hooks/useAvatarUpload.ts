@@ -31,6 +31,10 @@ export function useAvatarUpload() {
       const ext = uri.substring(uri.lastIndexOf('.') + 1) || 'jpg';
       const fileName = `${session.user.id}_${prefix}_${Date.now()}.${ext}`;
 
+      if (fileName.includes('..')) {
+        throw new Error('Invalid file name');
+      }
+
       const response = await fetch(uri);
       const blob = await response.blob();
 

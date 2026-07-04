@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Modal, Animated } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Sparkles } from 'lucide-react-native';
+import { InlineModal } from './InlineModal';
 
 /**
  * Props for the GuestLimitModal component.
@@ -41,17 +42,7 @@ export function GuestLimitModal({ visible, onClose, message }: GuestLimitModalPr
   }, [visible]);
 
   return (
-    <Modal
-      transparent
-      visible={visible}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <TouchableOpacity 
-        activeOpacity={1} 
-        onPress={onClose} 
-        className="flex-1 bg-black/60 items-center justify-center px-6"
-      >
+    <InlineModal visible={visible} onClose={onClose}>
         <TouchableOpacity 
           activeOpacity={0.95} 
           onPress={onClose}
@@ -78,7 +69,6 @@ export function GuestLimitModal({ visible, onClose, message }: GuestLimitModalPr
             />
           </View>
         </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
+    </InlineModal>
   );
 }

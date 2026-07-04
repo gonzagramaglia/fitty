@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { View, Text, ActivityIndicator, Animated, TouchableOpacity } from 'react-native';
+import { View, Text, ActivityIndicator, Animated, TouchableOpacity, Linking } from 'react-native';
 import { Sparkles, AlertCircle, Home } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useCameraContext } from '../../app/camera/_layout';
@@ -62,7 +62,7 @@ export default function ProcessingScreen() {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'health_checks',
           filter: `cat_id=eq.${activeCatId}`,
@@ -70,11 +70,11 @@ export default function ProcessingScreen() {
         (payload) => {
           const newRecord = payload.new as { id: string; status: string; bcs_score?: number };
           if (newRecord?.id && typeof newRecord.id === 'string') {
-            console.log('[processing] Health check result received:', newRecord.id, 'status:', newRecord.status);
+            console.log('[processing] Health check event:', payload.eventType, newRecord.id, 'status:', newRecord.status);
 
             if (newRecord.status === 'failed') {
               setHasFailed(true);
-            } else {
+            } else if (newRecord.status === 'completed') {
               setSuccessData({ id: newRecord.id, score: newRecord.bcs_score || 5 });
             }
           }
@@ -82,15 +82,7 @@ export default function ProcessingScreen() {
       )
       .subscribe();
 
-    // Instead of failing, we show a reassurance message after 30 seconds
-    // to highlight Temporal's durable execution capabilities.
-    const timeoutId = setTimeout(() => {
-      console.log('[processing] Analysis taking longer than usual.');
-      setIsTakingLong(true);
-    }, 30000);
-
     return () => {
-      clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
   }, [activeCatId, router, setProcessingState]);
@@ -103,13 +95,29 @@ export default function ProcessingScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  // Text rotation
+  // Text rotation — stops at the last item, then triggers "still processing" after 6 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      setLoadingTextIndex((prev) => (prev + 1) % loadingTexts.length);
+      setLoadingTextIndex((prev) => {
+        if (prev >= loadingTexts.length - 1) {
+          clearInterval(interval);
+          return prev; // Stay on last item
+        }
+        return prev + 1;
+      });
     }, 3000);
     return () => clearInterval(interval);
   }, [loadingTexts.length]);
+
+  // Show "still processing" screen 6 seconds after reaching the last loading text
+  useEffect(() => {
+    if (loadingTextIndex >= loadingTexts.length - 1) {
+      const timeout = setTimeout(() => {
+        setIsTakingLong(true);
+      }, 6000);
+      return () => clearTimeout(timeout);
+    }
+  }, [loadingTextIndex, loadingTexts.length]);
 
   // Progress bar animation (simulating progress over 20 seconds)
   useEffect(() => {
@@ -190,27 +198,46 @@ export default function ProcessingScreen() {
   if (isTakingLong) {
     return (
       <View className="flex-1 bg-[#F8FAFC] justify-center items-center px-8">
-        <View className="w-24 h-24 bg-blue-50 rounded-3xl items-center justify-center mb-8 border border-blue-100">
-          <Sparkles color="#3B82F6" size={40} />
+        <View className="w-24 h-24 bg-[#FFFBEB] rounded-3xl items-center justify-center mb-6 border border-[#FDE047]/30">
+          <Sparkles color="#EAB308" size={40} />
         </View>
 
-        <Text className="text-[#1A303F] text-3xl font-black tracking-tight text-center mb-4">
-          Durable Execution
+        <Text className="text-[#EAB308] text-3xl font-black tracking-tight text-center mb-3">
+          Still Processing{dots}
         </Text>
 
-        <Text className="text-[#64748B] text-center text-lg leading-relaxed px-4 mb-10">
-          The AI analysis is taking a bit longer than usual. Thanks to <Text className="font-bold text-blue-500">Temporal.io</Text>, your request is running durably in the background. You can safely leave this screen and check your dashboard later!
+        <Text className="text-[#64748B] text-center text-lg leading-relaxed px-4 mb-6">
+          Taking a bit longer than usual, but don't worry. Your analysis is running safely in the background thanks to <Text className="font-bold text-blue-500" onPress={() => Linking.openURL('https://temporal.io')}>Temporal.io</Text>. Results will appear automatically.
         </Text>
 
         <TouchableOpacity
           className="bg-primary-cool w-full py-4 rounded-2xl flex-row items-center justify-center shadow-sm"
-          onPress={() => {
+          onPress={async () => {
+            // Find the processing health check and navigate to it
             setProcessingState({ hasVoiceNote: false, hasTextNote: false });
+            if (activeCatId) {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                const { data: processingCheck } = await supabase
+                  .from('health_checks')
+                  .select('id')
+                  .eq('cat_id', activeCatId)
+                  .eq('user_id', user.id)
+                  .in('status', ['processing', 'failed'])
+                  .order('created_at', { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
+                if (processingCheck?.id) {
+                  setSelectedCheckId(processingCheck.id);
+                  router.replace('/(tabs)/history');
+                  return;
+                }
+              }
+            }
             router.replace('/(tabs)');
           }}
         >
-          <Home color="white" size={20} style={{ marginRight: 8 }} />
-          <Text className="text-white font-bold text-lg">Go to Home</Text>
+          <Text className="text-white font-bold text-lg">View Current Health Check</Text>
         </TouchableOpacity>
       </View>
     );

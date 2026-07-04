@@ -18,26 +18,34 @@ export function BCSGauge({ score }: Props) {
   // Calculate width percentage
   const widthPercent = ((safeScore - 1) / 8) * 100;
   
-  let fillClass = "bg-primary-cool"; // 1-3
-  let label = "Underweight";
-  let labelColor = "text-primary-cool-dark";
+  let fillClass = "bg-error";
+  let label = "Severely Underweight";
+  let labelColor = "text-error-dark";
 
-  if (safeScore >= 4 && safeScore <= 5) {
+  if (safeScore >= 3 && safeScore <= 4) {
+    fillClass = "bg-primary-cool";
+    label = "Slightly Underweight";
+    labelColor = "text-primary-cool-dark";
+  } else if (safeScore === 5) {
     fillClass = "bg-success";
     label = "Ideal Weight";
     labelColor = "text-success-dark";
-  } else if (safeScore >= 6) {
-    fillClass = safeScore >= 8 ? "bg-error" : "bg-warning";
-    label = safeScore >= 8 ? "Obese" : "Overweight";
-    labelColor = safeScore >= 8 ? "text-error-dark" : "text-warning-dark";
+  } else if (safeScore >= 6 && safeScore <= 7) {
+    fillClass = "bg-warning";
+    label = "Slightly Overweight";
+    labelColor = "text-warning";
+  } else if (safeScore >= 8) {
+    fillClass = "bg-error";
+    label = "Severely Overweight";
+    labelColor = "text-error-dark";
   }
 
   return (
     <View className="w-full">
       <View className="flex-row justify-between items-end mb-2">
         <View className="flex-row items-baseline gap-1">
-          <Text className="text-3xl font-bold text-text-primary">{safeScore}</Text>
-          <Text className="text-text-muted text-base font-medium">/ 9</Text>
+          <Text className={`text-3xl font-bold ${labelColor}`}>{safeScore}</Text>
+          <Text className="text-text-muted text-base font-normal">/ 9</Text>
         </View>
         <View className={`px-2 py-0.5 rounded-sm bg-surface-secondary`}>
           <Text className={`text-xs font-semibold uppercase tracking-wider ${labelColor}`}>

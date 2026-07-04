@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, Image, TouchableOpacity, Platform, Modal, Linking } from "react-native";
+import { View, Text, ScrollView, Image, TouchableOpacity, Platform, Modal, Linking, TextInput, DeviceEventEmitter } from "react-native";
 import { useRouter } from "expo-router";
 import Head from "expo-router/head";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronLeft, FileText, X, Play, Square, MessageCircle } from "lucide-react-native";
+import { ChevronLeft, FileText, X, Play, Square, MessageCircle, Trash2, RefreshCw } from "lucide-react-native";
 import { Audio } from "expo-av";
 import { useHealthCheck } from "../../hooks/useHealthCheck";
 import { useActiveCat } from "../../lib/ActiveCatContext";
@@ -13,6 +13,7 @@ import { AIReasoningCard } from "../../components/ui/AIReasoningCard";
 import { RecommendationsList } from "../../components/ui/RecommendationsList";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { ChatModal } from "../../components/ui/ChatModal";
+import { InlineModal } from "../../components/ui/InlineModal";
 
 /**
  * HistoryDetailView is the comprehensive screen displaying a single health check record.
@@ -26,6 +27,9 @@ export function HistoryDetailView() {
   const [expandedImage, setExpandedImage] = useState<{ uri: string } | ReturnType<typeof require> | null>(null);
   const [chatVisible, setChatVisible] = useState(false);
   const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [audioRemaining, setAudioRemaining] = useState<number | null>(null);
@@ -225,6 +229,8 @@ export function HistoryDetailView() {
     );
   }
 
+  if (!selectedCheckId) return null;
+
   if (error || !healthCheck) {
     return (
       <View className="flex-1 bg-surface justify-center items-center px-6">
@@ -339,6 +345,13 @@ export function HistoryDetailView() {
                 </View>
               )}
 
+              {/* Transcription processing indicator */}
+              {!healthCheck.text_note && healthCheck.voice_note_url && healthCheck.status === 'processing' && (
+                <View className="flex-row items-center px-4 py-3 rounded-xl bg-surface-secondary border border-border">
+                  <Text className="text-text-muted text-sm">🎙️ Transcribing voice note{processingDots}</Text>
+                </View>
+              )}
+
               {/* Audio player — only if voice note exists */}
               {healthCheck.voice_note_url && (
                 <TouchableOpacity
@@ -369,12 +382,59 @@ export function HistoryDetailView() {
         )}
 
         {/* BCS Gauge Card */}
-        {healthCheck.status === 'processing' ? (
-          <View className="bg-background border border-border rounded-2xl p-6 shadow-sm mb-6 mt-2 items-center">
+        {healthCheck.status === 'failed' ? (
+          <View className="bg-background border border-error/30 rounded-2xl p-8 shadow-sm mb-6 mt-2 items-center">
+            <Text className="text-3xl mb-3">⚠️</Text>
+            <Text className="text-text-primary text-base font-bold mb-2 text-center">Analysis Failed</Text>
+            <Text className="text-text-secondary text-sm text-center leading-relaxed mb-4">
+              Something went wrong during the AI analysis. Your photos are saved — you can retry without re-uploading.
+            </Text>
+            <TouchableOpacity
+              className="bg-primary-cool px-6 py-3 rounded-xl flex-row items-center"
+              onPress={async () => {
+                try {
+                  // Reset status to processing and re-trigger the workflow
+                  await supabase.from('health_checks').update({ status: 'processing', processing_step: 'Retrying analysis...' }).eq('id', healthCheck.id);
+                  const { data: { session } } = await supabase.auth.getSession();
+                  const analyzeUrl = process.env.EXPO_PUBLIC_CHAT_API_URL
+                    ? process.env.EXPO_PUBLIC_CHAT_API_URL.replace('/api/chat', '/api/analyze')
+                    : '/api/analyze';
+                  await fetch(analyzeUrl, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+                    },
+                    body: JSON.stringify({
+                      catId: healthCheck.cat_id,
+                      userId: session?.user?.id,
+                      healthCheckId: healthCheck.id,
+                      topPhotoUrl: healthCheck.top_photo_url,
+                      sidePhotoUrl: healthCheck.side_photo_url,
+                      voiceNoteUrl: healthCheck.voice_note_url,
+                      textNote: healthCheck.text_note || '',
+                      requestId: Date.now().toString(),
+                    }),
+                  });
+                } catch (err) {
+                  DeviceEventEmitter.emit('showToast', 'Failed to retry. Please try again.');
+                }
+              }}
+            >
+              <Text className="text-white font-bold flex-row items-center">↺  Retry Analysis</Text>
+            </TouchableOpacity>
+          </View>
+        ) : healthCheck.status === 'processing' ? (
+          <View className="bg-background border border-border rounded-2xl p-8 shadow-sm mb-6 mt-2 items-center">
             <Text className="text-3xl mb-3">⏳</Text>
             <Text className="text-text-primary text-base font-bold mb-2 text-center">AI Analysis In Progress</Text>
+            {healthCheck.processing_step && (
+              <Text className="text-[#EAB308] font-bold text-sm mb-2 text-center">
+                {healthCheck.processing_step.replace(/\.{3}$/, '')}{processingDots}
+              </Text>
+            )}
             <Text className="text-text-secondary text-sm text-center leading-relaxed">
-              Powered by <Text className="font-bold text-primary-cool-dark" onPress={() => Linking.openURL('https://temporal.io')}>Temporal.io</Text>. Results will appear automatically.
+              Powered by <Text className="font-bold text-primary-cool-dark" onPress={() => Linking.openURL('https://temporal.io')}>Temporal.io</Text>. Results will show up here once ready.
             </Text>
           </View>
         ) : (
@@ -392,12 +452,87 @@ export function HistoryDetailView() {
             </View>
 
             {/* Recommendations */}
-            <View className="mb-12">
+            <View className="mb-8">
               <RecommendationsList recommendations={healthCheck.recommendations} />
             </View>
           </>
         )}
+
+        {/* Delete Health Check — always visible */}
+        <TouchableOpacity
+          onPress={() => setShowDeleteModal(true)}
+          className="flex-row items-center justify-center py-3 mb-12 opacity-60"
+        >
+          <Trash2 size={16} color="#ef4444" />
+          <Text className="text-error text-sm font-medium ml-2">Delete this health check</Text>
+        </TouchableOpacity>
       </ScrollView>
+
+      {/* Delete Confirmation Modal */}
+      <InlineModal visible={showDeleteModal} onClose={() => { setShowDeleteModal(false); setDeleteConfirmText(''); }}>
+          <TouchableOpacity activeOpacity={1} className="bg-surface w-full max-w-[340px] rounded-3xl p-6 items-center shadow-xl">
+            <Text className="text-3xl mb-3">🗑️</Text>
+            <Text className="text-lg font-bold text-text-primary mb-2 text-center">Delete health check?</Text>
+            <Text className="text-text-secondary text-sm text-center mb-4">This will permanently remove this record{'\n'}and its chat history.</Text>
+            <Text className="text-text-muted text-xs text-center mb-3">
+              Type <Text className="font-bold text-error">I understand</Text> to confirm
+            </Text>
+            <TextInput
+              value={deleteConfirmText}
+              onChangeText={(text) => setDeleteConfirmText(text.replace(/[0-9]/g, ''))}
+              onSubmitEditing={() => {
+                if (deleteConfirmText.toLowerCase() === 'i understand') {
+                  setIsDeleting(true);
+                  supabase.from('health_checks').delete().eq('id', healthCheck.id).then(({ error }) => {
+                    if (!error) {
+                      setShowDeleteModal(false);
+                      setDeleteConfirmText('');
+                      setSelectedCheckId(null);
+                      const delDate = new Date(healthCheck.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); DeviceEventEmitter.emit('showToast', `Health check from ${delDate} deleted.`);
+                    }
+                    setIsDeleting(false);
+                  });
+                }
+              }}
+              maxLength={12}
+              placeholder="I understand"
+              placeholderTextColor="#94a3b8"
+              className="bg-background border border-border rounded-xl px-4 py-3 w-full text-center text-text-primary mb-4"
+              autoCapitalize="none"
+            />
+            <View className="flex-row gap-3 w-full">
+              <TouchableOpacity
+                onPress={() => { setShowDeleteModal(false); setDeleteConfirmText(''); }}
+                className="flex-1 py-3 rounded-2xl bg-surface-tertiary items-center"
+              >
+                <Text className="font-bold text-text-secondary text-sm">Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={async () => {
+                  setIsDeleting(true);
+                  try {
+                    const { error } = await supabase.from('health_checks').delete().eq('id', healthCheck.id);
+                    if (error) throw error;
+                    setShowDeleteModal(false);
+                    setDeleteConfirmText('');
+                    setSelectedCheckId(null);
+                    const delDate = new Date(healthCheck.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); DeviceEventEmitter.emit('showToast', `Health check from ${delDate} deleted.`);
+                  } catch (err) {
+                    console.error('Failed to delete health check:', err);
+                  } finally {
+                    setIsDeleting(false);
+                  }
+                }}
+                disabled={deleteConfirmText.toLowerCase() !== 'i understand' || isDeleting}
+                className={`flex-1 py-3 rounded-2xl items-center ${deleteConfirmText.toLowerCase() === 'i understand' ? 'bg-error' : 'bg-surface-tertiary'}`}
+              >
+                <Text className={`font-bold text-sm ${deleteConfirmText.toLowerCase() === 'i understand' ? 'text-white' : 'text-slate-400'}`}>
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+      </InlineModal>
 
       {/* Fullscreen Image */}
       {Platform.OS === 'web' ? (
@@ -459,6 +594,7 @@ export function HistoryDetailView() {
           ownerName={ownerFirstName}
           catName={healthCheck.cats?.name}
           isProcessing={healthCheck.status === 'processing'}
+          isFailed={healthCheck.status === 'failed'}
         />
       )}
     </View>

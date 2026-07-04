@@ -138,10 +138,10 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] Consolidate duplicate avatar upload logic, remove dead code, narrow `any` types
 
 ## Phase 9 — End-to-End Verification
-- [ ] **19 End-to-End AI Workflow Verification**
-  - [ ] Verify Temporal → Whisper → Claude → Supabase pipeline works for real users
-  - [ ] Results screen shows real BCS score, AI reasoning, and recommendations
-  - [ ] AI Chat works on real health check record
+- [x] **19 End-to-End AI Workflow Verification**
+  - [x] Verify Temporal → Whisper → Claude → Supabase pipeline works for real users
+  - [x] Results screen shows real BCS score, AI reasoning, and recommendations
+  - [x] AI Chat works on real health check record
 
 ## Phase 10 — Documentation & Submission
 - [ ] **20 Documentation & Project Report**

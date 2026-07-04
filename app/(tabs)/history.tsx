@@ -17,7 +17,7 @@ import type { CatProfile, User } from "../../lib/types";
 export default function HistoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { history, isLoading, error } = useHistory();
+  const { history, isLoading, error, refetch } = useHistory();
   const { activeCatId, setActiveCatId, selectedCheckId, setSelectedCheckId, showGuestModal } = useActiveCat();
   const [allCats, setAllCats] = useState<CatProfile[]>([]);
   const [isCatsLoading, setIsCatsLoading] = useState(true);
@@ -58,6 +58,11 @@ export default function HistoryScreen() {
       };
     }, [setSelectedCheckId])
   );
+
+  // Refetch history when returning from detail view (e.g., after deleting a check)
+  useEffect(() => {
+    if (!selectedCheckId) refetch();
+  }, [selectedCheckId]);
 
   if (selectedCheckId) {
     return <HistoryDetailView />;

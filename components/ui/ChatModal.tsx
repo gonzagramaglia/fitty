@@ -33,6 +33,8 @@ type Props = {
   catName?: string;
   /** Whether the health check is currently being processed. */
   isProcessing?: boolean;
+  /** Whether the health check analysis failed. */
+  isFailed?: boolean;
 };
 
 /**
@@ -41,7 +43,7 @@ type Props = {
  * 
  * @param {Props} props - The component props.
  */
-export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onHistoryUpdate, ownerName, isProcessing, catName }: Props) {
+export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onHistoryUpdate, ownerName, isProcessing, isFailed, catName }: Props) {
   const [messages, setMessages] = useState<Message[]>(initialHistory);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -49,6 +51,8 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
   const [isGuest, setIsGuest] = useState(false);
   const [mockStep, setMockStep] = useState(0);
   const [isAutoTyping, setIsAutoTyping] = useState(false);
+  const [typingMessage, setTypingMessage] = useState<string | null>(null);
+  const typingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingOriginalText, setEditingOriginalText] = useState<string>('');
   const [hasEdited, setHasEdited] = useState(false);
@@ -105,12 +109,17 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
       }
       isInternalUpdate.current = false;
     } else {
-      // Clean up typing interval when modal closes
+      // Clean up typing intervals when modal closes
       if (mockTypingRef.current) {
         clearInterval(mockTypingRef.current);
         mockTypingRef.current = null;
       }
+      if (typingRef.current) {
+        clearInterval(typingRef.current);
+        typingRef.current = null;
+      }
       setIsAutoTyping(false);
+      setTypingMessage(null);
       setInputText('');
       setEditingIndex(null);
       setEditingOriginalText('');
@@ -242,9 +251,37 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
         throw new Error(data.error || 'Failed to send message');
       }
 
-      setMessages(data.chatHistory);
-      isInternalUpdate.current = true;
-      onHistoryUpdate(data.chatHistory);
+      // Typewriter effect for the AI response
+      const fullHistory: Message[] = data.chatHistory;
+      const lastMsg = fullHistory[fullHistory.length - 1];
+      if (lastMsg && lastMsg.role === 'assistant') {
+        const withoutLast = fullHistory.slice(0, -1);
+        setMessages([...withoutLast, { role: 'assistant', content: '' }]);
+        setIsLoading(false);
+        
+        const fullText = lastMsg.content;
+        let i = 0;
+        typingRef.current = setInterval(() => {
+          i += 2; // 2 chars at a time for speed
+          if (i >= fullText.length) {
+            if (typingRef.current) clearInterval(typingRef.current);
+            typingRef.current = null;
+            setMessages(fullHistory);
+            setTypingMessage(null);
+            isInternalUpdate.current = true;
+            onHistoryUpdate(fullHistory);
+          } else {
+            setMessages([...withoutLast, { role: 'assistant', content: fullText.substring(0, i) }]);
+            setTypingMessage(fullText.substring(0, i));
+          }
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 15);
+      } else {
+        setMessages(fullHistory);
+        isInternalUpdate.current = true;
+        onHistoryUpdate(fullHistory);
+        setIsLoading(false);
+      }
       setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
 
     } catch (err: unknown) {
@@ -378,11 +415,13 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
               <View className="w-16 h-16 rounded-full bg-primary-cool/10 items-center justify-center">
                 <Bot color="#74B7B5" size={32} />
               </View>
-              <Text className="text-text-primary font-bold text-base mb-2">
-                {isProcessing ? `Hi ${ownerName || 'there'}! How is ${catName || 'your cat'}? 😸` : `Have questions, ${ownerName || 'there'}?`}
+              <Text className="text-text-primary font-bold text-base mb-2 text-center">
+                {isFailed ? `Hey ${ownerName || 'there'}, the analysis didn't go through this time 😿` : isProcessing ? `Hi ${ownerName || 'there'}! How is ${catName || 'your cat'}? 😸` : `Have questions, ${ownerName || 'there'}?`}
               </Text>
               <Text className="text-text-muted text-center leading-relaxed mb-6">
-                {isProcessing 
+                {isFailed
+                  ? "You can retry the analysis from the report screen. In the meantime, feel free to ask general questions about cat health, nutrition, or BCS scores!"
+                  : isProcessing 
                   ? "This health check is still being processed, but feel free to ask general questions about cat health, nutrition, or BCS scores!"
                   : 'Ask me anything about this health check report! For example: "Why is the score 7?" or "How can I reduce calories?"'}
               </Text>
@@ -442,8 +481,9 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
               <View className="w-8 h-8 rounded-full bg-primary-cool/20 items-center justify-center mr-2">
                 <Bot color="#74B7B5" size={16} />
               </View>
-              <View className="bg-white border border-border rounded-2xl rounded-tl-sm p-4 px-6 shadow-sm">
+              <View className="bg-white border border-border rounded-2xl rounded-tl-sm p-4 px-5 shadow-sm flex-row items-center">
                 <ActivityIndicator size="small" color="#74B7B5" />
+                <Text className="text-text-muted text-sm ml-3">Thinking...</Text>
               </View>
             </View>
           )}

@@ -5,12 +5,22 @@ import { startChatServer } from './server';
 
 /**
  * Initializes and starts the Temporal worker for processing AI tasks.
- * Connects to the local Temporal server and listens on 'fitty-ai-tasks'.
+ * The Express chat/analyze server always starts regardless of Temporal connectivity.
+ * The Temporal worker only starts if TEMPORAL_ADDRESS is configured and reachable.
  * @returns {Promise<void>}
  */
 async function run() {
-  let connectionOptions: any = {
-    address: process.env.TEMPORAL_ADDRESS || 'localhost:7233',
+  // Always start the Express server (chat + analyze endpoints)
+  const chatServer = startChatServer();
+
+  // Skip Temporal worker if address is not configured (allows Express-only mode)
+  if (!process.env.TEMPORAL_ADDRESS) {
+    console.warn('TEMPORAL_ADDRESS not set — running in Express-only mode (no AI worker).');
+    return;
+  }
+
+  let connectionOptions: Record<string, unknown> = {
+    address: process.env.TEMPORAL_ADDRESS,
   };
 
   // Support mTLS for Temporal Cloud
@@ -23,43 +33,43 @@ async function run() {
     };
   }
 
-  const connection = await NativeConnection.connect(connectionOptions);
+  try {
+    const connection = await NativeConnection.connect(connectionOptions);
 
-  const worker = await Worker.create({
-    connection,
-    namespace: process.env.TEMPORAL_NAMESPACE || 'default',
-    workflowsPath: require.resolve('./workflows'),
-    activities,
-    taskQueue: 'fitty-ai-tasks',
-  });
-  
-  // Register graceful shutdown handlers
-  process.on('SIGINT', () => {
-    console.log('Received SIGINT, shutting down worker...');
-    worker.shutdown();
-  });
-  process.on('SIGTERM', () => {
-    console.log('Received SIGTERM, shutting down worker...');
-    worker.shutdown();
-  });
+    const worker = await Worker.create({
+      connection,
+      namespace: process.env.TEMPORAL_NAMESPACE || 'default',
+      workflowsPath: require.resolve('./workflows'),
+      activities,
+      taskQueue: 'fitty-ai-tasks',
+    });
 
-  console.log(`Worker connected to ${connectionOptions.address}`);
-  console.log(`Listening on task queue: fitty-ai-tasks in namespace: ${process.env.TEMPORAL_NAMESPACE || 'default'}`);
-  
-  // Start the chat Express server (opt-in via env to avoid port conflicts in multi-replica setups)
-  let chatServer: import('http').Server | null = null;
-  if (process.env.ENABLE_CHAT_SERVER !== 'false') {
-    chatServer = startChatServer();
+    // Register graceful shutdown handlers
+    process.on('SIGINT', () => {
+      console.log('Received SIGINT, shutting down worker...');
+      worker.shutdown();
+    });
+    process.on('SIGTERM', () => {
+      console.log('Received SIGTERM, shutting down worker...');
+      worker.shutdown();
+    });
+
+    console.log(`Worker connected to ${connectionOptions.address}`);
+    console.log(`Listening on task queue: fitty-ai-tasks in namespace: ${process.env.TEMPORAL_NAMESPACE || 'default'}`);
+
+    await worker.run();
+
+    // Close connection and HTTP server after worker has gracefully stopped
+    chatServer.close();
+    await connection.close();
+  } catch (err) {
+    console.error('Temporal worker failed to connect:', err);
+    console.log('Express server remains running for chat/analyze endpoints.');
+    // Don't exit — Express is still serving
   }
-  
-  await worker.run();
-  
-  // Close connection and HTTP server after worker has gracefully stopped
-  if (chatServer) chatServer.close();
-  await connection.close();
 }
 
 run().catch((err) => {
-  console.error('Worker failed', err);
+  console.error('Fatal error:', err);
   process.exit(1);
 });

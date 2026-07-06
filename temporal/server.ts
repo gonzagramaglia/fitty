@@ -55,6 +55,10 @@ export function startChatServer() {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
+      if (user.is_anonymous) {
+        return res.status(403).json({ error: 'AI analysis is not available for guest users' });
+      }
+
       const { catId, userId, healthCheckId, topPhotoUrl, sidePhotoUrl, voiceNoteUrl, textNote, requestId } = req.body;
 
       if (!catId || !userId || !topPhotoUrl || !sidePhotoUrl) {
@@ -114,6 +118,10 @@ export function startChatServer() {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       if (authError || !user) {
         return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      if (user.is_anonymous) {
+        return res.status(403).json({ error: 'AI chat is not available for guest users' });
       }
 
       if (!process.env.ANTHROPIC_API_KEY) {

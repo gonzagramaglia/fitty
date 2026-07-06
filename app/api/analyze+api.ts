@@ -25,6 +25,10 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (user.is_anonymous) {
+      return Response.json({ error: 'AI analysis is not available for guest users' }, { status: 403 });
+    }
+
     const body = await req.json();
     const { catId, userId, topPhotoUrl, sidePhotoUrl, voiceNoteUrl, textNote, requestId } = body;
 

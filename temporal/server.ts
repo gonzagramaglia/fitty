@@ -55,6 +55,11 @@ export function startChatServer() {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
+      // Reject anonymous users (Judge Mode) from accessing the real AI workflow
+      if (user.is_anonymous) {
+        return res.status(403).json({ error: 'This feature is not available in Judge Mode. Please sign in with a Google account to access real AI analysis.' });
+      }
+
       const { catId, userId, healthCheckId, topPhotoUrl, sidePhotoUrl, voiceNoteUrl, textNote, requestId } = req.body;
 
       if (!catId || !userId || !topPhotoUrl || !sidePhotoUrl) {
@@ -114,6 +119,11 @@ export function startChatServer() {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       if (authError || !user) {
         return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      // Reject anonymous users (Judge Mode) from accessing the real AI chat
+      if (user.is_anonymous) {
+        return res.status(403).json({ error: 'This feature is not available in Judge Mode. Please sign in with a Google account to access real AI chat.' });
       }
 
       if (!process.env.ANTHROPIC_API_KEY) {

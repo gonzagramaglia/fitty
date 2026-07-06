@@ -153,7 +153,7 @@ export default function LoginScreen() {
         )}
         
         {/* Footer Area */}
-        <View className="px-6 pb-24">
+        <View className="px-6 pb-[88px]">
           {/* Pagination Dots */}
           <View className="flex-row justify-center space-x-2 mb-9 gap-2">
             {ONBOARDING_SLIDES.map((_, index) => (
@@ -170,11 +170,13 @@ export default function LoginScreen() {
           <View className="flex-row items-center justify-center">
             <TouchableOpacity 
               onPress={handleNext}
-              className="bg-primary-warm py-3 px-8 rounded-xl"
+              className="py-3 px-8 rounded-xl flex-row items-center"
+              style={{ backgroundColor: '#FFD700' }}
             >
-              <Text className="text-primary-warm-foreground font-semibold text-base">
+              <Text style={{ color: '#1A2530' }} className="font-semibold text-base">
                 {currentIndex === ONBOARDING_SLIDES.length - 1 ? "Get Started" : "Next"}
               </Text>
+              <Ionicons name="arrow-forward" size={18} color="#1A2530" style={{ marginLeft: 8 }} />
             </TouchableOpacity>
           </View>
         </View>
@@ -214,12 +216,13 @@ export default function LoginScreen() {
 
           {/* Primary Action - Guest Mode */}
           <TouchableOpacity 
-            className={`bg-primary-warm py-4 rounded-xl flex-row justify-center items-center ${isGuestLoading ? 'opacity-50' : ''}`}
+            className={`py-4 rounded-xl flex-row justify-center items-center ${isGuestLoading ? 'opacity-50' : ''}`}
+            style={{ backgroundColor: '#FFD700' }}
             onPress={() => { setPendingAction('guest'); setTermsVisible(true); }}
             disabled={isGuestLoading || isGoogleLoading}
           >
-            <Ionicons name="flash-outline" size={20} color="#FFFFFF" style={{ marginRight: 12 }} />
-            <Text className="text-white font-bold text-base font-sans">
+            <Ionicons name="flash-outline" size={20} color="#1A2530" style={{ marginRight: 12 }} />
+            <Text style={{ color: '#1A2530' }} className="font-bold text-base font-sans">
               {isGuestLoading ? 'Entering...' : 'Continue as Guest (Judges)'}
             </Text>
           </TouchableOpacity>

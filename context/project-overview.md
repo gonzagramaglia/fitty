@@ -112,4 +112,4 @@ A cat owner who:
 - The History dashboard correctly displays interactive timeline charts for weight and BCS trends.
 - All cat profiles, health check logs, and photos are securely stored in Supabase.
 - UI is visually premium, fluid, and fully in English (as required by the hackathon rules).
-- Aikido Security scans pass cleanly, and the report is included in the final submission.
+- Aikido Security AI Code Audit passes with all identified findings resolved, and the scan report is included in the final submission.

@@ -119,7 +119,7 @@ Complete manual test matrix: see `docs/testing.md`.
 
 ## 7. Security
 
-- **Aikido Security** — Continuous automated vulnerability scanning integrated via GitHub
+- **Aikido Security** — Continuous automated vulnerability scanning integrated via GitHub. Full AI Code Audit completed with findings resolved. See scan report screenshots below.
 - **Row Level Security (RLS)** — Every Supabase table enforces user-scoped access at the database level
 - **Service Role Isolation** — Frontend only has the anon key; service role key lives exclusively on the backend
 - **Rate Limiting** — All API endpoints (`/api/analyze`, `/api/chat`) rate-limited to 5 req/min per IP
@@ -128,6 +128,17 @@ Complete manual test matrix: see `docs/testing.md`.
 - **JWT Verification** — Every API request validates the auth token before processing
 - **Secure External Links** — All `window.open` calls include `noopener,noreferrer`
 - **No Exposed Secrets** — API keys never prefixed with `EXPO_PUBLIC_`, only available server-side
+- **Prompt Injection Mitigation** — User-supplied text sanitized and wrapped in delimited data blocks, separated from system instructions
+- **Ownership Verification (Defense-in-depth)** — Temporal worker validates `user_id` ownership before every DB write, even though the service role key bypasses RLS
+- **Guest Quota Enforcement** — Server-side per-anonymous-user analysis limit (3/day) prevents resource exhaustion from bypassed client UI
+
+### Aikido Security Scan Report
+
+![Aikido Scan Overview](aikido/ai-aikido-security-report-1.png)
+![Aikido Scan Details](aikido/ai-aikido-security-report-2.png)
+![Aikido Threat Scenarios](aikido/ai-aikido-security-report-3.png)
+![Aikido Trust Boundaries](aikido/ai-aikido-security-report-4.png)
+![Aikido Findings Resolved](aikido/ai-aikido-security-report-5.png)
 
 ---
 
@@ -149,7 +160,7 @@ Complete manual test matrix: see `docs/testing.md`.
 | Kiro | Primary development environment (Tasks 17–20) |
 | Claude Code | Development environment (Tasks 1–16) |
 | CodeRabbit | Automated AI code review on every PR |
-| Aikido Security | Continuous vulnerability scanning |
+| Aikido Security | Continuous vulnerability scanning + AI Code Audit |
 | Temporal Cloud | Managed durable execution platform |
 | Supabase | Managed PostgreSQL + Auth + Storage + Realtime |
 | Vercel | Frontend hosting (static export) |
@@ -170,7 +181,7 @@ Complete manual test matrix: see `docs/testing.md`.
 ## 11. Acknowledgments
 
 - **Temporal.io** — Durable execution platform sponsoring the hackathon
-- **Aikido Security** — Security scanning platform sponsoring the hackathon
+- **Aikido Security** — AI Code Audit platform sponsoring the hackathon. Identified and helped resolve 5 threat scenarios via automated scanning and AutoFix PRs.
 - **Kiro** — AI development environment sponsoring the hackathon
 - **Anthropic** — Claude Sonnet 5 for vision analysis
 - **OpenAI** — Whisper for audio transcription

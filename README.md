@@ -1,16 +1,41 @@
 # 🐾 Fitty — AI Cat Health Tracker
 
-> **#hackthekitty 2026** | World Cat Domination Day
+> **#hackthekitty 2026** | 😼 World Cat Domination Day
 
 Fitty estimates your cat's Body Condition Score (BCS) from two photos using AI vision, with optional voice note context. Built as a Universal App (iOS, Android, Web) with durable AI execution powered by Temporal.io.
 
 🔗 **Live Demo:** [fitty-demo.vercel.app](https://fitty-demo.vercel.app)
+
+![Fitty Hero](assets/images/fitty-hero.jpg)
 
 ---
 
 ## 🚀 Quick Start (Judges)
 
 Visit the live demo and tap **"Continue as Guest (Judges)"** — no setup required. The app provides a full simulated experience with pre-seeded data.
+
+### 🤖 Judge AI Assistant
+
+A floating AI chatbot is available on every page of the web app. Ask it anything about our architecture, features, or stack — it responds instantly via GPT-4o-mini with full project context.
+
+### 🎤 Pitch Presentation
+
+Navigate to [`/presentation`](https://fitty-demo.vercel.app/presentation) to view the interactive, in-app pitch presentation detailing the problem, solution, and architecture.
+
+### 🎬 Video Demo
+
+_Coming soon._
+
+---
+
+## ✨ Key Features
+
+- **AI Body Condition Scoring** — Two-photo analysis (top + side view) using Claude 5.
+- **Voice Note Context** — Audio observations auto-transcribed by OpenAI Whisper.
+- **Durable AI Execution** — Temporal.io guarantees workflow completion with automatic retries.
+- **Contextual AI Chat** — Follow-up Q&A about specific health reports.
+- **Interactive Trend Tracking** — BCS history chart showing health progression over time.
+- **Multi-cat Support** — Manage multiple cat profiles effortlessly.
 
 ---
 
@@ -94,15 +119,19 @@ This starts both the Express API server (chat + analyze endpoints) and the Tempo
 
 ```
 fitty/
-├── app/                  # Expo Router pages (tabs, auth, camera)
+├── app/                  # Expo Router pages (tabs, auth, camera, presentation)
+│   └── api/             # Expo API routes (chat endpoint for Judge AI)
 ├── components/           # Reusable UI components
 │   ├── ui/              # General UI (BCSGauge, ChatModal, etc.)
-│   └── camera/          # Camera-specific (SilhouetteOverlay, ProcessingScreen)
+│   ├── camera/          # Camera-specific (SilhouetteOverlay, ProcessingScreen)
+│   ├── JudgeChat.tsx    # Floating AI chatbot for hackathon judges
+│   └── GitHubLink.tsx   # GitHub link component
 ├── hooks/               # Custom React hooks (useHistory, useHealthCheck, etc.)
 ├── lib/                 # Shared utilities (supabase, types, validators)
 ├── temporal/            # Temporal workflows, activities, Express server
 ├── context/             # Project documentation (architecture, build plan, etc.)
 ├── docs/                # Testing report, project report
+├── journal/             # Video script, design prompts
 ├── __tests__/           # Unit tests (Jest)
 └── assets/              # Images, fonts
 ```
@@ -139,7 +168,7 @@ See [`docs/testing.md`](docs/testing.md) for the full manual test matrix.
 
 ## 🔒 Security
 
-- **Aikido Security** — Continuous vulnerability scanning via GitHub integration ([scan report](docs/aikido-report.md))
+- **Aikido Security** — Continuous vulnerability scanning via GitHub integration
 - **Row Level Security (RLS)** — All Supabase tables enforce user-scoped access
 - **Service Role Isolation** — Backend uses service key, frontend uses anon key only
 - **Rate Limiting** — All API endpoints limited to 5 req/min per IP
@@ -151,7 +180,7 @@ See [`docs/testing.md`](docs/testing.md) for the full manual test matrix.
 
 ---
 
-## 🏆 Sponsor Integration
+## 🏆 Hackathon Sponsors
 
 | Sponsor | Integration |
 |---------|-------------|
@@ -161,7 +190,15 @@ See [`docs/testing.md`](docs/testing.md) for the full manual test matrix.
 
 ---
 
-## 🐱 Theme: World Cat Domination Day
+## 🛠️ Other Key Tools
+
+- **Supabase** — Managed PostgreSQL, Auth, Storage, and Realtime subscriptions.
+- **CodeRabbit** — Automated AI code review on every Pull Request to maintain high code quality.
+- **Vercel & Render** — Frontend static export hosting (Vercel) and backend Express/Temporal worker hosting (Render).
+
+---
+
+## 😼 Theme: World Cat Domination Day
 
 Fitty directly drives positive impact for cats by:
 - **Preventing pet obesity** — the #1 preventable health issue affecting 60%+ of domestic cats

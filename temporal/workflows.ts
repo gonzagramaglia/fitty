@@ -45,7 +45,7 @@ export async function analyzeHealthCheck(args: AnalyzeHealthCheckArgs): Promise<
 
   // 1. Transcribe audio if a voice note was provided — do this FIRST so the text appears in UI immediately
   if (args.voiceNoteUrl) {
-    await updateProcessingStep(hcId, 'Transcribing voice note...');
+    await updateProcessingStep(hcId, 'Transcribing voice note...', args.userId);
     try {
       const transcription = await transcribeAudio(args.voiceNoteUrl);
       if (transcription) {
@@ -53,7 +53,7 @@ export async function analyzeHealthCheck(args: AnalyzeHealthCheckArgs): Promise<
         contextText = fullNote;
         // Save transcription to DB immediately so it shows in Owner's Notes
         if (hcId) {
-          await updateTextNote(hcId, fullNote);
+          await updateTextNote(hcId, fullNote, args.userId);
         }
       }
     } catch (err) {
@@ -63,7 +63,7 @@ export async function analyzeHealthCheck(args: AnalyzeHealthCheckArgs): Promise<
 
   try {
     // 1b. Fetch recent history for better context
-    await updateProcessingStep(hcId, 'Fetching health history...');
+    await updateProcessingStep(hcId, 'Fetching health history...', args.userId);
     let recentHistory: any[] = [];
     try {
       recentHistory = await fetchRecentHistory(args.catId, 5);
@@ -72,11 +72,11 @@ export async function analyzeHealthCheck(args: AnalyzeHealthCheckArgs): Promise<
     }
 
     // 2. Run the AI Model (Anthropic Claude 5 Sonnet)
-    await updateProcessingStep(hcId, 'Analyzing photos with AI...');
+    await updateProcessingStep(hcId, 'Analyzing photos with AI...', args.userId);
     const aiResult = await analyzeImages(args.topPhotoUrl, args.sidePhotoUrl, contextText, recentHistory);
 
     // 3. Save to Supabase
-    await updateProcessingStep(hcId, 'Saving results...');
+    await updateProcessingStep(hcId, 'Saving results...', args.userId);
     await saveResultToDatabase(
       args.catId, 
       args.userId, 

@@ -243,17 +243,25 @@ You must respond ONLY with a valid JSON object matching exactly this schema, wit
 /**
  * Updates the processing step on an existing health check record for real-time UI feedback.
  */
-export async function updateProcessingStep(healthCheckId: string, step: string): Promise<void> {
+export async function updateProcessingStep(healthCheckId: string, step: string, userId?: string): Promise<void> {
   if (!healthCheckId) return;
-  await supabase.from('health_checks').update({ processing_step: step }).eq('id', healthCheckId);
+  const query = supabase.from('health_checks').update({ processing_step: step }).eq('id', healthCheckId);
+  if (userId) {
+    query.eq('user_id', userId);
+  }
+  await query;
 }
 
 /**
  * Updates the text_note on an existing health check record after transcription completes.
  */
-export async function updateTextNote(healthCheckId: string, textNote: string): Promise<void> {
+export async function updateTextNote(healthCheckId: string, textNote: string, userId?: string): Promise<void> {
   if (!healthCheckId) return;
-  await supabase.from('health_checks').update({ text_note: textNote }).eq('id', healthCheckId);
+  const query = supabase.from('health_checks').update({ text_note: textNote }).eq('id', healthCheckId);
+  if (userId) {
+    query.eq('user_id', userId);
+  }
+  await query;
 }
 
 /**
@@ -273,7 +281,7 @@ export async function saveResultToDatabase(
 
   if (healthCheckId) {
     // Update existing record (created by the camera flow)
-    const { error } = await supabase.from('health_checks').update({
+    const query = supabase.from('health_checks').update({
       status: 'completed',
       bcs_score: aiResult.bcs_score,
       classification: aiResult.classification,
@@ -282,6 +290,13 @@ export async function saveResultToDatabase(
       text_note: textNote || undefined,
       processing_step: null,
     }).eq('id', healthCheckId);
+    
+    // Defense-in-depth: also verify user_id to prevent cross-user tampering
+    if (userId) {
+      query.eq('user_id', userId);
+    }
+    
+    const { error } = await query;
     if (error) {
       console.error("Failed to update health check:", error);
       throw error;
@@ -326,11 +341,18 @@ export async function saveFailedResultToDatabase(
   console.log(`Saving failed result to DB for cat: ${catId}`);
 
   if (healthCheckId) {
-    const { error } = await supabase.from('health_checks').update({
+    const query = supabase.from('health_checks').update({
       status: 'failed',
       ai_reasoning: `Analysis failed: ${errorMessage}`,
       processing_step: null,
     }).eq('id', healthCheckId);
+    
+    // Defense-in-depth: also verify user_id to prevent cross-user tampering
+    if (userId) {
+      query.eq('user_id', userId);
+    }
+    
+    const { error } = await query;
     if (error) {
       console.error("Failed to update health check to failed:", error);
       throw error;

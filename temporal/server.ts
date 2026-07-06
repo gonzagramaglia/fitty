@@ -76,6 +76,20 @@ export function startChatServer() {
         return res.status(403).json({ error: 'Cat not found or access denied' });
       }
 
+      // Validate healthCheckId ownership if provided
+      if (healthCheckId) {
+        const { data: healthCheck, error: hcError } = await supabase
+          .from('health_checks')
+          .select('id, user_id')
+          .eq('id', healthCheckId)
+          .eq('user_id', user.id)
+          .single();
+
+        if (hcError || !healthCheck) {
+          return res.status(403).json({ error: 'Health check not found or access denied' });
+        }
+      }
+
       const { getTemporalClient } = await import('./client');
       const client = await getTemporalClient();
 

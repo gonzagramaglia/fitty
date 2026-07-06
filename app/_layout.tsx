@@ -9,6 +9,8 @@ import { WebFrame } from "../components/WebFrame";
 import { ActiveCatProvider, useActiveCat } from "../lib/ActiveCatContext";
 import { GuestLimitModal } from "../components/ui/GuestLimitModal";
 import { InlineModal } from "../components/ui/InlineModal";
+import { JudgeChat } from "../components/JudgeChat";
+import { GitHubLink } from "../components/GitHubLink";
 // @ts-ignore
 import "../global.css";
 
@@ -230,8 +232,9 @@ export default function RootLayout() {
     if (!initialized) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    const isPresentation = segments[0] === "presentation";
 
-    if (!session && !inAuthGroup) {
+    if (!session && !inAuthGroup && !isPresentation) {
       router.replace("/(auth)/login");
     } else if (session && inAuthGroup) {
       router.replace("/(tabs)");
@@ -241,30 +244,36 @@ export default function RootLayout() {
   if (!initialized) return null;
 
   const inAuthGroup = segments[0] === "(auth)";
-  const isRouting = (!session && !inAuthGroup) || (!!session && inAuthGroup);
+  const isPresentation = segments[0] === "presentation";
+  const isRouting = (!session && !inAuthGroup && !isPresentation) || (!!session && inAuthGroup);
 
   return (
     <>
       <Head>
         <title>Fitty | AI Cat Health Tracker</title>
       </Head>
-      <WebFrame>
-        <ActiveCatProvider>
-          <View style={{ flex: 1 }}>
-            <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="camera" options={{ headerShown: false, presentation: "fullScreenModal" }} />
-            </Stack>
-            {isRouting && (
-              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#1A2530', zIndex: 99998 }} />
-            )}
-          </View>
-          <GlobalToast />
-          <GlobalGuestModal />
-          <GlobalProcessingModal />
-        </ActiveCatProvider>
-      </WebFrame>
+      <View style={{ flex: 1 }}>
+        <WebFrame>
+          <ActiveCatProvider>
+            <View style={{ flex: 1 }}>
+              <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                <Stack.Screen name="camera" options={{ headerShown: false, presentation: "fullScreenModal" }} />
+                <Stack.Screen name="presentation" options={{ headerShown: false }} />
+              </Stack>
+              {isRouting && (
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#1A2530', zIndex: 99998 }} />
+              )}
+            </View>
+            <GlobalToast />
+            <GlobalGuestModal />
+            <GlobalProcessingModal />
+          </ActiveCatProvider>
+        </WebFrame>
+        <JudgeChat />
+        <GitHubLink />
+      </View>
     </>
   );
 }

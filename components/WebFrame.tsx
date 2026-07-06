@@ -1,5 +1,6 @@
 import React from "react";
-import { Platform, View, StyleSheet, Text } from "react-native";
+import { Platform, View, StyleSheet, Text, useWindowDimensions } from "react-native";
+import { useSegments } from "expo-router";
 
 /**
  * WebFrame is a wrapper component that constrains the app's maximum width
@@ -8,6 +9,10 @@ import { Platform, View, StyleSheet, Text } from "react-native";
  * @param props - Contains the children elements to wrap.
  */
 export function WebFrame({ children }: { children: React.ReactNode }) {
+  const segments = useSegments();
+  const isPresentation = segments[0] === 'presentation';
+  const { width } = useWindowDimensions();
+
   if (Platform.OS !== "web") {
     return <>{children}</>;
   }
@@ -15,7 +20,7 @@ export function WebFrame({ children }: { children: React.ReactNode }) {
   return (
     <View className="flex-1 bg-text-primary items-center justify-center p-6">
       <View 
-        className="w-full max-w-[400px] h-full max-h-[850px] bg-text-secondary rounded-[56px] p-3 relative"
+        className={`w-full bg-text-secondary rounded-[56px] p-3 relative ${isPresentation ? 'max-w-[1024px] h-[768px]' : 'max-w-[400px] h-full max-h-[850px]'}`}
         style={{ boxShadow: "0px 20px 24px rgba(0, 0, 0, 0.25)" }}
       >
         {/* Fake Dynamic Island (Notch) */}
@@ -37,10 +42,10 @@ export function WebFrame({ children }: { children: React.ReactNode }) {
           style={{ color: '#ffdf21', cursor: 'pointer' } as any}
           onPress={() => window.open("https://hackthekitty.com/", "_blank", "noopener,noreferrer")}
         >
-          #hackthekitty
-        </Text>{' '}
-        using{' '}
-        <Text
+        #hackthekitty
+      </Text>
+      {width <= 768 ? '\nusing ' : ' using '}
+      <Text
           className="text-text-inverse underline font-semibold"
           style={{ cursor: 'pointer' } as any}
           onPress={() => window.open("https://kiro.dev", "_blank", "noopener,noreferrer")}

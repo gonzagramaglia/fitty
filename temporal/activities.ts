@@ -60,10 +60,10 @@ export async function transcribeAudio(audioUrl: string): Promise<string> {
   const validatedAudioUrl = buildValidatedUrl(audioUrl);
   const response = await fetch(validatedAudioUrl);
   if (!response.ok) throw new Error(`Failed to download audio: ${response.statusText}`);
-  
+
   const arrayBuffer = await response.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
-  
+
   let ext = '.m4a'; // default
   try {
     const urlExt = path.extname(new URL(audioUrl).pathname);
@@ -85,14 +85,14 @@ export async function transcribeAudio(audioUrl: string): Promise<string> {
 
   try {
     const fileStream = fs.createReadStream(tempFilePath);
-    
+
     console.log("Sending to OpenAI Whisper...");
     const transcription = await openai.audio.transcriptions.create({
       file: fileStream,
       model: 'whisper-1',
       prompt: 'This is a voice note about a cat health observation. The speaker may use Spanish or English.',
     });
-    
+
     console.log("Transcription complete:", transcription.text);
     return transcription.text;
   } finally {
@@ -110,10 +110,10 @@ async function getImageBase64(url: string): Promise<{ data: string; media_type: 
   const validatedUrl = buildValidatedUrl(url);
   const response = await fetch(validatedUrl);
   if (!response.ok) throw new Error(`Failed to download image: ${response.statusText}`);
-  
+
   const arrayBuffer = await response.arrayBuffer();
   const base64 = Buffer.from(arrayBuffer).toString('base64');
-  
+
   // Try to determine mime type from url or headers, default to jpeg
   let mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' = 'image/jpeg';
   const contentType = response.headers.get('content-type');
@@ -125,7 +125,7 @@ async function getImageBase64(url: string): Promise<{ data: string; media_type: 
 }
 
 /**
- * Prompts Claude 3.5 Sonnet to analyze the images and return a structured BCS result.
+ * Prompts Claude 5 Sonnet to analyze the images and return a structured BCS result.
  */
 export async function analyzeImages(topPhotoUrl: string, sidePhotoUrl: string, contextText: string, recentHistory?: any[]): Promise<any> {
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -211,17 +211,17 @@ You must respond ONLY with a valid JSON object matching exactly this schema, wit
   if (!rawContent && response.content.length > 0) {
     rawContent = (response.content[response.content.length - 1] as any).text || '';
   }
-  
+
   // Clean up potential markdown formatting around the JSON
   let jsonString = rawContent.trim();
-  
+
   // Try common markdown code block patterns
   if (jsonString.includes('```json')) {
     jsonString = jsonString.split('```json')[1].split('```')[0].trim();
   } else if (jsonString.includes('```')) {
     jsonString = jsonString.split('```')[1].split('```')[0].trim();
   }
-  
+
   // If still not valid JSON, try to extract the first { ... } block
   if (!jsonString.startsWith('{')) {
     const match = jsonString.match(/\{[\s\S]*\}/);
@@ -260,17 +260,17 @@ export async function updateTextNote(healthCheckId: string, textNote: string): P
  * Updates the existing health check record with the AI analysis results.
  */
 export async function saveResultToDatabase(
-  catId: string, 
-  userId: string, 
-  topPhotoUrl: string, 
-  sidePhotoUrl: string, 
-  voiceNoteUrl: string | undefined, 
-  textNote: string, 
+  catId: string,
+  userId: string,
+  topPhotoUrl: string,
+  sidePhotoUrl: string,
+  voiceNoteUrl: string | undefined,
+  textNote: string,
   aiResult: any,
   healthCheckId?: string
 ): Promise<void> {
   console.log(`Saving results to DB for cat: ${catId}`);
-  
+
   if (healthCheckId) {
     // Update existing record (created by the camera flow)
     const { error } = await supabase.from('health_checks').update({
@@ -314,17 +314,17 @@ export async function saveResultToDatabase(
  * Updates an existing health check record to failed status in Supabase.
  */
 export async function saveFailedResultToDatabase(
-  catId: string, 
-  userId: string, 
-  topPhotoUrl: string, 
-  sidePhotoUrl: string, 
-  voiceNoteUrl: string | undefined, 
-  textNote: string, 
+  catId: string,
+  userId: string,
+  topPhotoUrl: string,
+  sidePhotoUrl: string,
+  voiceNoteUrl: string | undefined,
+  textNote: string,
   errorMessage: string,
   healthCheckId?: string
 ): Promise<void> {
   console.log(`Saving failed result to DB for cat: ${catId}`);
-  
+
   if (healthCheckId) {
     const { error } = await supabase.from('health_checks').update({
       status: 'failed',
@@ -366,7 +366,7 @@ export async function fetchRecentHistory(catId: string, limit: number): Promise<
     .eq('status', 'completed')
     .order('created_at', { ascending: false })
     .limit(limit);
-  
+
   if (error) {
     console.error("Failed to fetch recent history:", error);
     return [];

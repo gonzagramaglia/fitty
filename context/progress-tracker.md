@@ -150,3 +150,15 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] Kiro usage writeup for the Kiro Track submission
   - [x] Final docs/ folder structure clean-up
   - [ ] Fix issues flagged by Aikido Security scan and include report in docs/
+- [x] **21 Judge AI Assistant & Presentation**
+  - [x] Build native interactive chat interface (`JudgeChat.tsx`)
+  - [x] Implement AI backend endpoint and system prompt (`/api/chat+api.ts`)
+  - [x] Update Testing documentation (testing.md) with latest test results
+  - [x] Apply Fitty Soft UI styling and floating layout for web
+  - [x] Write video script for the pitch presentation
+  - [x] Build fully responsive in-app video pitch presentation
+- [ ] **22 Final Polish & Submission**
+  - [ ] Generate Aikido Security scan report and include it in docs/, Project Report, and README
+  - [ ] Record and upload final pitch video
+  - [ ] Link video demo in README and Landing Page
+  - [ ] Final UI/UX review and clean-up

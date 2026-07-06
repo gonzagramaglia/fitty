@@ -10,6 +10,7 @@
 | Durable Execution | Temporal.io | Reliable orchestration of AI workflows, retries, and background jobs |
 | AI Model (Vision & Logic) | Anthropic API (Claude 5 Sonnet) | Extracting visual features from photos, scoring BCS, and generating reasoning |
 | AI Model (Audio) | OpenAI API (Whisper) | Transcribing user voice notes into text for the AI context |
+| Contextual AI Chat | OpenAI API (gpt-4o-mini) + Expo API Routes | Judge AI Assistant embedded natively in the app to answer architectural queries |
 | Security & CI/CD | Aikido Security | Automated vulnerability scanning and code security checks in GitHub Actions |
 
 ---
@@ -89,6 +90,22 @@ Temporal worker calls Anthropic API (Claude 5 Sonnet) with photos + text
 Temporal worker writes BCS result, reasoning, and transcribed text to Supabase `health_checks` table
   ↓
 App listens for DB changes and displays Results Page
+
+---
+
+## Data Flow: Judge AI Assistant (Chatbot)
+
+Judge clicks the floating Cat button on the web app
+  ↓
+App sends chat history to `app/api/chat+api.ts` (Expo API Route)
+  ↓
+API Route prepends the Fitty System Prompt (Context & Architecture)
+  ↓
+API Route calls OpenAI `gpt-4o-mini` API
+  ↓
+API Route returns text response to the client
+  ↓
+App renders response with typing animation
 
 ---
 

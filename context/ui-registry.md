@@ -219,3 +219,23 @@ After building any component — update this file with the component name, file 
 - **Quote Style:** Text note with left border accent (`w-[3px] bg-[#74B7B5]/40 rounded-full`).
 - **Audio Player:** Conditional touchable with play/stop states, duration display.
 - **Spacing:** `mb-6` below the card for separation from next section.
+
+### Judge AI Assistant
+**File:** `components/JudgeChat.tsx`
+**Description:** Floating action button and sliding chat window available globally on Web.
+**Key Patterns:**
+- **Floating Button:** Absolute positioned `bottom: 32, right: 32`, completely decoupled from `WebFrame`. Fitty yellow primary color `bg-[#FFD700]`.
+- **Chat Window:** Animated height transition on open. Fixed width of `350px` and height of `500px`.
+- **Header:** Matches the yellow branding `bg-[#FFD700]` with a `Bot` icon and close `X` button.
+- **Messages:** AI messages left-aligned with `Bot` avatar and soft white bubble. User messages right-aligned with dark navy `#1A2530` background and `User` avatar.
+- **Animations:** Uses React Native `Animated` for smooth slide up and fade effects without CSS keyframes.
+
+### Neo-Brutalist Presentation & Error Screens
+**File:** `app/presentation.tsx`, `app/+not-found.tsx`
+**Description:** High-impact, web-focused fallback screens for presentation modes and 404 routes.
+**Key Patterns:**
+- **Background:** Clean solid `#ffffff`.
+- **Center Card:** Soft contrast background `#f4f9f9` (Fitty light gray/blue).
+- **Brutalist Borders:** Thick, solid black borders `border-[4px] border-black` or inline `borderWidth: 4, borderColor: '#000'`.
+- **Neo Shadow:** Custom `neoShadow(x, y)` helper creating a hard, flat shadow on web (`boxShadow: 'Xpx Ypx 0px #000'`) and elevation on native.
+- **Buttons:** Bold colors (`#74B7B5` Fitty Teal), thick borders, neo-shadow, and uppercase heavy text (`fontWeight: '900'`).

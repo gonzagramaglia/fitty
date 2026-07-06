@@ -37,6 +37,8 @@ Cat owners who want a quick, stress-free way to monitor their pet's health at ho
 - **Interactive Trend Tracking** — BCS history chart showing health progression over time
 - **Contextual AI Chat** — Follow-up Q&A about specific health reports with full cat context
 - **Judge Mode** — Full demo experience for hackathon judges without requiring real data
+- **Judge AI Assistant** — Floating web chatbot powered by GPT-4o-mini for judges to ask technical and architecture questions instantly
+- **In-App Pitch Presentation** — Interactive, responsive slides detailing the problem, solution, and architecture for the demo video
 - **Multi-cat Support** — Manage multiple cat profiles with quick switching
 - **Delete & Retry** — Remove health checks or retry failed analyses without re-uploading
 

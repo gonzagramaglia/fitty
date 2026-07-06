@@ -25,6 +25,11 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Reject anonymous users (Judge Mode) from accessing the real AI workflow
+    if (user.is_anonymous) {
+      return Response.json({ error: 'This feature is not available in Judge Mode. Please sign in with a Google account to access real AI analysis.' }, { status: 403 });
+    }
+
     const body = await req.json();
     const { catId, userId, topPhotoUrl, sidePhotoUrl, voiceNoteUrl, textNote, requestId } = body;
 

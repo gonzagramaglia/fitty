@@ -10,7 +10,6 @@ import { ActiveCatProvider, useActiveCat } from "../lib/ActiveCatContext";
 import { GuestLimitModal } from "../components/ui/GuestLimitModal";
 import { InlineModal } from "../components/ui/InlineModal";
 import { JudgeChat } from "../components/JudgeChat";
-import { GitHubLink } from "../components/GitHubLink";
 // @ts-ignore
 import "../global.css";
 
@@ -272,7 +271,6 @@ export default function RootLayout() {
           </ActiveCatProvider>
         </WebFrame>
         <JudgeChat />
-        <GitHubLink />
       </View>
     </>
   );

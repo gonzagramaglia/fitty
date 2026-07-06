@@ -98,6 +98,8 @@ When GitHub asks for the Extended Description during the merge, use this bullet 
 | #8 | `feat/07-ai-contextual-chat` | 07 AI Contextual Chat & Judge Mode UX | ✅ Merged |
 | #9 | `feat/08-production-readiness` | 08 Production Readiness: Google Auth, UX Polish & Refactoring (Tasks 16–18) | ✅ Merged |
 | #10 | `feat/09-e2e-workflow` | 09 End-to-End AI Workflow Verification (Task 19) | ✅ Merged |
-| #11 | `docs/10-final-submission` | 10 Documentation & Project Report (Task 20) | 🔄 In Progress |
+| #11 | `docs/10-final-submission` | 10 Documentation & Project Report (Task 20) | ✅ Merged |
+| #12 | `fix/ai-aikido-security` | Aikido SAST Findings: SSRF, Path Traversal, Helmet, Deps | ✅ Merged |
+| #13–16 | `aikido-security-code-audits` | Aikido AI Code Audit: Threat Scenarios & Security Hardening + AutoFixes | ✅ Merged |
 
 *(Update this table every time a PR is opened or merged.)*

@@ -6,7 +6,7 @@ Fitty estimates your cat's Body Condition Score (BCS) from two photos using AI v
 
 🔗 **Live Demo:** [fitty-demo.vercel.app](https://fitty-demo.vercel.app)
 
-![Fitty Hero](assets/images/fitty-hero.jpg)
+[![Fitty Hero](assets/images/fitty-hero.jpg)](https://fitty-demo.vercel.app)
 
 ---
 
@@ -156,6 +156,7 @@ See [`docs/testing.md`](docs/testing.md) for the full manual test matrix.
 |----------|-------------|
 | [`docs/project-report.md`](docs/project-report.md) | Full hackathon project report |
 | [`docs/testing.md`](docs/testing.md) | Automated + manual test documentation |
+| [`docs/aikido/`](docs/aikido/) | Aikido AI Security scan report screenshots |
 | [`context/architecture.md`](context/architecture.md) | Technical architecture & data flows |
 | [`context/build-plan.md`](context/build-plan.md) | Phase-by-phase build plan |
 | [`context/progress-tracker.md`](context/progress-tracker.md) | Task completion tracker |
@@ -168,15 +169,26 @@ See [`docs/testing.md`](docs/testing.md) for the full manual test matrix.
 
 ## 🔒 Security
 
-- **Aikido Security** — Continuous vulnerability scanning via GitHub integration
+- **Aikido Security** — AI Code Audit completed with findings resolved. [See full scan report →](docs/aikido/)
 - **Row Level Security (RLS)** — All Supabase tables enforce user-scoped access
 - **Service Role Isolation** — Backend uses service key, frontend uses anon key only
-- **Rate Limiting** — All API endpoints limited to 5 req/min per IP
+- **Rate Limiting** — All API endpoints limited to 3–5 req/min per IP
 - **Input Validation** — 500-char message limit, form field filtering, max lengths enforced
 - **Error Sanitization** — Internal errors never exposed to clients (generic 500 responses)
 - **Auth Guards** — Every API endpoint validates JWT before processing
+- **Prompt Injection Defense** — User-supplied text sanitized and isolated in delimited data blocks
+- **Ownership Verification** — Temporal worker validates record ownership before every write (defense-in-depth)
+- **Guest Quota Enforcement** — Server-side per-anonymous-user limit prevents AI resource exhaustion
 - **No exposed secrets** — All API keys server-side only, never prefixed with `EXPO_PUBLIC_`
 - **HTTPS only** — All external links use `noopener,noreferrer`
+
+### 📊 Aikido Scan Report
+
+| | |
+|---|---|
+| ![Scan 1](docs/aikido/ai-aikido-security-report-1.png) | ![Scan 2](docs/aikido/ai-aikido-security-report-2.png) |
+| ![Scan 3](docs/aikido/ai-aikido-security-report-3.png) | ![Scan 4](docs/aikido/ai-aikido-security-report-4.png) |
+| ![Scan 5](docs/aikido/ai-aikido-security-report-5.png) | |
 
 ---
 
@@ -185,7 +197,7 @@ See [`docs/testing.md`](docs/testing.md) for the full manual test matrix.
 | Sponsor | Integration |
 |---------|-------------|
 | **Temporal.io** | Core of our architecture — durable AI workflow orchestration with automatic retries, real-time step updates visible to the user, and graceful failure handling. The "Still Processing" screen and retry-on-failure both showcase Temporal's durable execution guarantees. |
-| **Aikido Security** | Automated security scanning integrated via GitHub. Continuous monitoring ensures no vulnerabilities are introduced across PRs. |
+| **Aikido Security** | AI Code Audit identified 5 threat scenarios + dependency CVEs. All findings resolved via code hardening (prompt injection defense, ownership verification, guest quotas) and dependency patching. Scan report included in [`docs/aikido/`](docs/aikido/). |
 | **Kiro** | Primary development environment for the final 4 tasks (UX polish, refactoring, E2E verification, documentation). Steering files in `.kiro/` provided persistent project context across sessions. |
 
 ---

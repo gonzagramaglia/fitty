@@ -11,7 +11,7 @@
 | AI Model (Vision & Logic) | Anthropic API (Claude 5 Sonnet) | Extracting visual features from photos, scoring BCS, and generating reasoning |
 | AI Model (Audio) | OpenAI API (Whisper) | Transcribing user voice notes into text for the AI context |
 | Contextual AI Chat | OpenAI API (gpt-4o-mini) + Expo API Routes | Judge AI Assistant embedded natively in the app to answer architectural queries |
-| Security & CI/CD | Aikido Security | Automated vulnerability scanning and code security checks in GitHub Actions |
+| Security & CI/CD | Aikido Security | AI Code Audit with automated vulnerability scanning, threat scenario analysis, and AutoFix PRs via GitHub integration |
 
 ---
 

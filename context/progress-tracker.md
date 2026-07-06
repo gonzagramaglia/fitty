@@ -149,7 +149,6 @@ Living document to track the completion of Fitty's phases as defined in `build-p
   - [x] README with prerequisites, run instructions, and configuration
   - [x] Kiro usage writeup for the Kiro Track submission
   - [x] Final docs/ folder structure clean-up
-  - [ ] Fix issues flagged by Aikido Security scan and include report in docs/
 - [x] **21 Judge AI Assistant & Presentation**
   - [x] Build native interactive chat interface (`JudgeChat.tsx`)
   - [x] Implement AI backend endpoint and system prompt (`/api/chat+api.ts`)

@@ -37,7 +37,10 @@ export function startChatServer() {
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // --- Analyze endpoint: triggers the Temporal AI workflow ---
+  /**
+   * POST /api/analyze — Triggers the Temporal AI workflow for a health check.
+   * Validates auth, cat ownership, and starts the analyzeHealthCheck workflow.
+   */
   app.post('/api/analyze', limiter, async (req, res) => {
     try {
       const authHeader = req.headers.authorization;

@@ -8,9 +8,11 @@ import {
   ScrollView, 
   Platform, 
   KeyboardAvoidingView,
-  useWindowDimensions
+  useWindowDimensions,
+  Linking
 } from 'react-native';
 import { X, Send, Bot, User } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 
 interface Message {
@@ -331,24 +333,45 @@ export const JudgeChat = () => {
 
       {/* Floating Action Button */}
       {!isOpen && (
-        <TouchableOpacity
-          onPress={() => setIsOpen(true)}
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 32,
-            backgroundColor: '#FFD700',
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.15,
-            shadowRadius: 12,
-            elevation: 8,
-          }}
-        >
-          <Bot color="#1A2530" size={32} />
-        </TouchableOpacity>
+        <>
+          <TouchableOpacity
+            onPress={() => Linking.openURL('https://github.com/gonzagramaglia/fitty')}
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: 26,
+              backgroundColor: '#1A2530',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 12,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 12,
+              elevation: 8,
+            }}
+          >
+            <Feather name="github" color="#ffffff" size={24} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setIsOpen(true)}
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: '#FFD700',
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 12,
+              elevation: 8,
+            }}
+          >
+            <Bot color="#1A2530" size={32} />
+          </TouchableOpacity>
+        </>
       )}
     </View>
   );

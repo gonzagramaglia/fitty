@@ -55,6 +55,11 @@ export function startChatServer() {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
+      // Reject anonymous users (Judge Mode) from accessing the real AI workflow
+      if (user.is_anonymous) {
+        return res.status(403).json({ error: 'This feature is not available in Judge Mode. Please sign in with a Google account to access real AI analysis.' });
+      }
+
       const { catId, userId, healthCheckId, topPhotoUrl, sidePhotoUrl, voiceNoteUrl, textNote, requestId } = req.body;
 
       if (!catId || !userId || !topPhotoUrl || !sidePhotoUrl) {
@@ -74,20 +79,6 @@ export function startChatServer() {
 
       if (catError || !cat) {
         return res.status(403).json({ error: 'Cat not found or access denied' });
-      }
-
-      // Validate healthCheckId ownership if provided
-      if (healthCheckId) {
-        const { data: healthCheck, error: hcError } = await supabase
-          .from('health_checks')
-          .select('id, user_id')
-          .eq('id', healthCheckId)
-          .eq('user_id', user.id)
-          .single();
-
-        if (hcError || !healthCheck) {
-          return res.status(403).json({ error: 'Health check not found or access denied' });
-        }
       }
 
       const { getTemporalClient } = await import('./client');
@@ -128,6 +119,11 @@ export function startChatServer() {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       if (authError || !user) {
         return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      // Reject anonymous users (Judge Mode) from accessing the real AI chat
+      if (user.is_anonymous) {
+        return res.status(403).json({ error: 'This feature is not available in Judge Mode. Please sign in with a Google account to access real AI chat.' });
       }
 
       if (!process.env.ANTHROPIC_API_KEY) {

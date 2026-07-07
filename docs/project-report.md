@@ -159,7 +159,7 @@ Complete manual test matrix: see `docs/testing.md`.
 
 | Tool | Purpose |
 |------|---------|
-| Kiro | Primary development environment (Tasks 17–20) |
+| Kiro | Primary development environment (Tasks 17–22) |
 | Claude Code | Development environment (Tasks 1–16) |
 | CodeRabbit | Automated AI code review on every PR |
 | Aikido Security | Continuous vulnerability scanning + AI Code Audit |

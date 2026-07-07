@@ -221,9 +221,11 @@ Prepare the final submission package for the hackathon: project report, README, 
 - Final docs/ folder structure clean-up
 
 ### 21 Judge AI Assistant & Pitch Presentation
+
 Build the floating Judge AI chatbot (GPT-4o-mini) and the in-app neo-brutalist pitch presentation for the video demo.
 
 ### 22 Final Polish & Submission
+
 Security hardening via Aikido AI Code Audit, video demo recording, and final UX polish.
 
 - Aikido Security scan report generation and inclusion in docs/

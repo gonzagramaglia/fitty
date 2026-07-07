@@ -159,5 +159,5 @@ Living document to track the completion of Fitty's phases as defined in `build-p
 - [x] **22 Final Polish & Submission**
   - [x] Generate Aikido Security scan report and include it in docs/, Project Report, and README
   - [x] Record and upload final pitch video
-  - [x] Link video demo in README and Landing Page
+  - [x] Link video demo in README and Presentation
   - [x] Final UI/UX review and clean-up

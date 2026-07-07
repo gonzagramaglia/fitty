@@ -94,7 +94,7 @@ export default function Presentation() {
           </Text>
           <TouchableOpacity 
             activeOpacity={0.7}
-            onPress={() => Linking.openURL('https://youtu.be/nqmhqraKEKY')}
+            onPress={() => { Linking.openURL('https://youtu.be/nqmhqraKEKY').catch(() => {}); }}
             style={[{ marginTop: 32, backgroundColor: '#1A2530', paddingHorizontal: width > 768 ? 32 : 24, paddingVertical: width > 768 ? 16 : 12, borderWidth: 3, borderColor: '#000', borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }, neoShadow(2, 2)]}
           >
             <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#ef4444' }} />

@@ -151,7 +151,7 @@ ${contextText ? `\nAdditional context from the owner: "${contextText}"\n` : ''}$
 
 Analyze the cat's physical shape, paying attention to the waistline from above, the abdominal tuck from the side, and any visible fat deposits.
 
-You must respond ONLY with a valid JSON object matching exactly this schema, without any markdown formatting or extra text:
+You must respond ONLY in English. You must respond ONLY with a valid JSON object matching exactly this schema, without any markdown formatting or extra text:
 {
   "bcs_score": number (1-9, where 1-2 = severely underweight, 3-4 = slightly underweight, 5 = ideal, 6-7 = slightly overweight, 8-9 = severely overweight),
   "classification": string (must be one of: "Severely underweight", "Slightly underweight", "Ideal weight", "Slightly overweight", "Severely overweight"),

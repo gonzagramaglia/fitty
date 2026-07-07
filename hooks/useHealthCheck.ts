@@ -108,9 +108,22 @@ export function useHealthCheck(id: string) {
 
     // Polling fallback: if Realtime misses the update, poll every 5s
     // (stops once status changes from 'processing')
-    const pollInterval = setInterval(() => {
-      if (!cancelled) {
-        fetchHealthCheck();
+    let pollingStopped = false;
+    const pollInterval = setInterval(async () => {
+      if (cancelled || pollingStopped) {
+        clearInterval(pollInterval);
+        return;
+      }
+      // Quick check if still processing before doing a full refetch
+      const { data: check } = await supabase
+        .from('health_checks')
+        .select('status')
+        .eq('id', id)
+        .single();
+      if (check && check.status !== 'processing') {
+        pollingStopped = true;
+        clearInterval(pollInterval);
+        fetchHealthCheck(); // One final fetch to get full data
       }
     }, 5000);
 

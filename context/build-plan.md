@@ -219,3 +219,16 @@ Prepare the final submission package for the hackathon: project report, README, 
 - README with prerequisites, run instructions, and configuration
 - Kiro usage writeup for the Kiro Track submission
 - Final docs/ folder structure clean-up
+
+### 21 Judge AI Assistant & Pitch Presentation
+
+Build the floating Judge AI chatbot (GPT-4o-mini) and the in-app neo-brutalist pitch presentation for the video demo.
+
+### 22 Final Polish & Submission
+
+Security hardening via Aikido AI Code Audit, video demo recording, and final UX polish.
+
+- Aikido Security scan report generation and inclusion in docs/
+- Record and upload final pitch video (YouTube)
+- Link video demo in README and Presentation
+- Final UI/UX review: login button colors, presentation nav buttons, processing speed, OAuth fallback

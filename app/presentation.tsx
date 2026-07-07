@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, Platform, DeviceEventEmitter, Linking, Animated } from 'react-native';
-import { Cloud, Server, Shield, Cpu, Lock, TrendingUp, BookOpen, Target, Code2, Heart, Zap, Activity, MessageCircle } from 'lucide-react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity, Platform, Linking, Animated } from 'react-native';
+import { Cloud, Server, Shield, Cpu, Lock, TrendingUp, BookOpen, Target, Code2, Heart, MessageCircle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 // Helper for Neo-Brutalist shadows (works perfectly on React Native Web)
@@ -77,7 +77,6 @@ export default function Presentation() {
           style={{ flex: 1 }}
           onScroll={(e) => {
             const offsetY = e.nativeEvent.contentOffset.y;
-            const totalSlides = width > 768 ? 7 : 8;
             setCurrentSlide(Math.round(offsetY / height));
           }}
           scrollEventThrottle={100}
@@ -95,12 +94,12 @@ export default function Presentation() {
           </Text>
           <TouchableOpacity 
             activeOpacity={0.7}
-            onPress={() => DeviceEventEmitter.emit('showToast', 'A giant cat is currently recording this demo! 🐱🎥')}
-            style={[{ marginTop: 32, backgroundColor: '#e2e8f0', paddingHorizontal: width > 768 ? 32 : 24, paddingVertical: width > 768 ? 16 : 12, borderWidth: 3, borderColor: '#94a3b8', borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: 0.9 }, neoShadow(2, 2)]}
+            onPress={() => { Linking.openURL('https://youtu.be/nqmhqraKEKY').catch(() => {}); }}
+            style={[{ marginTop: 32, backgroundColor: '#1A2530', paddingHorizontal: width > 768 ? 32 : 24, paddingVertical: width > 768 ? 16 : 12, borderWidth: 3, borderColor: '#000', borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }, neoShadow(2, 2)]}
           >
             <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#ef4444' }} />
-            <Text style={{ fontSize: width > 768 ? 18 : 16, fontWeight: '900', color: '#64748b', textTransform: 'uppercase' }}>
-              Recording Video Demo...
+            <Text style={{ fontSize: width > 768 ? 18 : 16, fontWeight: '900', color: '#fff', textTransform: 'uppercase' }}>
+              Watch Video Demo
             </Text>
           </TouchableOpacity>
         </View>

@@ -51,7 +51,6 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
   const [isGuest, setIsGuest] = useState(false);
   const [mockStep, setMockStep] = useState(0);
   const [isAutoTyping, setIsAutoTyping] = useState(false);
-  const [typingMessage, setTypingMessage] = useState<string | null>(null);
   const typingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingOriginalText, setEditingOriginalText] = useState<string>('');
@@ -119,7 +118,6 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
         typingRef.current = null;
       }
       setIsAutoTyping(false);
-      setTypingMessage(null);
       setInputText('');
       setEditingIndex(null);
       setEditingOriginalText('');
@@ -267,12 +265,10 @@ export function ChatModal({ visible, onClose, healthCheckId, initialHistory, onH
             if (typingRef.current) clearInterval(typingRef.current);
             typingRef.current = null;
             setMessages(fullHistory);
-            setTypingMessage(null);
             isInternalUpdate.current = true;
             onHistoryUpdate(fullHistory);
           } else {
             setMessages([...withoutLast, { role: 'assistant', content: fullText.substring(0, i) }]);
-            setTypingMessage(fullText.substring(0, i));
           }
           scrollViewRef.current?.scrollToEnd({ animated: true });
         }, 15);

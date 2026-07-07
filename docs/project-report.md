@@ -9,6 +9,8 @@
 
 Fitty is an AI-powered cat health tracker that estimates Body Condition Score (BCS) from two photos using Claude Sonnet 5, with voice note transcription via OpenAI Whisper. Built as a Universal App (iOS, Android, Web) with durable AI execution via Temporal.io, it delivers instant veterinary-grade health insights to cat owners — no vet visit required.
 
+🎬 **Video Demo:** [https://youtu.be/nqmhqraKEKY](https://youtu.be/nqmhqraKEKY)
+
 ---
 
 ## 2. Project Overview
@@ -157,7 +159,7 @@ Complete manual test matrix: see `docs/testing.md`.
 
 | Tool | Purpose |
 |------|---------|
-| Kiro | Primary development environment (Tasks 17–20) |
+| Kiro | Primary development environment (Tasks 17–22) |
 | Claude Code | Development environment (Tasks 1–16) |
 | CodeRabbit | Automated AI code review on every PR |
 | Aikido Security | Continuous vulnerability scanning + AI Code Audit |

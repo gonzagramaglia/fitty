@@ -2,7 +2,7 @@
 
 > **#hackthekitty 2026** | 😼 World Cat Domination Day
 
-Fitty estimates your cat's Body Condition Score (BCS) from two photos using AI vision, with optional voice note context. Built as a Universal App (iOS, Android, Web) with durable AI execution powered by Temporal.io.
+Fitty estimates your cat's Body Condition Score (BCS) from two photos using AI vision, with optional voice note context. Features an always-on Vet AI chat for follow-up questions about your cat's health. Built as a Universal App (iOS, Android, Web) with durable AI execution powered by Temporal.io.
 
 🔗 **Live Demo:** [fitty-demo.vercel.app](https://fitty-demo.vercel.app)
 
@@ -24,7 +24,7 @@ Navigate to [`/presentation`](https://fitty-demo.vercel.app/presentation) to vie
 
 ### 🎬 Video Demo
 
-_Coming soon._
+[![Fitty Demo](https://img.youtube.com/vi/nqmhqraKEKY/maxresdefault.jpg)](https://youtu.be/nqmhqraKEKY)
 
 ---
 

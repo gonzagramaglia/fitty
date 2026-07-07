@@ -42,18 +42,21 @@ jest.mock('@anthropic-ai/sdk', () => {
 const mockEq = jest.fn();
 const mockUpdate = jest.fn();
 const mockInsert = jest.fn();
+const mockSelect = jest.fn();
 
 // Create query builder that returns itself for chaining
 const mockQueryBuilder: any = {
   update: mockUpdate,
   eq: mockEq,
   insert: mockInsert,
+  select: mockSelect,
   then: jest.fn()
 };
 
 // Make methods return the builder for chaining
 mockUpdate.mockReturnValue(mockQueryBuilder);
 mockEq.mockReturnValue(mockQueryBuilder);
+mockSelect.mockResolvedValue({ data: [{ id: 'health-check-uuid-123' }], error: null });
 mockInsert.mockResolvedValue({ error: null });
 mockQueryBuilder.then.mockImplementation((resolve) => {
   resolve({ error: null });
@@ -92,6 +95,7 @@ describe('Temporal Activities — AI Workflow', () => {
     // Reset the mock functions
     mockUpdate.mockReturnValue(mockQueryBuilder);
     mockEq.mockReturnValue(mockQueryBuilder);
+    mockSelect.mockResolvedValue({ data: [{ id: 'health-check-uuid-123' }], error: null });
     mockInsert.mockResolvedValue({ error: null });
     mockQueryBuilder.then.mockImplementation((resolve) => {
       resolve({ error: null });

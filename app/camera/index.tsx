@@ -395,7 +395,7 @@ export default function CameraScreen() {
         }
         
         // Insert recent record for Guests
-        const { error } = await supabase.from('health_checks').insert({
+        const { data: guestRecord, error } = await supabase.from('health_checks').insert({
           cat_id: activeCatId,
           user_id: userId,
           created_at: new Date().toISOString(),
@@ -412,10 +412,21 @@ export default function CameraScreen() {
             { title: "Hydration", description: "Ensure fresh water is always available." }
           ],
           status: "completed"
-        });
+        }).select('id').single();
         
         if (error) throw error;
-        // Realtime subscription in ProcessingScreen will catch this insert and show the success screen.
+
+        // Show ProcessingScreen for 15s so judges see all phases, then navigate to result
+        // The step is already 'uploading' so ProcessingScreen renders.
+        // We delay, then navigate directly.
+        await new Promise((resolve) => setTimeout(resolve, 15000));
+        
+        setProcessingState({ hasVoiceNote: false, hasTextNote: false });
+        if (guestRecord?.id) {
+          setSelectedCheckId(guestRecord.id);
+        }
+        router.replace('/(tabs)/history');
+        return;
       } else {
         // REAL USER FLOW: Upload media and trigger Temporal workflow
         console.log("Uploading media for real user...");

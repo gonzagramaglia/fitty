@@ -13,7 +13,9 @@
 - The shot transitions to show the devices running Fitty, officially presenting the app to the world.
 
 **Audio (Cat Voiceover):** 
-"To achieve World Domination, we must remain in peak physical condition. But training humans to monitor our weight is exhausting. That's why I locked my human in front of a keyboard and forced him to code Fitty for me."
+"To achieve World Domination, we must remain in peak physical condition. But training humans to monitor our weight is exhausting. That's why I forced my human to build Fitty."
+
+> ✅ **PROGRESS MARKER:** Everything above this line has been recorded and edited.
 
 ---
 
@@ -55,14 +57,16 @@
 ## 📱 1:30 - 4:00 | Deep Dive Demo: The Web App (2 minutes 30 seconds)
 **Visual:** 
 - Screen recording of the **Fitty Web App** starting at the Login screen.
-- First Demo (Judge Mode): The human clicks "Guest Login (Judge Mode)". 
+- First Demo (Judge Mode): The human clicks the gold "Continue as Guest (Judges)" button. 
 - The app requires a cat profile first. The human taps, and the form auto-fills instantly.
 - Navigates to Dashboard and History, showcasing the clean empty states and the educational BCS Info Card.
-- Clicks "Scan". A Guest Mode modal appears. The app auto-loads two photos and a voice note, simulating the Temporal AI processing.
-- The history instantly populates with several mock records spanning different months, showcasing the trend chart.
+- Clicks "Scan". A Judge Mode warning modal appears. The app auto-loads two photos and records a voice note (simulated 7-second recording with live waveform).
+- The AI Processing Screen appears — the camera shows each phase cycling through in real-time: "Analyzing image dimensions..." → "Detecting body outline..." → "Scanning for physical cues..." → "Comparing with veterinary BCS standards..." → "Generating final health report..." (15 seconds total).
+- After processing completes, the app automatically navigates to the health check result with the BCS gauge and full AI reasoning.
+- The history tab is now populated with 6 months of data and an interactive trend chart.
 - The human opens the **Contextual Vet AI** chat. In Judge Mode, it plays a fast, mocked script to demonstrate the UI instantly without spending tokens.
 - Second Demo (Real User): The human logs out, signs in with Google, and creates a real profile for a second cat ("The Loyal Subject"). They upload real photos and a real voice note.
-- The AI processes the submission, returning a perfect BCS of 5.
+- The AI processes the submission via Temporal (real workflow), returning a BCS of 5.
 - The human opens the **Contextual Vet AI** chat again. This time it's the real, functional integration. They type a custom question and get a live, context-aware AI response.
 
 **Audio (Cat Voiceover):** 
@@ -70,7 +74,9 @@
 
 Watch. He logs in as a guest and is forced to create a profile. With one tap, it auto-fills. He checks the dashboard and history—empty, clean, waiting for data. 
 
-Then he clicks Scan. The app warns him he's in Judge Mode, then automatically loads photos and a voice note. It simulates the AI processing... and boom. The medical history is instantly populated with months of data and a trend chart, proving I have maintained my perfection over time. He even opens the Vet AI chat, which we mocked for judges so they don't burn my API tokens.
+Then he clicks Scan. The app warns him he's in Judge Mode, then automatically loads photos and a voice note. Now watch the AI Processing — each step updates live: detecting body outline, scanning for physical cues, generating the final health report. This is exactly what happens in real-time when Temporal orchestrates the Claude and Whisper APIs.
+
+Boom. The report lands. BCS gauge, AI reasoning, actionable recommendations — all from two photos. And the history is instantly populated with months of trend data, proving I have maintained my perfection over time. He even opens the Vet AI chat, which we mocked for judges so they don't burn my API tokens.
 
 But a real app needs real users. So my human logs out and signs in with Google. He creates a new profile for a loyal servant, snaps real photos, and records a voice note. 
 
@@ -96,12 +102,20 @@ So, we built a custom Judge AI Assistant floating right here, globally accessibl
 
 It knows exactly how my human built this, and it's waiting to answer any question you have about our project. Go ahead. Test it."
 
+*(Beat — 2 seconds of silence while the chat bot responds on screen)*
+
+**Audio (Cat Voiceover):**
+"Fitty. AI-driven. Durably executed. Ruthlessly secure. Everything a cat needs to dominate this planet in peak physical form. You've seen the future. All that's left... is your obedience."
+
 ---
 
 ## 🎬 5:50 - 6:00 | Outro (10 seconds)
 **Visual:** 
-- The exact same video from the intro, but played **in reverse**.
-- Ends with the giant humanized cat seamlessly descending back down the balcony, disappearing from view as the presentation concludes.
+- 10-second closing sequence with a different, cinematic music track (no voiceover).
+- The background transitions to white — Matrix-style digital wipe.
+- The devices (phone/laptop showing Fitty) morph into two floating pills: one blue, one red.
+- Camera slowly focuses on the cat character's hands holding the pills, offering them to the viewer.
+- Fade to white → Fitty logo + #hackthekitty.
 
-**Audio (Cat Voiceover):** 
-"Fitty isn't just an app. It's an AI-driven, durably executed, secure platform designed to ensure felines remain in peak condition to rule this planet. Keep us healthy. Now... feed me. Meow."
+**Audio:** 
+- New instrumental track (no cat voiceover). Cinematic, suspenseful.

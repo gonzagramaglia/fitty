@@ -135,6 +135,23 @@ export const JudgeChat = () => {
       alignItems: 'flex-end',
       pointerEvents: 'box-none'
     }}>
+      {/* Dark overlay on mobile when chat is open */}
+      {isOpen && width <= 768 && (
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setIsOpen(false)}
+          style={{
+            position: 'absolute',
+            top: -1000,
+            left: -1000,
+            right: -1000,
+            bottom: -1000,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            zIndex: -1,
+          }}
+        />
+      )}
+
       {/* Chat Window */}
       {isOpen && (
         <Animated.View
@@ -333,33 +350,36 @@ export const JudgeChat = () => {
 
       {/* Floating Action Button */}
       {!isOpen && (
-        <>
+        <TouchableOpacity
+          onPress={() => setIsOpen(true)}
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: 32,
+            backgroundColor: '#FFD700',
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 12,
+            elevation: 8,
+          }}
+        >
+          <Bot color="#1A2530" size={32} />
+        </TouchableOpacity>
+      )}
+
+      {/* GitHub Button — bottom left */}
+      {!(isOpen && width <= 768) && (
+        <View style={{ position: 'fixed' as any, bottom: 32, left: 32, zIndex: 100000 }}>
           <TouchableOpacity
             onPress={() => Linking.openURL('https://github.com/gonzagramaglia/fitty')}
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: 26,
-              backgroundColor: '#1A2530',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 12,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 12,
-              elevation: 8,
-            }}
-          >
-            <Feather name="github" color="#ffffff" size={24} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setIsOpen(true)}
             style={{
               width: 64,
               height: 64,
               borderRadius: 32,
-              backgroundColor: '#FFD700',
+              backgroundColor: '#1A2530',
               alignItems: 'center',
               justifyContent: 'center',
               shadowColor: '#000',
@@ -369,9 +389,9 @@ export const JudgeChat = () => {
               elevation: 8,
             }}
           >
-            <Bot color="#1A2530" size={32} />
+            <Feather name="github" color="#ffffff" size={28} />
           </TouchableOpacity>
-        </>
+        </View>
       )}
     </View>
   );

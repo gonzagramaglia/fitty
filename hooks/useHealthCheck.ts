@@ -106,8 +106,17 @@ export function useHealthCheck(id: string) {
       )
       .subscribe();
 
+    // Polling fallback: if Realtime misses the update, poll every 5s
+    // (stops once status changes from 'processing')
+    const pollInterval = setInterval(() => {
+      if (!cancelled) {
+        fetchHealthCheck();
+      }
+    }, 5000);
+
     return () => {
       cancelled = true;
+      clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
   }, [id]);

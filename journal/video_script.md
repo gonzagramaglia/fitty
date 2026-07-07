@@ -100,12 +100,12 @@ I know you judges are going to have a lot of highly technical questions about ou
 
 So, we built a custom Judge AI Assistant floating right here, globally accessible alongside the app. It is powered by Expo API Routes and OpenAI's `gpt-4o-mini`. We injected Fitty's entire architectural context, project overview, and strict codebase rules directly into its system prompt. 
 
-It knows exactly how my human built this, and it's waiting to answer any question you have about our project. Go ahead. Test it."
+It knows exactly how my human built this, and it's waiting to answer any question you have about our project. Go ahead! Give it a try."
 
 *(Beat — 2 seconds of silence while the chat bot responds on screen)*
 
 **Audio (Cat Voiceover):**
-"Fitty. AI-driven. Durably executed. Ruthlessly secure. Everything a cat needs to dominate this planet in peak physical form. You've seen the future. All that's left... is your obedience."
+"So... you have witnessed Fitty AI. Everything a cat needs to dominate this planet in peak physical form. The future has already been written. The only question is whether you'll help us build it... or go back to being an ordinary, lazy human. Choose wisely."
 
 ---
 

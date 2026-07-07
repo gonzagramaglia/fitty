@@ -6,6 +6,20 @@ type Props = {
 };
 
 /**
+ * Parses markdown-style **bold** text into React Native Text components.
+ */
+function renderBoldText(text: string) {
+  const parts = text.split(/\*\*(.*?)\*\*/g);
+  return parts.map((part, index) => {
+    // Odd indices are the bold content (captured group)
+    if (index % 2 === 1) {
+      return <Text key={index} className="font-bold text-text-primary">{part}</Text>;
+    }
+    return part;
+  });
+}
+
+/**
  * AIReasoningCard displays the detailed reasoning provided by the AI model
  * explaining how it derived the Body Condition Score from the visual analysis.
  *
@@ -26,7 +40,7 @@ export function AIReasoningCard({ reasoning }: Props) {
       </View>
       
       <Text className="text-text-secondary text-sm leading-relaxed">
-        {reasoning}
+        {renderBoldText(reasoning)}
       </Text>
     </View>
   );

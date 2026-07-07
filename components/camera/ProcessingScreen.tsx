@@ -96,7 +96,9 @@ export default function ProcessingScreen() {
   }, []);
 
   // Text rotation — stops at the last item, then triggers "still processing" after 6 seconds
+  // Guests rotate at 2x speed (1.5s vs 3s)
   useEffect(() => {
+    const intervalMs = isGuest ? 1500 : 3000;
     const interval = setInterval(() => {
       setLoadingTextIndex((prev) => {
         if (prev >= loadingTexts.length - 1) {
@@ -105,9 +107,9 @@ export default function ProcessingScreen() {
         }
         return prev + 1;
       });
-    }, 3000);
+    }, intervalMs);
     return () => clearInterval(interval);
-  }, [loadingTexts.length]);
+  }, [loadingTexts.length, isGuest]);
 
   // Show "still processing" screen 6 seconds after reaching the last loading text
   useEffect(() => {
@@ -119,14 +121,14 @@ export default function ProcessingScreen() {
     }
   }, [loadingTextIndex, loadingTexts.length]);
 
-  // Progress bar animation (simulating progress over 20 seconds)
+  // Progress bar animation (faster for guests)
   useEffect(() => {
     Animated.timing(progressAnim, {
       toValue: 90, // Only go to 90% — last 10% is instant on result arrival
-      duration: 20000,
+      duration: isGuest ? 8000 : 20000,
       useNativeDriver: false,
     }).start();
-  }, []);
+  }, [isGuest]);
 
   const getContextText = () => {
     if (hasVoiceNote) return ' and your voice note';
@@ -198,8 +200,11 @@ export default function ProcessingScreen() {
   if (isTakingLong) {
     return (
       <View className="flex-1 bg-[#F8FAFC] justify-center items-center px-8">
-        <View className="w-24 h-24 bg-[#FFFBEB] rounded-3xl items-center justify-center mb-6 border border-[#FDE047]/30">
+        <View className="w-24 h-24 bg-white rounded-3xl shadow-sm border border-[#E2E8F0] items-center justify-center mb-8 relative">
           <Sparkles color="#EAB308" size={40} />
+          <View className="absolute -bottom-3 -right-3 bg-white rounded-full p-2 shadow-sm border border-[#E2E8F0]">
+            <ActivityIndicator size="small" color="#EAB308" />
+          </View>
         </View>
 
         <Text className="text-[#EAB308] text-3xl font-black tracking-tight text-center mb-3">
@@ -213,22 +218,29 @@ export default function ProcessingScreen() {
         <TouchableOpacity
           className="bg-primary-cool w-full py-4 rounded-2xl flex-row items-center justify-center shadow-sm"
           onPress={async () => {
-            // Find the processing health check and navigate to it
+            // Find the most recent health check and navigate to it
             setProcessingState({ hasVoiceNote: false, hasTextNote: false });
             if (activeCatId) {
               const { data: { user } } = await supabase.auth.getUser();
               if (user) {
-                const { data: processingCheck } = await supabase
+                const isGuestUser = user.is_anonymous === true;
+                let query = supabase
                   .from('health_checks')
                   .select('id')
                   .eq('cat_id', activeCatId)
-                  .eq('user_id', user.id)
-                  .in('status', ['processing', 'failed'])
+                  .eq('user_id', user.id);
+                
+                // Guests have 'completed' records; real users look for recent in-progress or done
+                if (!isGuestUser) {
+                  query = query.in('status', ['processing', 'failed', 'completed']);
+                }
+                
+                const { data: latestCheck } = await query
                   .order('created_at', { ascending: false })
                   .limit(1)
                   .maybeSingle();
-                if (processingCheck?.id) {
-                  setSelectedCheckId(processingCheck.id);
+                if (latestCheck?.id) {
+                  setSelectedCheckId(latestCheck.id);
                   router.replace('/(tabs)/history');
                   return;
                 }

@@ -60,6 +60,14 @@ export default function LoginScreen() {
       setIsGuestLoading(true);
       const { error } = await supabase.auth.signInAnonymously();
       if (error) throw error;
+
+      // Clean up stale data from previous guest session so judges always start fresh
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Delete health checks first (FK dependency), then cats
+        await supabase.from('health_checks').delete().eq('user_id', user.id);
+        await supabase.from('cats').delete().eq('user_id', user.id);
+      }
       
       const message = "Temporary Guest Account. Data is saved locally and will be lost if you clear your browser data or sign out.";
       DeviceEventEmitter.emit('showToast', { message, persistent: true });

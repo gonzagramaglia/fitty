@@ -150,7 +150,9 @@ export default function CameraScreen() {
         }
 
         // Only request camera/mic permissions for real users (not guests)
-        if (!isUserGuest) {
+        // On web, permissions are requested lazily when actually capturing to avoid
+        // the browser prompt appearing before the user interacts with camera/mic
+        if (!isUserGuest && Platform.OS !== 'web') {
           if (!permission?.granted) requestPermission();
           if (!audioPermissionResponse?.granted) requestAudioPermission();
         }
@@ -320,8 +322,8 @@ export default function CameraScreen() {
         hasTextNote: text.trim().length > 0
       });
 
-      // Simulate backend processing time
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      // Simulate backend processing time (faster for guests)
+      await new Promise((resolve) => setTimeout(resolve, isGuest ? 1500 : 3000));
       
       // If the user is a guest (Hackathon Judge), use the mock flow
       if (isGuest) {
@@ -416,17 +418,8 @@ export default function CameraScreen() {
         
         if (error) throw error;
 
-        // Show ProcessingScreen for 15s so judges see all phases, then navigate to result
-        // The step is already 'uploading' so ProcessingScreen renders.
-        // We delay, then navigate directly.
-        await new Promise((resolve) => setTimeout(resolve, 15000));
-        
-        setProcessingState({ hasVoiceNote: false, hasTextNote: false });
-        if (guestRecord?.id) {
-          setSelectedCheckId(guestRecord.id);
-        }
-        router.replace('/(tabs)/history');
-        return;
+        // Let ProcessingScreen handle the transition via Realtime subscription
+        // (the insert above will trigger the postgres_changes event)
       } else {
         // REAL USER FLOW: Upload media and trigger Temporal workflow
         console.log("Uploading media for real user...");

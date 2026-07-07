@@ -218,6 +218,18 @@ export default function RootLayout() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setInitialized(true);
+
+      // Detect OAuth redirect that failed to establish session (e.g. Brave Shields blocking storage)
+      if (!session && typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+        setTimeout(() => {
+          DeviceEventEmitter.emit('showToast', { 
+            message: '⚠️ OAuth login failed. Your browser may be blocking cookies. Please try Chrome or Safari, or disable privacy shields for this site.',
+            persistent: true 
+          });
+          // Clean the URL hash so it doesn't loop
+          window.history.replaceState(null, '', window.location.pathname);
+        }, 500);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {

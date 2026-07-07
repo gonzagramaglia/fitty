@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, Platform, DeviceEventEmitter, Linking } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, ScrollView, Image, TouchableOpacity, Platform, DeviceEventEmitter, Linking, Animated } from 'react-native';
 import { Cloud, Server, Shield, Cpu, Lock, TrendingUp, BookOpen, Target, Code2, Heart, Zap, Activity, MessageCircle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
@@ -13,6 +13,24 @@ export default function Presentation() {
   const { width, height } = containerSize;
   const router = useRouter();
   const scrollViewRef = React.useRef<ScrollView>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Pulse animation for the down button on first slide
+  useEffect(() => {
+    if (currentSlide === 0) {
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.2, duration: 800, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        ])
+      );
+      loop.start();
+      return () => loop.stop();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [currentSlide]);
 
   const handleDemoPress = () => {
     // Navigate to the main app
@@ -51,11 +69,18 @@ export default function Presentation() {
       onLayout={(e) => setContainerSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}
     >
       {width > 0 && height > 0 && (
+        <>
         <ScrollView 
           ref={scrollViewRef}
           pagingEnabled 
           showsVerticalScrollIndicator={false}
           style={{ flex: 1 }}
+          onScroll={(e) => {
+            const offsetY = e.nativeEvent.contentOffset.y;
+            const totalSlides = width > 768 ? 7 : 8;
+            setCurrentSlide(Math.round(offsetY / height));
+          }}
+          scrollEventThrottle={100}
         >
       
       {/* Slide 1: Intro (Soft UI for Video Consistency) */}
@@ -298,6 +323,61 @@ export default function Presentation() {
       </View>
 
     </ScrollView>
+        {/* Navigation Controls — fixed to browser viewport, next to tablet left edge (desktop only) */}
+        {width > 768 && (
+        <View style={{ position: 'fixed' as any, left: '9%', top: '50%', transform: [{ translateY: -135 }], zIndex: 99999, alignItems: 'center', gap: 14 }}>
+          {/* Slide indicator */}
+          <View style={{ 
+            backgroundColor: '#1A2530', 
+            borderRadius: 12, 
+            paddingHorizontal: 14, 
+            paddingVertical: 8, 
+            marginBottom: 6,
+          }}>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: '#fff', textAlign: 'center' }}>
+              {currentSlide + 1}/{width > 768 ? 7 : 8}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => {
+              if (currentSlide > 0) {
+                scrollViewRef.current?.scrollTo({ y: (currentSlide - 1) * height, animated: true });
+              }
+            }}
+            style={{
+              width: 64, height: 64, borderRadius: 32,
+              backgroundColor: currentSlide > 0 ? '#1A2530' : 'transparent',
+              alignItems: 'center', justifyContent: 'center',
+              borderWidth: currentSlide > 0 ? 2 : 1,
+              borderColor: currentSlide > 0 ? '#000' : 'rgba(100,116,139,0.25)',
+              ...(Platform.OS === 'web' && currentSlide > 0 ? { boxShadow: '4px 4px 0px #000' } as any : {}),
+            }}
+            disabled={currentSlide === 0}
+          >
+            <Text style={{ color: currentSlide > 0 ? '#fff' : 'rgba(100,116,139,0.3)', fontSize: 28, fontWeight: '900' }}>↑</Text>
+          </TouchableOpacity>
+          <Animated.View style={{ transform: [{ scale: currentSlide === 0 ? pulseAnim : 1 }] }}>
+          <TouchableOpacity
+            onPress={() => {
+              const totalSlides = width > 768 ? 7 : 8;
+              if (currentSlide < totalSlides - 1) {
+                scrollViewRef.current?.scrollTo({ y: (currentSlide + 1) * height, animated: true });
+              }
+            }}
+            style={{
+              width: 64, height: 64, borderRadius: 32,
+              backgroundColor: '#1A2530',
+              alignItems: 'center', justifyContent: 'center',
+              borderWidth: 2, borderColor: '#000',
+              ...(Platform.OS === 'web' ? { boxShadow: '4px 4px 0px #000' } as any : { elevation: 4 }),
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 28, fontWeight: '900' }}>↓</Text>
+          </TouchableOpacity>
+          </Animated.View>
+        </View>
+        )}
+        </>
       )}
     </View>
   );

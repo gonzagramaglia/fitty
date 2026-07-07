@@ -29,7 +29,7 @@
 
 **(Slide 2: The Problem)**
 **Audio (Cat Voiceover):** 
-"You see, for centuries, we've relied on humans to take us to the vet just to figure out if we are getting too fat from the treats we successfully extorted. It's a highly inefficient process. They guess. They lack precision."
+"You see, for centuries, we've relied on humans to take us to the vet just to figure out if we are getting too fat from the treats we successfully extorted."
 
 **(Slide 3: The Solution)**
 **Audio (Cat Voiceover):** 
@@ -45,7 +45,7 @@
 
 **(Slide 6: AI Engineering Mindset)**
 **Audio (Cat Voiceover):** 
-"Building this required absolute discipline. I did not let my human just write code. We used Kiro to drive the entire development process through spec-driven AI agents. Every agent must read the sacred docs. Scope is sacred. Clean code over clever abstractions. No rogue human coding allowed."
+"Building this required absolute discipline. I did not let my human just write code. We used Kiro to drive the entire development process through spec-driven AI agents. Every agent must read the sacred docs. Scope is sacred. Clean code over clever abstractions."
 
 **(Slide 7: Enough Talk)**
 **Audio (Cat Voiceover):** 
@@ -70,9 +70,9 @@
 - The human opens the **Contextual Vet AI** chat again. This time it's the real, functional integration. They type a custom question and get a live, context-aware AI response.
 
 **Audio (Cat Voiceover):** 
-"Behold, the Fitty Web App. First, I ordered my human to build a special 'Judge Mode' so you humans can test it instantly. 
+"Allow me to present the Fitty Web App. First, I ordered my human to build a special 'Judge Mode' so you humans can test it instantly.
 
-Watch. He logs in as a guest and is forced to create a profile. With one tap, it auto-fills. He checks the dashboard and history—empty, clean, waiting for data. 
+Watch. First, I make you accept my non-negotiable terms and conditions. Then you log in as a guest, and I force you to create a profile. Each field takes just one tap to fill. You check the dashboard and history—empty, clean, waiting for data.
 
 Then he clicks Scan. The app warns him he's in Judge Mode, then automatically loads photos and a voice note. Now watch the AI Processing — each step updates live: detecting body outline, scanning for physical cues, generating the final health report. This is exactly what happens in real-time when Temporal orchestrates the Claude and Whisper APIs.
 

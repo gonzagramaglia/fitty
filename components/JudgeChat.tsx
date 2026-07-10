@@ -90,9 +90,20 @@ export const JudgeChat = () => {
     setIsLoading(true);
 
     try {
+      // Build the judge chat URL from the same base as the Vet AI chat
+      const baseUrl = process.env.EXPO_PUBLIC_CHAT_API_URL 
+        ? process.env.EXPO_PUBLIC_CHAT_API_URL.replace('/api/chat', '/api/judge-chat')
+        : null;
+
+      if (!baseUrl) {
+        setMessages(prev => [...prev, { role: 'assistant', content: 'Judge AI is temporarily unavailable. The backend URL is not configured.' }]);
+        setIsLoading(false);
+        return;
+      }
+
       // Force at least a 1-second delay for the typing animation effect
       const [response] = await Promise.all([
-        fetch('/api/chat', {
+        fetch(baseUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
